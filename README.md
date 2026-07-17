@@ -71,12 +71,7 @@ complete. The first build target is the **SRS engine** — pure logic, fully tes
 everything else plugs into it. The main open technical question is the **stroke-data
 source** for the drawing mechanic.
 
-## Contributing
+## Working in this repo
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md). In short: read the
-[principles](./docs/product/principles.md) first — a change that violates one needs a
-fix or a documented [ADR](./docs/decisions/README.md).
-
-## License
-
-[MIT](./LICENSE).
+Read the [principles](./docs/product/principles.md) first — a change that violates one
+needs a fix or a documented [ADR](./docs/decisions/README.md).

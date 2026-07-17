@@ -28,7 +28,7 @@ on it — so it is Phase 1. See
 - [x] Flagship vision doc + principles + glossary
 - [x] Architecture overview, data model, content model
 - [x] Initial ADRs (web-first, no-romaji, SM-2)
-- [x] Git initialized, `.gitignore`, contribution docs
+- [x] Git initialized, `.gitignore`
 - [ ] **Resolve stroke-data source** for the drawing mechanic (KanjiVG vs. authored
       subset vs. hybrid) → write an ADR. *This is the main open technical question.*
 - [ ] Decide project scaffolding specifics (TypeScript config, test runner, lint) →
