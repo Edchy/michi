@@ -30,6 +30,7 @@ docs/
 
 **"I'm going to write curriculum content."**
 [curriculum/overview.md](./curriculum/overview.md) →
+[session-flow.md](./curriculum/session-flow.md) →
 [content-model.md](./curriculum/content-model.md) →
 [month-1.md](./curriculum/month-1.md)
 
@@ -47,6 +48,8 @@ docs/
 
 ### curriculum/ — what we teach
 - [overview.md](./curriculum/overview.md) — sequencing philosophy and session shape
+- [session-flow.md](./curriculum/session-flow.md) — how a session plays out (auto-advance),
+  the first experience, and where the three scripts get explained
 - [month-1.md](./curriculum/month-1.md) — the full 28-day hiragana curriculum
 - [content-model.md](./curriculum/content-model.md) — how content is structured as data
 

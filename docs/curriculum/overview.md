@@ -58,6 +58,10 @@ Every daily session follows the same three-part rhythm:
 
 Consolidation days drop step 2 and expand steps 1 and 3.
 
+How the learner moves *through* these steps (auto-advance, feedback, in-session
+progress), what the very first moment of the app is, and where the three scripts get
+explained are all specified in [session-flow.md](./session-flow.md).
+
 ---
 
 ## Progression Map

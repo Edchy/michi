@@ -20,6 +20,10 @@ Each daily session runs 15-25 minutes:
 
 Sessions always have a clear end state. The learner knows when they're done.
 
+How the learner moves *through* a session (auto-advance, feedback, progress) and the
+very first moments of the app are specified in
+[session-flow.md](./session-flow.md).
+
 ---
 
 ## Hiragana Reference
@@ -50,19 +54,25 @@ Teaching order follows the rows above. Five characters at a time, row by row.
 
 ### Day 1 — Introduction Session
 
-**No characters yet. Context first.**
+**No characters yet. Doing first, then a little context.** Day 1's opening is the
+app's first-ever moment; its exact shape is specified in
+[session-flow.md §2](./session-flow.md#2-the-absolute-first-thing).
 
-Content:
-- Why Japanese has three scripts (and the fascinating history behind it)
-- How hiragana was invented by court ladies in the Heian period (~800s AD)
-- The Japanese sound system: mora-timing, no silent letters, no irregular pronunciations
-- The promise: once you know the 46 sounds, you can read and pronounce anything written in hiragana
+Order matters here — **hook before story:**
 
-Exercises:
-- Listen to native audio of each of the 5 vowel sounds (あ い う え お) — just listening, no characters yet
-- Identify which English words contain these sounds (a as in "father", i as in "bee", u as in "food", e as in "pet", o as in "boat")
+1. **First sound (the hook).** The learner immediately *hears* a native voice say
+   あ and mimics it aloud ("say it back" → self-confirm). Doing, not reading.
+2. **A short beat of context** — *only after* the hook, kept to a sentence or two:
+   Japanese has three scripts; the sound system is regular (mora-timed, no silent
+   letters, no irregular pronunciations); **the promise** — "learn 46 sounds and you
+   can read anything written in hiragana." (The deeper three-scripts story is
+   dripped in later, per [session-flow.md §3](./session-flow.md#3-explaining-the-three-scripts--where-when-why).)
+3. **The rest of the vowels, by ear.** Hear and mimic い う え お — still no
+   characters. Optionally anchor each to a familiar sound (a as in "father", i as in
+   "bee", u as in "food", e as in "pet", o as in "boat").
 
-Ends with: "Tomorrow we start your first 5 characters. You've already heard them today."
+Ends with: "Tomorrow we start your first 5 characters. You've already *said* them
+today."
 
 ---
 
