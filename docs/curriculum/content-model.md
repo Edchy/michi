@@ -177,11 +177,12 @@ needs machine-usable stroke information for every drawable character:
 - Used for: rendering the animated stroke-order hint, and checking the learner's
   drawn strokes against the correct path and order.
 
-**Open question (tracked in the roadmap):** the *source* of stroke data. Candidate
-approaches — KanjiVG (SVG stroke data for kana and kanji), a hand-authored subset for
-the 46 hiragana, or a hybrid. This is one of the first real technical decisions to
-resolve before the drawing mechanic can be built, and it will get its own ADR. See
-[../roadmap.md](../roadmap.md).
+**Source (decided):** kana stroke data comes from **`strokesvg`** (derived from the
+Klee One typeface, OFL-licensed), so the stroke hints match our Klee One teaching
+face exactly; gaps in the core 92 kana are hand-authored. Kanji stroke data (a later
+phase) will come from KanjiVG. The matcher consumes a normalized ordered list of
+stroke paths and is independent of the source. Full rationale in
+[ADR-0004](../decisions/0004-stroke-data-source.md).
 
 ---
 

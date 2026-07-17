@@ -29,8 +29,9 @@ on it — so it is Phase 1. See
 - [x] Architecture overview, data model, content model
 - [x] Initial ADRs (web-first, no-romaji, SM-2)
 - [x] Git initialized, `.gitignore`
-- [ ] **Resolve stroke-data source** for the drawing mechanic (KanjiVG vs. authored
-      subset vs. hybrid) → write an ADR. *This is the main open technical question.*
+- [x] **Resolve stroke-data source** for the drawing mechanic → `strokesvg` (Klee
+      One / OFL) for kana, KanjiVG for kanji later
+      ([ADR-0004](./decisions/0004-stroke-data-source.md))
 - [ ] Decide project scaffolding specifics (TypeScript config, test runner, lint) →
       when Phase 1 begins
 
@@ -136,7 +137,7 @@ significant, gets its own [ADR](./decisions/README.md) before work starts.
 
 ## Open Questions (tracked)
 
-- **Stroke-data source** for the drawing mechanic — the top unresolved technical
-  decision (Phase 0). Needs an ADR.
+- ~~**Stroke-data source** for the drawing mechanic~~ — resolved in
+  [ADR-0004](./decisions/0004-stroke-data-source.md) (`strokesvg`/Klee One for kana).
 - **Content on-disk format** — JSON vs. TS modules; finalize when Phase 2 begins.
 - **Test/lint/TS tooling specifics** — finalize when Phase 1 begins.

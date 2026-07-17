@@ -39,5 +39,6 @@ preserves the history of thinking.
 | [0001](./0001-web-first-capacitor.md) | Web-first with Next.js + Capacitor | Accepted |
 | [0002](./0002-no-romaji.md) | No romaji as a reading aid | Accepted |
 | [0003](./0003-sm2-srs-algorithm.md) | Use SM-2 for spaced repetition | Accepted |
+| [0004](./0004-stroke-data-source.md) | Stroke-data source for the drawing mechanic | Accepted |
 
 _Add new rows here as ADRs are written._

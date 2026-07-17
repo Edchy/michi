@@ -68,8 +68,8 @@ engine, offline-first storage (IndexedDB / SQLite). Full rationale in
 
 Following the [roadmap](./docs/roadmap.md): **Phase 0 (Foundations)** is nearly
 complete. The first build target is the **SRS engine** — pure logic, fully testable,
-everything else plugs into it. The main open technical question is the **stroke-data
-source** for the drawing mechanic.
+everything else plugs into it. The stroke-data source for the drawing mechanic is now
+settled ([ADR-0004](./docs/decisions/0004-stroke-data-source.md)).
 
 ## Working in this repo
 
