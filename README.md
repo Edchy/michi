@@ -20,8 +20,11 @@ recall, motor memory, and output**. It is, deliberately, the opposite of an
 engagement machine.
 
 > 📁 **This repository is currently in the planning phase.** There is no application
-> code yet — this is a fully documented project foundation. Start with the
-> **[Product Vision](./docs/product/vision.md)**.
+> code yet — this is a fully documented project foundation.
+>
+> 👉 **New here (human or agent)? Read [OVERVIEW.md](./OVERVIEW.md)** — the single
+> entry point that summarizes the whole project and links to everything. Or jump
+> straight to the **[Product Vision](./docs/product/vision.md)**.
 
 ## Why Michi?
 

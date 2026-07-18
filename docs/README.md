@@ -1,8 +1,15 @@
 # Michi Documentation
 
-This is the documentation index for Michi. If you're new, start with the
-**[Product Vision](./product/vision.md)** — it defines what Michi is, what it isn't,
-and why it's built the way it is. Everything else supports it.
+This is the documentation **index** for Michi — a map of what exists in `docs/`.
+
+> 🧭 **Want the project explained, not just listed?** Read
+> **[../OVERVIEW.md](../OVERVIEW.md)** — the single entry point you can read top to
+> bottom to actually understand Michi, with links out for depth. This page is the
+> reference index you return to once you know your way around.
+
+If you're brand new, start with the **[Product Vision](./product/vision.md)** — it
+defines what Michi is, what it isn't, and why it's built the way it is. Everything
+else supports it.
 
 ## How the docs are organized
 
