@@ -1,4 +1,4 @@
-import type { Grade, SrsItemState } from "./types.js";
+import type { Grade, SrsItemState } from "./types";
 
 /** SM-2's ease-factor floor. Ease never drops below this. */
 export const MIN_EASE = 1.3;

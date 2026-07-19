@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { review, newItem, isDue, confidence, MIN_EASE } from "./engine.js";
-import type { SrsItemState } from "./types.js";
+import { review, newItem, isDue, confidence, MIN_EASE } from "./engine";
+import type { SrsItemState } from "./types";
 
 const NOW = new Date("2026-07-19T12:00:00Z");
 
