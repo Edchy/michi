@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { buildModule1, type Step } from "@/content/module1";
-import { speak } from "@/lib/audio";
+import { speak, primeAudio } from "@/lib/audio";
 import type { Kana } from "@/content/hiragana";
 
 type Feel = "bleed" | "card";
@@ -146,7 +146,14 @@ function WelcomeStep({ onContinue }: { onContinue: () => void }) {
         Five of them. You’ll hear each one and say it back — no reading yet. Once a
         Japanese sound is in your ear, it stays.
       </p>
-      <ContinueButton onClick={onContinue} label="Begin" />
+      {/* prime the speech engine on this first gesture so audio is ready */}
+      <ContinueButton
+        onClick={() => {
+          primeAudio();
+          onContinue();
+        }}
+        label="Begin"
+      />
     </div>
   );
 }
@@ -190,21 +197,19 @@ function TeachStep({
 
 function RevealStep({ kana, onContinue }: { kana: Kana[]; onContinue: () => void }) {
   return (
-    <div className="flex flex-col items-center gap-10 text-center">
-      <p className="text-lg text-neutral-500">These five sounds are written:</p>
+    <div className="flex flex-col items-center gap-14 text-center">
       <div className="flex flex-wrap items-center justify-center gap-5">
         {kana.map((k, i) => (
           <button
             key={k.id}
             onClick={() => speak(k.glyph)}
-            className="kana-rise text-6xl leading-none text-neutral-900 transition-transform hover:scale-110"
+            className="kana-rise text-6xl leading-none text-neutral-900 transition-transform hover:scale-110 active:scale-95"
             style={{ animationDelay: `${0.1 + i * 0.09}s` }}
           >
             {k.glyph}
           </button>
         ))}
       </div>
-      <p className="text-sm text-neutral-400">Tap any character to hear it.</p>
       <ContinueButton onClick={onContinue} />
     </div>
   );
