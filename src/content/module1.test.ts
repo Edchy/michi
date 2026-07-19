@@ -17,19 +17,16 @@ describe("buildModule1", () => {
     }
   });
 
-  it("reveals the family, then checks each, then done", () => {
+  it("reveals the family, then runs the drill, then done", () => {
     expect(steps[6]!.kind).toBe("reveal");
-    for (let i = 7; i < 12; i++) expect(steps[i]!.kind).toBe("recognize");
-    expect(steps[12]!.kind).toBe("done");
-    expect(steps).toHaveLength(13);
+    expect(steps[7]!.kind).toBe("drill");
+    expect(steps[8]!.kind).toBe("done");
+    expect(steps).toHaveLength(9);
   });
 
-  it("every recognize step includes its answer among options", () => {
-    for (const s of steps) {
-      if (s.kind === "recognize") {
-        expect(s.options).toContain(s.answer);
-        expect(s.options).toHaveLength(3);
-      }
-    }
+  it("the drill carries the full pool of five vowels", () => {
+    const drill = steps[7]!;
+    expect(drill.kind).toBe("drill");
+    if (drill.kind === "drill") expect(drill.pool).toHaveLength(5);
   });
 });

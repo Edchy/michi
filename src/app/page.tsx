@@ -2,16 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { buildModule1, type Step } from "@/content/module1";
+import { newDrill, grade, MIN_OPTIONS } from "@/content/drill";
 import { speak, primeAudio } from "@/lib/audio";
 import type { Kana } from "@/content/hiragana";
-
-type Feel = "bleed" | "card";
 
 export default function Module1Page() {
   const steps = useMemo(() => buildModule1(), []);
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1); // 1 forward, -1 back
-  const [feel, setFeel] = useState<Feel>("bleed");
 
   const step = steps[index]!;
   const atStart = index === 0;
@@ -28,16 +26,11 @@ export default function Module1Page() {
       {/* the moving surface — CSS slide-in keyed per step (always settles visible) */}
       <div className="flex flex-1 items-center justify-center">
         <div key={index} className="w-full step-enter" data-dir={direction}>
-          <StepView step={step} feel={feel} onAdvance={() => go(1)} />
+          <StepView step={step} onAdvance={() => go(1)} />
         </div>
       </div>
 
-      <BottomBar
-        feel={feel}
-        onToggleFeel={() => setFeel((f) => (f === "bleed" ? "card" : "bleed"))}
-        showBack={!atStart}
-        onBack={() => go(-1)}
-      />
+      <BottomBar showBack={!atStart} onBack={() => go(-1)} />
     </main>
   );
 }
@@ -56,19 +49,9 @@ function ProgressBar({ index, total }: { index: number; total: number }) {
   );
 }
 
-function BottomBar({
-  feel,
-  onToggleFeel,
-  showBack,
-  onBack,
-}: {
-  feel: Feel;
-  onToggleFeel: () => void;
-  showBack: boolean;
-  onBack: () => void;
-}) {
+function BottomBar({ showBack, onBack }: { showBack: boolean; onBack: () => void }) {
   return (
-    <div className="flex items-center justify-between py-6 text-sm">
+    <div className="flex items-center py-6 text-sm">
       <button
         onClick={onBack}
         className={`min-h-[44px] px-2 text-neutral-400 transition-opacity hover:text-neutral-700 ${
@@ -77,49 +60,28 @@ function BottomBar({
       >
         ← Back
       </button>
-      {/* dev-only feel toggle — remove once we pick */}
-      <button
-        onClick={onToggleFeel}
-        className="min-h-[44px] rounded-full border border-neutral-200 px-4 text-neutral-500 transition-colors hover:bg-neutral-100"
-      >
-        feel: {feel === "bleed" ? "full-bleed" : "soft card"}
-      </button>
     </div>
   );
 }
 
 /* ---------- step surface ---------- */
 
-function StepView({
-  step,
-  feel,
-  onAdvance,
-}: {
-  step: Step;
-  feel: Feel;
-  onAdvance: () => void;
-}) {
-  const inner =
-    step.kind === "welcome" ? (
-      <WelcomeStep onContinue={onAdvance} />
-    ) : step.kind === "teach" ? (
-      <TeachStep kana={step.kana} first={step.first} onContinue={onAdvance} />
-    ) : step.kind === "reveal" ? (
-      <RevealStep kana={step.kana} onContinue={onAdvance} />
-    ) : step.kind === "recognize" ? (
-      <RecognizeStep answer={step.answer} options={step.options} onDone={onAdvance} />
-    ) : (
-      <DoneStep learned={step.learned} />
-    );
-
-  if (feel === "card") {
-    return (
-      <div className="mx-auto rounded-3xl bg-white px-6 py-14 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_12px_32px_-8px_rgba(0,0,0,0.10)] ring-1 ring-neutral-100">
-        {inner}
-      </div>
-    );
-  }
-  return <div className="py-10">{inner}</div>;
+function StepView({ step, onAdvance }: { step: Step; onAdvance: () => void }) {
+  return (
+    <div className="py-10">
+      {step.kind === "welcome" ? (
+        <WelcomeStep onContinue={onAdvance} />
+      ) : step.kind === "teach" ? (
+        <TeachStep kana={step.kana} first={step.first} onContinue={onAdvance} />
+      ) : step.kind === "reveal" ? (
+        <RevealStep kana={step.kana} onContinue={onAdvance} />
+      ) : step.kind === "drill" ? (
+        <RecognizeDrill pool={step.pool} onDone={onAdvance} />
+      ) : (
+        <DoneStep learned={step.learned} />
+      )}
+    </div>
+  );
 }
 
 /* ---------- steps ---------- */
@@ -198,15 +160,16 @@ function TeachStep({
 function RevealStep({ kana, onContinue }: { kana: Kana[]; onContinue: () => void }) {
   return (
     <div className="flex flex-col items-center gap-14 text-center">
-      <div className="flex flex-wrap items-center justify-center gap-5">
+      <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4">
         {kana.map((k, i) => (
           <button
             key={k.id}
             onClick={() => speak(k.glyph)}
-            className="kana-rise text-6xl leading-none text-neutral-900 transition-transform hover:scale-110 active:scale-95"
+            className="kana-rise flex flex-col items-center gap-1.5 transition-transform hover:scale-110 active:scale-95"
             style={{ animationDelay: `${0.1 + i * 0.09}s` }}
           >
-            {k.glyph}
+            <span className="text-6xl leading-none text-neutral-900">{k.glyph}</span>
+            <span className="text-sm font-light tracking-wide text-neutral-300">{k.say}</span>
           </button>
         ))}
       </div>
@@ -215,46 +178,86 @@ function RevealStep({ kana, onContinue }: { kana: Kana[]; onContinue: () => void
   );
 }
 
-function RecognizeStep({
-  answer,
-  options,
-  onDone,
-}: {
+/** Random integer in [0, n). */
+function randInt(n: number): number {
+  return Math.floor(Math.random() * n);
+}
+
+/** Fisher–Yates shuffle (copy). */
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = randInt(i + 1);
+    [a[i], a[j]] = [a[j]!, a[i]!];
+  }
+  return a;
+}
+
+interface Question {
   answer: Kana;
   options: Kana[];
-  onDone: () => void;
-}) {
-  const [picked, setPicked] = useState<string | null>(null);
-  const correct = picked === answer.id;
+}
 
+/** Build one question: the answer plus (count-1) distractors, shuffled. */
+function makeQuestion(pool: Kana[], count: number, avoidId?: string): Question {
+  // avoid repeating the same answer twice in a row when possible
+  const candidates = avoidId && pool.length > 1 ? pool.filter((k) => k.id !== avoidId) : pool;
+  const answer = candidates[randInt(candidates.length)]!;
+  const distractors = shuffle(pool.filter((k) => k.id !== answer.id)).slice(0, count - 1);
+  return { answer, options: shuffle([answer, ...distractors]) };
+}
+
+function RecognizeDrill({ pool, onDone }: { pool: Kana[]; onDone: () => void }) {
+  const [drill, setDrill] = useState(() => newDrill());
+  const [q, setQ] = useState<Question>(() => makeQuestion(pool, MIN_OPTIONS));
+  const [picked, setPicked] = useState<string | null>(null);
+
+  const gotIt = picked === q.answer.id;
+
+  // play the target sound when a new question appears
   useEffect(() => {
-    const t = setTimeout(() => speak(answer.glyph), 300);
+    const t = setTimeout(() => speak(q.answer.glyph), 300);
     return () => clearTimeout(t);
-  }, [answer.glyph]);
+  }, [q.answer.glyph]);
 
   function choose(k: Kana) {
-    if (picked && correct) return; // locked once right
+    if (picked && gotIt) return; // locked once right
     setPicked(k.id);
-    if (k.id === answer.id) {
-      speak(k.glyph);
-      setTimeout(onDone, 700); // brief affirmation, then auto-advance
-    } else {
-      speak(answer.glyph); // teach: play the right one
+    const correct = k.id === q.answer.id;
+    speak(q.answer.glyph); // right or wrong, the last thing heard is correct
+
+    if (!correct) {
+      // reset streak, let them try again on the same question
+      setDrill((d) => grade(d, false, pool.length));
+      return;
     }
+
+    const next = grade(drill, true, pool.length);
+    setDrill(next);
+    setTimeout(() => {
+      if (next.done) {
+        onDone();
+      } else {
+        setQ(makeQuestion(pool, next.options, q.answer.id));
+        setPicked(null);
+      }
+    }, 650);
   }
+
+  const cols = q.options.length <= 2 ? "grid-cols-2" : q.options.length === 3 ? "grid-cols-3" : "grid-cols-3 sm:grid-cols-5";
 
   return (
     <div className="flex flex-col items-center gap-10 text-center">
       <div className="flex flex-col items-center gap-4">
         <p className="text-lg text-neutral-500">Which one did you hear?</p>
-        <ListenButton text={answer.glyph} label="Play again" />
+        <ListenButton text={q.answer.glyph} label="Play again" />
       </div>
-      <div className="grid w-full grid-cols-3 gap-3">
-        {options.map((k) => {
-          // once any pick is made: highlight the correct one green, a wrong pick red.
+
+      <div className={`grid w-full gap-3 ${cols}`}>
+        {q.options.map((k) => {
           let style = "bg-neutral-100 text-neutral-800 hover:bg-neutral-200";
           if (picked) {
-            if (k.id === answer.id) style = "bg-emerald-50 text-emerald-700 ring-2 ring-emerald-300";
+            if (k.id === q.answer.id) style = "bg-emerald-50 text-emerald-700 ring-2 ring-emerald-300";
             else if (k.id === picked) style = "bg-rose-50 text-rose-400 ring-1 ring-rose-200";
           }
           return (
@@ -268,12 +271,13 @@ function RecognizeStep({
           );
         })}
       </div>
+
       <div className="min-h-[1.5rem] text-sm">
-        {picked && correct && <span className="text-emerald-600">✓ Yes — {answer.say}</span>}
-        {picked && !correct && (
+        {picked && gotIt && <span className="text-emerald-600">✓ Yes — {q.answer.say}</span>}
+        {picked && !gotIt && (
           <span className="text-neutral-500">
-            This is <span className="font-semibold text-neutral-800">{answer.glyph}</span> — try
-            it.
+            This is <span className="font-semibold text-neutral-800">{q.answer.glyph}</span> — try
+            again.
           </span>
         )}
       </div>
