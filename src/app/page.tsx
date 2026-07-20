@@ -182,8 +182,8 @@ function RevealStep({ kana, onContinue }: { kana: Kana[]; onContinue: () => void
   );
 }
 
-/** Question types active in Module 1's drill (interleaved). */
-const DRILL_TYPES: QuestionType[] = ["hearPickChar", "seePickSound", "sayAloud"];
+/** Question types active in Module 1's drill (interleaved). trace is a placeholder. */
+const DRILL_TYPES: QuestionType[] = ["hearPickChar", "seePickSound", "sayAloud", "trace"];
 
 /**
  * In-drill mastery indicator: the adaptive drill climbs 2 → 3 → 4 → 5 options
@@ -258,7 +258,9 @@ function RecognizeDrill({ pool, onDone }: { pool: Kana[]; onDone: () => void }) 
   return (
     <div className="flex flex-col items-center gap-10 text-center">
       <MasteryIndicator drill={drill} poolSize={pool.length} />
-      {q.type === "sayAloud" ? (
+      {q.type === "trace" ? (
+        <TraceQuestion key={qNum} q={q} onDone={() => advance(true, 0)} />
+      ) : q.type === "sayAloud" ? (
         <SayAloudQuestion key={qNum} q={q} onDone={() => advance(true, 0)} />
       ) : (
         <PickQuestion
@@ -397,6 +399,35 @@ function SayAloudQuestion({ q, onDone }: { q: Question; onDone: () => void }) {
           </button>
         </div>
       )}
+    </>
+  );
+}
+
+/**
+ * PLACEHOLDER — the trace/write drill (motor memory, the signature handwriting
+ * mechanic). Not built yet: this only marks where it belongs in the flow so we
+ * can see it interleaved. A real version needs a drawing canvas + stroke-order
+ * guidance + stroke checking (docs/design/typography.md, ADR-0004 stroke data).
+ */
+function TraceQuestion({ q, onDone }: { q: Question; onDone: () => void }) {
+  return (
+    <>
+      <p className="text-lg text-neutral-500">Trace the character.</p>
+
+      {/* stubbed canvas: shows the target glyph faintly, as a guide would */}
+      <div className="relative flex h-56 w-56 items-center justify-center rounded-2xl border-2 border-dashed border-neutral-300">
+        <span className="select-none text-[9rem] leading-none text-neutral-200">{q.answer.glyph}</span>
+        <span className="absolute bottom-3 rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-400">
+          drawing — coming soon
+        </span>
+      </div>
+
+      <button
+        onClick={onDone}
+        className="min-h-[48px] rounded-full bg-neutral-900 px-10 text-base font-medium text-white transition-colors hover:bg-neutral-700"
+      >
+        Skip for now
+      </button>
     </>
   );
 }

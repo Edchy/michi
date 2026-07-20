@@ -10,7 +10,8 @@ import type { Kana } from "./hiragana";
 export type QuestionType =
   | "hearPickChar" // hear the sound → pick the character   (ear → eye)
   | "seePickSound" // see the character → pick the sound     (eye → ear)
-  | "sayAloud"; // see the character → say it aloud       (production, self-confirm)
+  | "sayAloud" // see the character → say it aloud       (production, self-confirm)
+  | "trace"; // trace / write the character            (motor memory) — PLACEHOLDER
 
 /** Types that show a set of options to choose among. `sayAloud` has no options. */
 const PICK_TYPES: QuestionType[] = ["hearPickChar", "seePickSound"];
