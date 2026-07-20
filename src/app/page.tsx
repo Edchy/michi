@@ -156,8 +156,6 @@ function TeachStep({
         {first && <span className="mt-1 text-xs text-neutral-400">tap to hear it</span>}
       </button>
 
-      <p className="max-w-xs text-sm leading-relaxed text-neutral-500 text-pretty">{kana.hint}</p>
-
       <ContinueButton onClick={onContinue} />
     </div>
   );
@@ -185,7 +183,7 @@ function RevealStep({ kana, onContinue }: { kana: Kana[]; onContinue: () => void
 }
 
 /** Question types active in Module 1's drill (interleaved). */
-const DRILL_TYPES: QuestionType[] = ["hearPickChar", "seePickSound"];
+const DRILL_TYPES: QuestionType[] = ["hearPickChar", "seePickSound", "sayAloud"];
 
 /**
  * In-drill mastery indicator: the adaptive drill climbs 2 → 3 → 4 → 5 options
@@ -238,15 +236,48 @@ function RecognizeDrill({ pool, onDone }: { pool: Kana[]; onDone: () => void }) 
   // tested rather than randomness repeating a few and skipping others.
   const bag = useRef(new ShuffleBag(pool));
   const [drill, setDrill] = useState(() => newDrill());
+  const [qNum, setQNum] = useState(0); // increments per question → fresh sub-component
   const [q, setQ] = useState<Question>(() =>
     makeQuestion(pool, bag.current.next(), pickType(DRILL_TYPES), MIN_OPTIONS),
   );
-  const [picked, setPicked] = useState<string | null>(null);
 
+  // Advance after a result: grade (for pick-types; sayAloud always counts) and
+  // draw the next question, or finish. `delayMs` lets a miss linger a beat.
+  function advance(correct: boolean, delayMs: number) {
+    const next = grade(drill, correct, pool.length);
+    setDrill(next);
+    setTimeout(() => {
+      if (next.done) onDone();
+      else {
+        setQ(makeQuestion(pool, bag.current.next(q.answer.id), pickType(DRILL_TYPES), next.options));
+        setQNum((n) => n + 1);
+      }
+    }, delayMs);
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-10 text-center">
+      <MasteryIndicator drill={drill} poolSize={pool.length} />
+      {q.type === "sayAloud" ? (
+        <SayAloudQuestion key={qNum} q={q} onDone={() => advance(true, 0)} />
+      ) : (
+        <PickQuestion
+          key={qNum}
+          q={q}
+          onAnswered={(correct) => advance(correct, correct ? 700 : 1100)}
+        />
+      )}
+    </div>
+  );
+}
+
+/** A recognition question: pick the character (hear) or the sound (see). */
+function PickQuestion({ q, onAnswered }: { q: Question; onAnswered: (correct: boolean) => void }) {
+  const [picked, setPicked] = useState<string | null>(null);
   const gotIt = picked === q.answer.id;
 
-  // On a "hear → pick" question, play the target on appear. On "see → pick sound",
-  // the prompt is the visible character — no auto audio (that'd give it away).
+  // "hear → pick": play the target on appear. "see → pick sound": the character
+  // is the prompt, so no auto audio (that'd give the answer away).
   useEffect(() => {
     if (q.type !== "hearPickChar") return;
     const t = setTimeout(() => play(q.answer), 300);
@@ -257,20 +288,7 @@ function RecognizeDrill({ pool, onDone }: { pool: Kana[]; onDone: () => void }) 
     if (picked) return; // one answer per question — then it advances either way
     setPicked(k.id);
     if (q.type === "seePickSound") play(k); // this drill's options ARE sounds
-
-    const correct = k.id === q.answer.id;
-    const next = grade(drill, correct, pool.length); // wrong lowers the streak
-    setDrill(next);
-    setTimeout(
-      () => {
-        if (next.done) onDone();
-        else {
-          setQ(makeQuestion(pool, bag.current.next(q.answer.id), pickType(DRILL_TYPES), next.options));
-          setPicked(null);
-        }
-      },
-      correct ? 700 : 1100,
-    );
+    onAnswered(k.id === q.answer.id);
   }
 
   const cols =
@@ -281,10 +299,7 @@ function RecognizeDrill({ pool, onDone }: { pool: Kana[]; onDone: () => void }) 
         : "grid-cols-3 sm:grid-cols-5";
 
   return (
-    <div className="flex flex-col items-center gap-10 text-center">
-      <MasteryIndicator drill={drill} poolSize={pool.length} />
-
-      {/* Prompt: the thing to identify — a sound (hear) or a character (see). */}
+    <>
       {q.type === "hearPickChar" ? (
         <div className="flex flex-col items-center gap-4">
           <p className="text-lg text-neutral-500">Which one did you hear?</p>
@@ -299,7 +314,6 @@ function RecognizeDrill({ pool, onDone }: { pool: Kana[]; onDone: () => void }) 
         </div>
       )}
 
-      {/* Options: characters (hear-drill) or sound buttons (see-drill). */}
       <div className={`grid w-full gap-3 ${cols}`}>
         {q.options.map((k) => {
           let style = "bg-neutral-100 text-neutral-800 hover:bg-neutral-200";
@@ -334,7 +348,56 @@ function RecognizeDrill({ pool, onDone }: { pool: Kana[]; onDone: () => void }) 
           </span>
         )}
       </div>
-    </div>
+    </>
+  );
+}
+
+/**
+ * Production drill: see the character → say it out loud → check.
+ * Retrieval first — the character shows alone. Tapping "Check" reveals the
+ * pronunciation hint and the native audio to compare against; "I said it"
+ * advances. No speech recognition: the act of vocalizing is what matters
+ * (session-flow.md), so it always counts toward the streak.
+ */
+function SayAloudQuestion({ q, onDone }: { q: Question; onDone: () => void }) {
+  const [checked, setChecked] = useState(false);
+
+  function check() {
+    setChecked(true);
+    play(q.answer);
+  }
+
+  return (
+    <>
+      <p className="text-lg text-neutral-500">Say this sound out loud.</p>
+      <span className="select-none text-[9rem] leading-none text-neutral-900">
+        {q.answer.glyph}
+      </span>
+
+      {!checked ? (
+        <button
+          onClick={check}
+          className="min-h-[48px] rounded-full bg-neutral-900 px-10 text-base font-medium text-white transition-colors hover:bg-neutral-700"
+        >
+          Check
+        </button>
+      ) : (
+        <div className="flex flex-col items-center gap-6">
+          <div className="flex flex-col items-center gap-2">
+            <ListenButton kana={q.answer} label="Hear it" />
+            <p className="max-w-xs text-sm leading-relaxed text-neutral-500 text-pretty">
+              {q.answer.hint}
+            </p>
+          </div>
+          <button
+            onClick={onDone}
+            className="min-h-[48px] rounded-full bg-neutral-900 px-10 text-base font-medium text-white transition-colors hover:bg-neutral-700"
+          >
+            I said it
+          </button>
+        </div>
+      )}
+    </>
   );
 }
 
