@@ -221,27 +221,27 @@ function RecognizeDrill({ pool, onDone }: { pool: Kana[]; onDone: () => void }) 
   }, [q.answer]);
 
   function choose(k: Kana) {
-    if (picked && gotIt) return; // locked once right
+    if (picked) return; // one answer per question — then it advances either way
     // Tapping an option is silent — it's a choice, not a sound. The target sound
     // comes only from the ▶ prompt, so "which one did you hear?" stays unambiguous.
     setPicked(k.id);
 
-    if (k.id !== q.answer.id) {
-      // wrong: reset streak, let them try again on the same question
-      setDrill((d) => grade(d, false, pool.length));
-      return;
-    }
-
-    const next = grade(drill, true, pool.length);
+    const correct = k.id === q.answer.id;
+    const next = grade(drill, correct, pool.length); // wrong lowers the streak
     setDrill(next);
-    setTimeout(() => {
-      if (next.done) {
-        onDone();
-      } else {
-        setQ(makeQuestion(pool, next.options, q.answer.id));
-        setPicked(null);
-      }
-    }, 600);
+    // Either way, show the outcome briefly, then move on to the next question.
+    // A miss lingers a touch longer so the revealed answer registers.
+    setTimeout(
+      () => {
+        if (next.done) {
+          onDone();
+        } else {
+          setQ(makeQuestion(pool, next.options, q.answer.id));
+          setPicked(null);
+        }
+      },
+      correct ? 600 : 1100,
+    );
   }
 
   const cols = q.options.length <= 2 ? "grid-cols-2" : q.options.length === 3 ? "grid-cols-3" : "grid-cols-3 sm:grid-cols-5";
@@ -257,10 +257,10 @@ function RecognizeDrill({ pool, onDone }: { pool: Kana[]; onDone: () => void }) 
         {q.options.map((k) => {
           let style = "bg-neutral-100 text-neutral-800 hover:bg-neutral-200";
           if (picked) {
-            // Only reveal green on a CORRECT pick. A wrong pick just marks itself
-            // red — the answer stays hidden so "listen again, then try" is real.
-            if (gotIt && k.id === q.answer.id) style = "bg-emerald-50 text-emerald-700 ring-2 ring-emerald-300";
-            else if (k.id === picked && k.id !== q.answer.id) style = "bg-rose-50 text-rose-400 ring-1 ring-rose-200";
+            // Once answered, reveal: the correct one green, a wrong pick red.
+            // We advance either way, so showing the answer is the teaching moment.
+            if (k.id === q.answer.id) style = "bg-emerald-50 text-emerald-700 ring-2 ring-emerald-300";
+            else if (k.id === picked) style = "bg-rose-50 text-rose-400 ring-1 ring-rose-200";
           }
           return (
             <button
@@ -277,7 +277,9 @@ function RecognizeDrill({ pool, onDone }: { pool: Kana[]; onDone: () => void }) 
       <div className="min-h-[1.5rem] text-sm">
         {picked && gotIt && <span className="text-emerald-600">✓ Yes — {q.answer.say}</span>}
         {picked && !gotIt && (
-          <span className="text-neutral-500">Not quite — listen again, then try.</span>
+          <span className="text-neutral-500">
+            That was <span className="font-semibold text-neutral-800">{q.answer.say}</span>.
+          </span>
         )}
       </div>
     </div>
