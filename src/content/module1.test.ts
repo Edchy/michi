@@ -17,16 +17,26 @@ describe("buildModule1", () => {
     }
   });
 
-  it("reveals the family, then runs the drill, then done", () => {
+  it("reveals the family, then runs sequential drill blocks, then done", () => {
     expect(steps[6]!.kind).toBe("reveal");
-    expect(steps[7]!.kind).toBe("drill");
-    expect(steps[8]!.kind).toBe("done");
-    expect(steps).toHaveLength(9);
+    const drills = steps.filter((s) => s.kind === "drill");
+    expect(drills).toHaveLength(5); // 4 single-type blocks + 1 mixed capstone
+    expect(steps[steps.length - 1]!.kind).toBe("done");
   });
 
-  it("the drill carries the full pool of five vowels", () => {
-    const drill = steps[7]!;
-    expect(drill.kind).toBe("drill");
-    if (drill.kind === "drill") expect(drill.pool).toHaveLength(5);
+  it("drill blocks go single-type first, then the mixed capstone last", () => {
+    const drills = steps.filter((s) => s.kind === "drill");
+    // first four are single-type, in order
+    const singles = drills.slice(0, 4).map((d) => (d.kind === "drill" ? d.types : []));
+    expect(singles).toEqual([["hearPickChar"], ["seePickSound"], ["sayAloud"], ["trace"]]);
+    // last block mixes all types
+    const mix = drills[4];
+    if (mix?.kind === "drill") expect(mix.types.length).toBeGreaterThan(1);
+  });
+
+  it("every drill block carries the full pool of five vowels", () => {
+    for (const d of steps) {
+      if (d.kind === "drill") expect(d.pool).toHaveLength(5);
+    }
   });
 });

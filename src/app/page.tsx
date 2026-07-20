@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { buildModule1, type Step } from "@/content/module1";
-import { newDrill, grade, MIN_OPTIONS, STREAK_TO_ADVANCE, type DrillState } from "@/content/drill";
+import { DrillProgress } from "@/content/drill";
 import { makeQuestion, pickType, type Question, type QuestionType } from "@/content/question";
 import { ShuffleBag } from "@/content/bag";
 import { play, primeAudio } from "@/lib/audio";
@@ -21,15 +21,8 @@ export default function Module1Page() {
     setIndex((i) => Math.min(steps.length - 1, Math.max(0, i + delta)));
   }
 
-  // Top bar tracks module steps. The drill (a single step, but the real work)
-  // shows its own mastery indicator inside instead of cramming into this sliver.
-  const last = steps.length - 1;
-  const pct = Math.round((index / last) * 100);
-
   return (
-    <main className="relative mx-auto flex min-h-screen max-w-[600px] flex-col px-5">
-      <ProgressBar pct={pct} />
-
+    <main className="relative mx-auto flex min-h-screen max-w-[600px] flex-col px-5 pt-8">
       {/* the moving surface — CSS slide-in keyed per step (always settles visible) */}
       <div className="flex flex-1 items-center justify-center">
         <div key={index} className="w-full step-enter" data-dir={direction}>
@@ -43,17 +36,6 @@ export default function Module1Page() {
 }
 
 /* ---------- chrome ---------- */
-
-function ProgressBar({ pct }: { pct: number }) {
-  return (
-    <div className="mt-8 h-1.5 w-full overflow-hidden rounded-full bg-neutral-200">
-      <div
-        className="h-full rounded-full bg-neutral-800 transition-[width] duration-300 ease-out"
-        style={{ width: `${pct}%` }}
-      />
-    </div>
-  );
-}
 
 function BottomBar({ showBack, onBack }: { showBack: boolean; onBack: () => void }) {
   return (
@@ -82,7 +64,7 @@ function StepView({ step, onAdvance }: { step: Step; onAdvance: () => void }) {
       ) : step.kind === "reveal" ? (
         <RevealStep kana={step.kana} onContinue={onAdvance} />
       ) : step.kind === "drill" ? (
-        <RecognizeDrill pool={step.pool} onDone={onAdvance} />
+        <DrillBlock pool={step.pool} types={step.types} onDone={onAdvance} />
       ) : (
         <DoneStep learned={step.learned} />
       )}
@@ -182,74 +164,44 @@ function RevealStep({ kana, onContinue }: { kana: Kana[]; onContinue: () => void
   );
 }
 
-/** Question types active in Module 1's drill (interleaved). trace is a placeholder. */
-const DRILL_TYPES: QuestionType[] = ["hearPickChar", "seePickSound", "sayAloud", "trace"];
+/** How many choices a recognition question shows (fixed — no escalation). */
+const OPTION_COUNT = 4;
 
 /**
- * In-drill mastery indicator: the adaptive drill climbs 2 → 3 → 4 → 5 options
- * (harder each level). A dot per level shows how far you've climbed; streak pips
- * show progress toward the next level. This lives inside the drill because the
- * drill is a single module step but the real work — the top bar can't show it.
+ * One drill block. Runs a single question type (or a mix, for the capstone) over
+ * the pool until every vowel has been answered correctly, then advances. No
+ * progress bar — a block is simply done once all its items are gotten right.
  */
-function MasteryIndicator({ drill, poolSize }: { drill: DrillState; poolSize: number }) {
-  const topLevel = Math.min(poolSize, 5);
-  const levels = [];
-  for (let opt = MIN_OPTIONS; opt <= topLevel; opt++) levels.push(opt);
-
-  return (
-    <div className="flex flex-col items-center gap-3">
-      <div className="flex items-center gap-2">
-        {levels.map((opt) => {
-          const done = drill.done || opt < drill.options;
-          const current = !drill.done && opt === drill.options;
-          return (
-            <span
-              key={opt}
-              className={`h-2 w-2 rounded-full transition-colors ${
-                done ? "bg-neutral-800" : current ? "bg-neutral-400" : "bg-neutral-200"
-              }`}
-            />
-          );
-        })}
-      </div>
-      <p className="text-xs text-neutral-400">
-        {drill.done ? "Mastered" : `${drill.options} sounds`}
-      </p>
-      {!drill.done && (
-        <div className="flex items-center gap-1.5">
-          {Array.from({ length: STREAK_TO_ADVANCE }, (_, i) => (
-            <span
-              key={i}
-              className={`h-1.5 w-1.5 rounded-full transition-colors ${
-                i < drill.streak ? "bg-emerald-400" : "bg-neutral-200"
-              }`}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function RecognizeDrill({ pool, onDone }: { pool: Kana[]; onDone: () => void }) {
-  // A shuffle bag draws every vowel once before repeating, so all five get
-  // tested rather than randomness repeating a few and skipping others.
+function DrillBlock({
+  pool,
+  types,
+  onDone,
+}: {
+  pool: Kana[];
+  types: QuestionType[];
+  onDone: () => void;
+}) {
+  // A shuffle bag draws every vowel once before repeating, so all five come up.
   const bag = useRef(new ShuffleBag(pool));
-  const [drill, setDrill] = useState(() => newDrill());
+  const progress = useRef(new DrillProgress(pool.map((k) => k.id)));
   const [qNum, setQNum] = useState(0); // increments per question → fresh sub-component
   const [q, setQ] = useState<Question>(() =>
-    makeQuestion(pool, bag.current.next(), pickType(DRILL_TYPES), MIN_OPTIONS),
+    makeQuestion(pool, bag.current.next(), pickType(types), Math.min(OPTION_COUNT, pool.length)),
   );
 
-  // Advance after a result: grade (for pick-types; sayAloud always counts) and
-  // draw the next question, or finish. `delayMs` lets a miss linger a beat.
   function advance(correct: boolean, delayMs: number) {
-    const next = grade(drill, correct, pool.length);
-    setDrill(next);
+    progress.current.mark(q.answer.id, correct);
     setTimeout(() => {
-      if (next.done) onDone();
+      if (progress.current.done) onDone();
       else {
-        setQ(makeQuestion(pool, bag.current.next(q.answer.id), pickType(DRILL_TYPES), next.options));
+        setQ(
+          makeQuestion(
+            pool,
+            bag.current.next(q.answer.id),
+            pickType(types),
+            Math.min(OPTION_COUNT, pool.length),
+          ),
+        );
         setQNum((n) => n + 1);
       }
     }, delayMs);
@@ -257,7 +209,6 @@ function RecognizeDrill({ pool, onDone }: { pool: Kana[]; onDone: () => void }) 
 
   return (
     <div className="flex flex-col items-center gap-10 text-center">
-      <MasteryIndicator drill={drill} poolSize={pool.length} />
       {q.type === "trace" ? (
         <TraceQuestion key={qNum} q={q} onDone={() => advance(true, 0)} />
       ) : q.type === "sayAloud" ? (
