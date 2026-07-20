@@ -54,3 +54,17 @@ export function grade(state: DrillState, correct: boolean, poolSize: number): Dr
 
 /** Safety cap so a huge pool doesn't demand an unreasonable number of buttons. */
 const MAX_OPTIONS_CAP = 5;
+
+/**
+ * Progress toward finishing the drill, in [0, 1]. Combines how far up the option
+ * ladder the learner has climbed with their streak within the current level, so
+ * the progress bar advances on every correct answer instead of sitting frozen.
+ */
+export function drillProgress(state: DrillState, poolSize: number): number {
+  if (state.done) return 1;
+  const topLevel = Math.min(poolSize, MAX_OPTIONS_CAP);
+  const levels = topLevel - MIN_OPTIONS + 1; // e.g. 2..5 → 4 levels
+  const levelIndex = state.options - MIN_OPTIONS; // 0-based level reached
+  const withinLevel = Math.min(state.streak, STREAK_TO_ADVANCE) / STREAK_TO_ADVANCE;
+  return (levelIndex + withinLevel) / levels;
+}

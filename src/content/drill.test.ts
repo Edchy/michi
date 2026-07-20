@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { newDrill, grade, MIN_OPTIONS, STREAK_TO_ADVANCE, type DrillState } from "./drill";
+import {
+  newDrill,
+  grade,
+  drillProgress,
+  MIN_OPTIONS,
+  STREAK_TO_ADVANCE,
+  type DrillState,
+} from "./drill";
 
 const POOL = 5;
 
@@ -68,5 +75,30 @@ describe("finishing", () => {
     let s: DrillState = { options: POOL, streak: 0, done: true };
     s = grade(s, false, POOL);
     expect(s.done).toBe(true);
+  });
+});
+
+describe("drillProgress", () => {
+  it("is 0 at the start and 1 when done", () => {
+    expect(drillProgress(newDrill(), POOL)).toBe(0);
+    expect(drillProgress({ options: POOL, streak: 0, done: true }, POOL)).toBe(1);
+  });
+
+  it("increases monotonically as correct answers accumulate", () => {
+    let s = newDrill();
+    let last = drillProgress(s, POOL);
+    for (let i = 0; i < 20; i++) {
+      s = grade(s, true, POOL);
+      const p = drillProgress(s, POOL);
+      expect(p).toBeGreaterThanOrEqual(last);
+      last = p;
+    }
+    expect(last).toBe(1);
+  });
+
+  it("moves within a level (streak advances the bar before leveling up)", () => {
+    const s0 = newDrill();
+    const s1 = grade(s0, true, POOL);
+    expect(drillProgress(s1, POOL)).toBeGreaterThan(drillProgress(s0, POOL));
   });
 });

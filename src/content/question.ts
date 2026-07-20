@@ -39,23 +39,19 @@ export function pickType(types: QuestionType[]): QuestionType {
 }
 
 /**
- * Build one question of the given type: a target answer plus, for pick-types,
- * (optionCount − 1) distractors, all shuffled. `avoidId` steers away from
- * repeating the previous answer back-to-back when possible.
+ * Build one question for a given `answer` (drawn by the caller, e.g. from a
+ * ShuffleBag so coverage is even) and type: for pick-types, `answer` plus
+ * (optionCount − 1) distractors from `pool`, all shuffled.
  */
 export function makeQuestion(
   pool: Kana[],
+  answer: Kana,
   type: QuestionType,
   optionCount: number,
-  avoidId?: string,
 ): Question {
-  const candidates = avoidId && pool.length > 1 ? pool.filter((k) => k.id !== avoidId) : pool;
-  const answer = candidates[randInt(candidates.length)]!;
-
   if (!PICK_TYPES.includes(type)) {
     return { type, answer, options: [] };
   }
-
   const distractors = shuffle(pool.filter((k) => k.id !== answer.id)).slice(0, optionCount - 1);
   return { type, answer, options: shuffle([answer, ...distractors]) };
 }
