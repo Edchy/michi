@@ -306,50 +306,47 @@ function PickQuestion({ q, onAnswered }: { q: Question; onAnswered: (correct: bo
 }
 
 /**
- * Production drill: see the character → say it out loud → check.
- * Retrieval first — the character shows alone. Tapping "Check" reveals the
- * pronunciation hint and the native audio to compare against; "I said it"
- * advances. No speech recognition: the act of vocalizing is what matters
- * (session-flow.md), so it always counts toward the streak.
+ * Production drill: see the character → say it out loud → "I said it".
+ * The character is the sound button (tap/spam to hear it), like the teach step,
+ * with the pronunciation hint always visible beneath. One action button, no
+ * phase change, no layout shift. No speech recognition — the act of vocalizing
+ * is what matters (session-flow.md), so it always counts.
  */
 function SayAloudQuestion({ q, onDone }: { q: Question; onDone: () => void }) {
-  const [checked, setChecked] = useState(false);
-
-  function check() {
-    setChecked(true);
-    play(q.answer);
-  }
+  // auto-play the sound on arrival (re-plays on tap)
+  useEffect(() => {
+    const t = setTimeout(() => play(q.answer), 250);
+    return () => clearTimeout(t);
+  }, [q.answer]);
 
   return (
     <>
       <p className="text-lg text-neutral-500">Say this sound out loud.</p>
-      <span className="select-none text-[9rem] leading-none text-neutral-900">
-        {q.answer.glyph}
-      </span>
 
-      {!checked ? (
-        <button
-          onClick={check}
-          className="min-h-[48px] rounded-full bg-neutral-900 px-10 text-base font-medium text-white transition-colors hover:bg-neutral-700"
-        >
-          Check
-        </button>
-      ) : (
-        <div className="flex flex-col items-center gap-6">
-          <div className="flex flex-col items-center gap-2">
-            <ListenButton kana={q.answer} label="Hear it" />
-            <p className="max-w-xs text-sm leading-relaxed text-neutral-500 text-pretty">
-              {q.answer.hint}
-            </p>
-          </div>
-          <button
-            onClick={onDone}
-            className="min-h-[48px] rounded-full bg-neutral-900 px-10 text-base font-medium text-white transition-colors hover:bg-neutral-700"
-          >
-            I said it
-          </button>
-        </div>
-      )}
+      {/* the character IS the sound — tap it to hear it again */}
+      <button
+        onClick={() => play(q.answer)}
+        className="group flex flex-col items-center gap-3 rounded-3xl px-8 py-2 transition-transform active:scale-95"
+        aria-label={`Hear the sound ${q.answer.say}`}
+      >
+        <span className="select-none text-[9rem] leading-none text-neutral-900 transition-transform group-hover:scale-105">
+          {q.answer.glyph}
+        </span>
+        <span className="flex items-center gap-1.5 text-sm text-neutral-400">
+          <span aria-hidden>▶</span> tap to hear
+        </span>
+      </button>
+
+      <p className="max-w-xs text-sm leading-relaxed text-neutral-500 text-pretty">
+        {q.answer.hint}
+      </p>
+
+      <button
+        onClick={onDone}
+        className="min-h-[48px] rounded-full bg-neutral-900 px-10 text-base font-medium text-white transition-colors hover:bg-neutral-700"
+      >
+        I said it
+      </button>
     </>
   );
 }
