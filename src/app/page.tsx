@@ -222,12 +222,12 @@ function RecognizeDrill({ pool, onDone }: { pool: Kana[]; onDone: () => void }) 
 
   function choose(k: Kana) {
     if (picked && gotIt) return; // locked once right
+    // Tapping an option is silent — it's a choice, not a sound. The target sound
+    // comes only from the ▶ prompt, so "which one did you hear?" stays unambiguous.
     setPicked(k.id);
-    const correct = k.id === q.answer.id;
-    play(q.answer); // right or wrong, the last thing heard is correct
 
-    if (!correct) {
-      // reset streak, let them try again on the same question
+    if (k.id !== q.answer.id) {
+      // wrong: reset streak, let them try again on the same question
       setDrill((d) => grade(d, false, pool.length));
       return;
     }
@@ -241,7 +241,7 @@ function RecognizeDrill({ pool, onDone }: { pool: Kana[]; onDone: () => void }) 
         setQ(makeQuestion(pool, next.options, q.answer.id));
         setPicked(null);
       }
-    }, 650);
+    }, 600);
   }
 
   const cols = q.options.length <= 2 ? "grid-cols-2" : q.options.length === 3 ? "grid-cols-3" : "grid-cols-3 sm:grid-cols-5";
@@ -257,8 +257,10 @@ function RecognizeDrill({ pool, onDone }: { pool: Kana[]; onDone: () => void }) 
         {q.options.map((k) => {
           let style = "bg-neutral-100 text-neutral-800 hover:bg-neutral-200";
           if (picked) {
-            if (k.id === q.answer.id) style = "bg-emerald-50 text-emerald-700 ring-2 ring-emerald-300";
-            else if (k.id === picked) style = "bg-rose-50 text-rose-400 ring-1 ring-rose-200";
+            // Only reveal green on a CORRECT pick. A wrong pick just marks itself
+            // red — the answer stays hidden so "listen again, then try" is real.
+            if (gotIt && k.id === q.answer.id) style = "bg-emerald-50 text-emerald-700 ring-2 ring-emerald-300";
+            else if (k.id === picked && k.id !== q.answer.id) style = "bg-rose-50 text-rose-400 ring-1 ring-rose-200";
           }
           return (
             <button
@@ -275,10 +277,7 @@ function RecognizeDrill({ pool, onDone }: { pool: Kana[]; onDone: () => void }) 
       <div className="min-h-[1.5rem] text-sm">
         {picked && gotIt && <span className="text-emerald-600">✓ Yes — {q.answer.say}</span>}
         {picked && !gotIt && (
-          <span className="text-neutral-500">
-            This is <span className="font-semibold text-neutral-800">{q.answer.glyph}</span> — try
-            again.
-          </span>
+          <span className="text-neutral-500">Not quite — listen again, then try.</span>
         )}
       </div>
     </div>
