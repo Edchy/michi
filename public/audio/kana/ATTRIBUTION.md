@@ -3,21 +3,28 @@
 Native-speaker recordings of the hiragana vowels, sourced from Wikimedia Commons.
 
 All by **Hakatanoshio117117** (Wikimedia Commons, "Audio files of hiragana" set),
-public domain (PD-self).
+public domain (PD-self). Sourced from the uniform `Japanese X.ogg` set so all
+five are the same speaker/session (an earlier mix had う/お from different
+recordings, which sounded incoherent).
 
 | File | Kana | Source | License |
 |------|------|--------|---------|
-| `hira_a.mp3` | あ | `Ja-A.oga` | Public domain |
+| `hira_a.mp3` | あ | `Japanese A.ogg` (→ `Ja-A.oga`) | Public domain |
 | `hira_i.mp3` | い | `Japanese I.ogg` | Public domain |
-| `hira_u.mp3` | う | `Ja-U.oga` | Public domain |
-| `hira_e.mp3` | え | `Ja-E.oga` | Public domain |
-| `hira_o.mp3` | お | `Ja-O.oga` | Public domain |
+| `hira_u.mp3` | う | `Japanese U.ogg` | Public domain |
+| `hira_e.mp3` | え | `Japanese E.ogg` (→ `Ja-E.oga`) | Public domain |
+| `hira_o.mp3` | お | `Japanese O.ogg` | Public domain |
 
 ## Processing
 
-Each source `.oga`/`.ogg` was converted to mono MP3, trimmed to a single clean
-utterance (several sources repeated the sound three times), and peak-normalized
-to ~-2 dB so volume is consistent across the set. Tooling: `ffmpeg`.
+Each source was trimmed to a single clean utterance (the sources repeat the
+sound three times), converted to mono MP3, and peak-normalized to −3 dB.
+Tooling: `ffmpeg`.
+
+> Note: あ and え were recorded a few dB quieter (in RMS) than the others by the
+> speaker; normalization can't fully match perceived loudness without clipping,
+> so they sound slightly softer. Acceptable for placeholder audio — the eventual
+> native-voice-actor set (docs/design/audio.md) resolves this.
 
 ## Status
 
