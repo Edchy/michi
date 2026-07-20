@@ -136,7 +136,7 @@ function TeachStep({
   }, [kana]);
 
   return (
-    <div className="flex flex-col items-center gap-14 text-center">
+    <div className="flex flex-col items-center gap-8 text-center">
       {/* the character IS the sound — tap it (spam it) to hear "ah" */}
       <button
         onClick={() => play(kana)}
@@ -147,10 +147,10 @@ function TeachStep({
           {kana.glyph}
         </span>
         <span className="text-lg font-light tracking-wide text-neutral-300">{kana.say}</span>
-        {first && (
-          <span className="mt-1 text-xs text-neutral-400">tap to hear it</span>
-        )}
+        {first && <span className="mt-1 text-xs text-neutral-400">tap to hear it</span>}
       </button>
+
+      <p className="max-w-xs text-sm leading-relaxed text-neutral-500 text-pretty">{kana.hint}</p>
 
       <ContinueButton onClick={onContinue} />
     </div>
