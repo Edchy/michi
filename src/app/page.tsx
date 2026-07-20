@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { buildModule1, type Step } from "@/content/module1";
 import { newDrill, grade, MIN_OPTIONS } from "@/content/drill";
-import { speak, primeAudio } from "@/lib/audio";
-import type { Kana } from "@/content/hiragana";
+import { play, primeAudio } from "@/lib/audio";
+import { VOWELS, type Kana } from "@/content/hiragana";
 
 export default function Module1Page() {
   const steps = useMemo(() => buildModule1(), []);
@@ -86,10 +86,10 @@ function StepView({ step, onAdvance }: { step: Step; onAdvance: () => void }) {
 
 /* ---------- steps ---------- */
 
-function ListenButton({ text, label = "Listen" }: { text: string; label?: string }) {
+function ListenButton({ kana, label = "Listen" }: { kana: Kana; label?: string }) {
   return (
     <button
-      onClick={() => speak(text)}
+      onClick={() => play(kana)}
       className="mx-auto flex min-h-[48px] items-center gap-2 rounded-full bg-neutral-900 px-6 text-white transition-colors hover:bg-neutral-700"
     >
       <span aria-hidden>▶</span>
@@ -108,10 +108,10 @@ function WelcomeStep({ onContinue }: { onContinue: () => void }) {
         Five of them. You’ll hear each one and say it back — no reading yet. Once a
         Japanese sound is in your ear, it stays.
       </p>
-      {/* prime the speech engine on this first gesture so audio is ready */}
+      {/* preload the clips on this first gesture so the first play is instant */}
       <ContinueButton
         onClick={() => {
-          primeAudio();
+          primeAudio(VOWELS);
           onContinue();
         }}
         label="Begin"
@@ -131,15 +131,15 @@ function TeachStep({
 }) {
   // auto-play the sound when the step first appears
   useEffect(() => {
-    const t = setTimeout(() => speak(kana.glyph), 250);
+    const t = setTimeout(() => play(kana), 250);
     return () => clearTimeout(t);
-  }, [kana.glyph]);
+  }, [kana]);
 
   return (
     <div className="flex flex-col items-center gap-14 text-center">
       {/* the character IS the sound — tap it (spam it) to hear "ah" */}
       <button
-        onClick={() => speak(kana.glyph)}
+        onClick={() => play(kana)}
         className="group flex flex-col items-center gap-3 rounded-3xl px-8 py-4 transition-transform active:scale-95"
         aria-label={`Hear the sound ${kana.say}`}
       >
@@ -164,7 +164,7 @@ function RevealStep({ kana, onContinue }: { kana: Kana[]; onContinue: () => void
         {kana.map((k, i) => (
           <button
             key={k.id}
-            onClick={() => speak(k.glyph)}
+            onClick={() => play(k)}
             className="kana-rise flex flex-col items-center gap-1.5 transition-transform hover:scale-110 active:scale-95"
             style={{ animationDelay: `${0.1 + i * 0.09}s` }}
           >
@@ -216,15 +216,15 @@ function RecognizeDrill({ pool, onDone }: { pool: Kana[]; onDone: () => void }) 
 
   // play the target sound when a new question appears
   useEffect(() => {
-    const t = setTimeout(() => speak(q.answer.glyph), 300);
+    const t = setTimeout(() => play(q.answer), 300);
     return () => clearTimeout(t);
-  }, [q.answer.glyph]);
+  }, [q.answer]);
 
   function choose(k: Kana) {
     if (picked && gotIt) return; // locked once right
     setPicked(k.id);
     const correct = k.id === q.answer.id;
-    speak(q.answer.glyph); // right or wrong, the last thing heard is correct
+    play(q.answer); // right or wrong, the last thing heard is correct
 
     if (!correct) {
       // reset streak, let them try again on the same question
@@ -250,7 +250,7 @@ function RecognizeDrill({ pool, onDone }: { pool: Kana[]; onDone: () => void }) 
     <div className="flex flex-col items-center gap-10 text-center">
       <div className="flex flex-col items-center gap-4">
         <p className="text-lg text-neutral-500">Which one did you hear?</p>
-        <ListenButton text={q.answer.glyph} label="Play again" />
+        <ListenButton kana={q.answer} label="Play again" />
       </div>
 
       <div className={`grid w-full gap-3 ${cols}`}>
