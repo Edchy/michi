@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { buildModule1, type Step } from "@/content/module1";
 import { newDrill, grade, MIN_OPTIONS } from "@/content/drill";
+import { makeQuestion, pickType, type Question, type QuestionType } from "@/content/question";
 import { play, primeAudio } from "@/lib/audio";
 import { VOWELS, type Kana } from "@/content/hiragana";
 
@@ -178,87 +179,75 @@ function RevealStep({ kana, onContinue }: { kana: Kana[]; onContinue: () => void
   );
 }
 
-/** Random integer in [0, n). */
-function randInt(n: number): number {
-  return Math.floor(Math.random() * n);
-}
-
-/** Fisher–Yates shuffle (copy). */
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = randInt(i + 1);
-    [a[i], a[j]] = [a[j]!, a[i]!];
-  }
-  return a;
-}
-
-interface Question {
-  answer: Kana;
-  options: Kana[];
-}
-
-/** Build one question: the answer plus (count-1) distractors, shuffled. */
-function makeQuestion(pool: Kana[], count: number, avoidId?: string): Question {
-  // avoid repeating the same answer twice in a row when possible
-  const candidates = avoidId && pool.length > 1 ? pool.filter((k) => k.id !== avoidId) : pool;
-  const answer = candidates[randInt(candidates.length)]!;
-  const distractors = shuffle(pool.filter((k) => k.id !== answer.id)).slice(0, count - 1);
-  return { answer, options: shuffle([answer, ...distractors]) };
-}
+/** Question types active in Module 1's drill (interleaved). */
+const DRILL_TYPES: QuestionType[] = ["hearPickChar", "seePickSound"];
 
 function RecognizeDrill({ pool, onDone }: { pool: Kana[]; onDone: () => void }) {
   const [drill, setDrill] = useState(() => newDrill());
-  const [q, setQ] = useState<Question>(() => makeQuestion(pool, MIN_OPTIONS));
+  const [q, setQ] = useState<Question>(() =>
+    makeQuestion(pool, pickType(DRILL_TYPES), MIN_OPTIONS),
+  );
   const [picked, setPicked] = useState<string | null>(null);
 
   const gotIt = picked === q.answer.id;
 
-  // play the target sound when a new question appears
+  // On a "hear → pick" question, play the target on appear. On "see → pick sound",
+  // the prompt is the visible character — no auto audio (that'd give it away).
   useEffect(() => {
+    if (q.type !== "hearPickChar") return;
     const t = setTimeout(() => play(q.answer), 300);
     return () => clearTimeout(t);
-  }, [q.answer]);
+  }, [q]);
 
   function choose(k: Kana) {
     if (picked) return; // one answer per question — then it advances either way
-    // Tapping an option is silent — it's a choice, not a sound. The target sound
-    // comes only from the ▶ prompt, so "which one did you hear?" stays unambiguous.
     setPicked(k.id);
+    if (q.type === "seePickSound") play(k); // this drill's options ARE sounds
 
     const correct = k.id === q.answer.id;
     const next = grade(drill, correct, pool.length); // wrong lowers the streak
     setDrill(next);
-    // Either way, show the outcome briefly, then move on to the next question.
-    // A miss lingers a touch longer so the revealed answer registers.
     setTimeout(
       () => {
-        if (next.done) {
-          onDone();
-        } else {
-          setQ(makeQuestion(pool, next.options, q.answer.id));
+        if (next.done) onDone();
+        else {
+          setQ(makeQuestion(pool, pickType(DRILL_TYPES), next.options, q.answer.id));
           setPicked(null);
         }
       },
-      correct ? 600 : 1100,
+      correct ? 700 : 1100,
     );
   }
 
-  const cols = q.options.length <= 2 ? "grid-cols-2" : q.options.length === 3 ? "grid-cols-3" : "grid-cols-3 sm:grid-cols-5";
+  const cols =
+    q.options.length <= 2
+      ? "grid-cols-2"
+      : q.options.length === 3
+        ? "grid-cols-3"
+        : "grid-cols-3 sm:grid-cols-5";
 
   return (
     <div className="flex flex-col items-center gap-10 text-center">
-      <div className="flex flex-col items-center gap-4">
-        <p className="text-lg text-neutral-500">Which one did you hear?</p>
-        <ListenButton kana={q.answer} label="Play again" />
-      </div>
+      {/* Prompt: the thing to identify — a sound (hear) or a character (see). */}
+      {q.type === "hearPickChar" ? (
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-lg text-neutral-500">Which one did you hear?</p>
+          <ListenButton kana={q.answer} label="Play again" />
+        </div>
+      ) : (
+        <div className="flex flex-col items-center gap-3">
+          <p className="text-lg text-neutral-500">Which sound is this?</p>
+          <span className="select-none text-[7rem] leading-none text-neutral-900">
+            {q.answer.glyph}
+          </span>
+        </div>
+      )}
 
+      {/* Options: characters (hear-drill) or sound buttons (see-drill). */}
       <div className={`grid w-full gap-3 ${cols}`}>
         {q.options.map((k) => {
           let style = "bg-neutral-100 text-neutral-800 hover:bg-neutral-200";
           if (picked) {
-            // Once answered, reveal: the correct one green, a wrong pick red.
-            // We advance either way, so showing the answer is the teaching moment.
             if (k.id === q.answer.id) style = "bg-emerald-50 text-emerald-700 ring-2 ring-emerald-300";
             else if (k.id === picked) style = "bg-rose-50 text-rose-400 ring-1 ring-rose-200";
           }
@@ -266,9 +255,16 @@ function RecognizeDrill({ pool, onDone }: { pool: Kana[]; onDone: () => void }) 
             <button
               key={k.id}
               onClick={() => choose(k)}
-              className={`flex min-h-[96px] items-center justify-center rounded-2xl text-5xl transition-all ${style}`}
+              className={`flex min-h-[96px] items-center justify-center rounded-2xl transition-all ${style}`}
             >
-              {k.glyph}
+              {q.type === "seePickSound" ? (
+                <span className="flex items-center gap-2 text-base font-medium">
+                  <span aria-hidden>▶</span>
+                  <span>{k.say}</span>
+                </span>
+              ) : (
+                <span className="text-5xl">{k.glyph}</span>
+              )}
             </button>
           );
         })}
