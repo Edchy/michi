@@ -8,25 +8,63 @@ export interface Kana {
   glyph: string;
   reading: string; // the sound — never shown as a romaji reading aid (P2); used for TTS + labels
   say: string; // an English hint at the sound, for the teaching beat ("ah", "ee"...)
-  hint: string; // a fuller pronunciation explanation shown when the sound is first taught
+  hints: readonly string[]; // rotating pronunciation prompts for production practice
 }
 
 export const VOWELS: Kana[] = [
-  { id: "hira_a", glyph: "あ", reading: "a", say: "ah", hint: 'Like the "a" in "father."' },
-  { id: "hira_i", glyph: "い", reading: "i", say: "ee", hint: 'Like the "ee" in "see."' },
+  {
+    id: "hira_a",
+    glyph: "あ",
+    reading: "a",
+    say: "ah",
+    hints: [
+      'Like the "a" in "father."',
+      "A clean, open ah. Short and steady.",
+      "Keep it pure: ah, without sliding into uh.",
+    ],
+  },
+  {
+    id: "hira_i",
+    glyph: "い",
+    reading: "i",
+    say: "ee",
+    hints: [
+      'Like the "ee" in "see," but shorter.',
+      "Smile lightly and make a clean ee.",
+      "Keep the sound steady, without a trailing y.",
+    ],
+  },
   {
     id: "hira_u",
     glyph: "う",
     reading: "u",
     say: "oo",
-    hint: 'Like the "oo" in "food" — but with relaxed, unpushed lips.',
+    hints: [
+      'Like the "oo" in "food," but with relaxed, unpushed lips.',
+      "A short oo with neutral lips, not tightly rounded.",
+      "Keep the lips relaxed and the sound compact.",
+    ],
   },
-  { id: "hira_e", glyph: "え", reading: "e", say: "eh", hint: 'Like the "e" in "bed."' },
+  {
+    id: "hira_e",
+    glyph: "え",
+    reading: "e",
+    say: "eh",
+    hints: [
+      'Like the "e" in "bed."',
+      "A clean eh. Short and steady.",
+      "Keep it open and finish without gliding into ay.",
+    ],
+  },
   {
     id: "hira_o",
     glyph: "お",
     reading: "o",
     say: "oh",
-    hint: 'Like the "oh" in "boat" — but shorter, without the lingering "ow".',
+    hints: [
+      'Like the "oh" in "boat," but shorter, without the lingering "ow".',
+      "A short, pure oh. Do not let it turn into ow.",
+      "Round gently, then stop the sound cleanly.",
+    ],
   },
 ];

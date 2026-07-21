@@ -1,7 +1,37 @@
 import { describe, it, expect } from "vitest";
-import { DrillProgress } from "./drill";
+import { ChoiceProgress, DrillProgress } from "./drill";
 
 const IDS = ["a", "i", "u", "e", "o"];
+
+describe("ChoiceProgress", () => {
+  it("moves from two to five options after two consecutive correct answers at each level", () => {
+    const p = new ChoiceProgress(5);
+    expect(p.optionCount).toBe(2);
+
+    for (const expected of [3, 4, 5]) {
+      p.mark(true);
+      expect(p.optionCount).toBe(expected - 1);
+      p.mark(true);
+      expect(p.optionCount).toBe(expected);
+      expect(p.done).toBe(false);
+    }
+
+    p.mark(true);
+    p.mark(true);
+    expect(p.optionCount).toBe(5);
+    expect(p.done).toBe(true);
+  });
+
+  it("resets the consistency streak after a miss without dropping a level", () => {
+    const p = new ChoiceProgress(5);
+    p.mark(true);
+    p.mark(false);
+    p.mark(true);
+    expect(p.optionCount).toBe(2);
+    p.mark(true);
+    expect(p.optionCount).toBe(3);
+  });
+});
 
 describe("DrillProgress", () => {
   it("is not done until every item has been correct", () => {

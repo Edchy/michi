@@ -5,20 +5,20 @@ import { VOWELS } from "./hiragana";
 describe("buildModule1", () => {
   const steps = buildModule1();
 
-  it("opens with a welcome, then teaches all five vowels in order", () => {
+  it("opens with a welcome and an intro, then teaches all five vowels in order", () => {
     expect(steps[0]!.kind).toBe("welcome");
+    expect(steps[1]!.kind).toBe("intro");
     for (let i = 0; i < 5; i++) {
-      const s = steps[i + 1]!;
+      const s = steps[i + 2]!;
       expect(s.kind).toBe("teach");
       if (s.kind === "teach") {
         expect(s.kana.id).toBe(VOWELS[i]!.id);
-        expect(s.first).toBe(i === 0);
       }
     }
   });
 
   it("reveals the family, then runs sequential drill blocks, then done", () => {
-    expect(steps[6]!.kind).toBe("reveal");
+    expect(steps[7]!.kind).toBe("reveal");
     const drills = steps.filter((s) => s.kind === "drill");
     expect(drills).toHaveLength(5); // 4 single-type blocks + 1 mixed capstone
     expect(steps[steps.length - 1]!.kind).toBe("done");

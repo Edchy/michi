@@ -9,8 +9,9 @@ import type { QuestionType } from "./question";
  * block interleaves them all as a consolidation capstone.
  */
 export type Step =
-  | { kind: "welcome" } // a warm intro before the first sound
-  | { kind: "teach"; kana: Kana; first: boolean } // hear it, say it; first shows the tap hint
+  | { kind: "welcome" } // the landing: just the mark and a way in
+  | { kind: "intro" } // a brief explainer of what's about to happen
+  | { kind: "teach"; kana: Kana } // hear it, say it
   | { kind: "reveal"; kana: Kana[] } // "these sounds have shapes" — the family
   | { kind: "drill"; pool: Kana[]; types: QuestionType[] } // one block; single-type or mixed
   | { kind: "done"; learned: Kana[] };
@@ -26,9 +27,10 @@ const DRILL_BLOCKS: QuestionType[][] = [
 
 export function buildModule1(): Step[] {
   const welcome: Step = { kind: "welcome" };
-  const teach: Step[] = VOWELS.map((kana, i) => ({ kind: "teach", kana, first: i === 0 }));
+  const intro: Step = { kind: "intro" };
+  const teach: Step[] = VOWELS.map((kana) => ({ kind: "teach", kana }));
   const reveal: Step = { kind: "reveal", kana: VOWELS };
   const drills: Step[] = DRILL_BLOCKS.map((types) => ({ kind: "drill", pool: VOWELS, types }));
   const done: Step = { kind: "done", learned: VOWELS };
-  return [welcome, ...teach, reveal, ...drills, done];
+  return [welcome, intro, ...teach, reveal, ...drills, done];
 }

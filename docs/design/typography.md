@@ -36,13 +36,17 @@ Clean, neutral, and highly legible. The safe workhorse for everything that isn't
 
 ---
 
-### 3. Inter — English UI Text
+### 3. System stack — English UI Text
 **Use for**: menus, buttons, navigation, English instructions, headers, all Latin-script text.
 
-Inter is the standard modern UI typeface — clean, neutral, optimized for screen readability at small sizes. It won't compete visually with the Japanese characters on screen and pairs comfortably with both Klee One and Noto Sans JP.
+The native system UI font (San Francisco on Apple, Segoe/Roboto elsewhere) — clean,
+neutral, quiet next to the Japanese characters, and loaded already by every OS. Zero
+font weight to ship. This is Tailwind's default `font-sans`; no import.
 
-- Source: [Google Fonts — Inter](https://fonts.google.com/specimen/Inter)
-- Free, single import
+> **Decision (2026-07-20):** Inter was dropped in favor of the system stack. It bought
+> nothing over the native fonts for a UI this text-light, and skipping it means one
+> less font to load. Add Inter back (one line) if the Latin type ever looks off next
+> to Klee One.
 
 ---
 

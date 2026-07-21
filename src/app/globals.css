@@ -1,5 +1,48 @@
 @import "tailwindcss";
 
+/* Design tokens — see docs/design/DESIGN.md. Two pigments split by meaning:
+   朱 vermilion = rare emphasis, 藍 indigo = the ink & primary action.
+   @theme keys generate Tailwind utilities: --color-ink → text-ink/bg-ink, etc. */
+@theme {
+  --font-kana: "Klee One", serif;
+
+  /* 藍 indigo — the ink (near-black) + surfaces (barely tinted toward it) */
+  --color-bg: oklch(0.992 0.002 264);
+  --color-surface: oklch(0.968 0.004 264);
+  --color-surface-2: oklch(0.938 0.005 264);
+  --color-line: oklch(0.9 0.005 264);
+  --color-ink: oklch(0.25 0.045 264);
+  --color-ink-muted: oklch(0.52 0.03 264);
+  --color-ink-faint: oklch(0.68 0.022 264);
+
+  /* 朱 vermilion — rare emphasis (kept under 10% of surface) */
+  --color-accent: oklch(0.585 0.181 32);
+  --color-accent-hover: oklch(0.53 0.181 32);
+  --color-accent-weak: oklch(0.955 0.03 32);
+
+  /* small, quiet radius — no pills */
+  --radius-btn: 6px;
+  --radius-lg: 12px;
+}
+
+/* Interactive controls should advertise their affordance consistently. */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+/* A correct press gets one decisive pop and glyph-only glow. It holds until the
+   question advances—there is no rebound or scale-down. */
+.answer-success {
+  transform: scale(1.4);
+  filter: drop-shadow(0 0 10px oklch(0.25 0.045 264 / 0.4));
+}
+
 /* Step transition: slide in from the direction of travel, always ending visible. */
 @keyframes step-in-fwd {
   from { opacity: 0; transform: translateX(40px); }
@@ -20,6 +63,10 @@
 .kana-rise { animation: kana-rise 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @media (prefers-reduced-motion: reduce) {
+  .answer-success {
+    transform: none;
+  }
+
   .step-enter,
   .step-enter[data-dir="-1"],
   .kana-rise {

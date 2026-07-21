@@ -178,7 +178,8 @@ michi/
     │   ├── srs-engine.md       the spaced-repetition engine (build first)
     │   └── data-model.md       persisted learner state
     ├── design/          CRAFT
-    │   ├── typography.md       the three typefaces (a pedagogical choice)
+    │   ├── DESIGN.md           the visual system (feel, color, motion)
+    │   ├── typography.md       the typefaces (a pedagogical choice)
     │   └── audio.md            voiceover strategy & pitch-accent accuracy
     ├── decisions/       WHY — ADRs 0001–0004 (+ README, template)
     └── roadmap.md       WHEN — phases, status, open questions

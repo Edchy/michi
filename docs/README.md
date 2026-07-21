@@ -18,7 +18,7 @@ docs/
 ├── product/       WHAT & WHY  — vision, pedagogy, principles, glossary
 ├── curriculum/    WHAT WE TEACH — sequencing, Month 1 plan, content model
 ├── architecture/  HOW IT'S BUILT — tech stack, system shape, data & SRS
-├── design/        CRAFT — typography, audio (UI design deliberately deferred)
+├── design/        CRAFT — visual system, typography, audio
 ├── decisions/     WHY — Architecture Decision Records (ADRs)
 └── roadmap.md     WHEN — phases and milestones
 ```
@@ -67,7 +67,8 @@ docs/
 - [data-model.md](./architecture/data-model.md) — persisted learner state
 
 ### design/ — craft
-- [typography.md](./design/typography.md) — the three typefaces (a pedagogical choice)
+- [DESIGN.md](./design/DESIGN.md) — the visual system: feel, color (朱 vermilion), typography, motion
+- [typography.md](./design/typography.md) — the typefaces (a pedagogical choice)
 - [audio.md](./design/audio.md) — voiceover strategy and pitch-accent accuracy
 
 ### decisions/ — why
