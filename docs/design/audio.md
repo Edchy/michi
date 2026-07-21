@@ -184,7 +184,7 @@ Don't pick just one. Use each option for what it's best at:
 
 **Google Cloud TTS Neural2** → dynamically generated sentences, grammar examples, anything that can't be pre-recorded because it varies. Use SSML to set a slightly slower speed for beginner audio.
 
-**ElevenLabs** → intro narration, "did you know" cultural moments, story narration in week 2+. Use a consistent character voice to give the app personality.
+**ElevenLabs** → intro narration, "did you know" cultural moments, story narration once stories begin. Use a consistent character voice to give the app personality.
 
 This hybrid approach gives you native-quality for everything critical, flexibility for dynamic content, and personality for narrative moments — at a cost that stays near zero until you have real users.
 

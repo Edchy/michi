@@ -6,33 +6,46 @@
  * difficulty ladder; production drills require every item in the pool once.
  */
 
-/** Progressive choice difficulty: two consecutive correct answers unlock the
- * next option count. A miss resets the streak, but never removes a level. */
+/** Adaptive choice difficulty. The first level takes three consecutive correct
+ * answers; later levels take two. Two consecutive misses lower the option count. */
 export class ChoiceProgress {
-  private streak = 0;
+  private correctStreak = 0;
+  private missStreak = 0;
   private complete = false;
   private currentOptions: number;
+  private points = 0;
+  readonly maxPoints: number;
 
-  constructor(
-    private readonly maxOptions: number,
-    private readonly correctToAdvance = 2,
-  ) {
+  constructor(private readonly maxOptions: number) {
     this.currentOptions = Math.min(2, maxOptions);
+    this.maxPoints = maxOptions <= 1 ? 1 : 3 + Math.max(0, maxOptions - 2) * 2;
   }
 
   mark(wasCorrect: boolean): void {
     if (this.complete) return;
     if (!wasCorrect) {
-      this.streak = 0;
+      this.points = Math.max(0, this.points - 1);
+      this.correctStreak = 0;
+      this.missStreak += 1;
+      if (this.missStreak >= 2 && this.currentOptions > 2) {
+        this.currentOptions -= 1;
+        this.missStreak = 0;
+      }
       return;
     }
 
-    this.streak += 1;
-    if (this.streak < this.correctToAdvance) return;
+    this.points = Math.min(this.maxPoints, this.points + 1);
+    this.missStreak = 0;
+    this.correctStreak += 1;
+    const correctToAdvance = this.currentOptions === 2 ? 3 : 2;
+    if (this.correctStreak < correctToAdvance) return;
 
-    this.streak = 0;
+    this.correctStreak = 0;
     if (this.currentOptions < this.maxOptions) this.currentOptions += 1;
-    else this.complete = true;
+    else {
+      this.points = this.maxPoints;
+      this.complete = true;
+    }
   }
 
   get optionCount(): number {
@@ -41,6 +54,10 @@ export class ChoiceProgress {
 
   get done(): boolean {
     return this.complete;
+  }
+
+  get masteryPoints(): number {
+    return this.points;
   }
 }
 
@@ -58,5 +75,13 @@ export class DrillProgress {
   /** True once every item in the pool has been answered correctly. */
   get done(): boolean {
     return this.poolIds.every((id) => this.correct.has(id));
+  }
+
+  get completedCount(): number {
+    return this.correct.size;
+  }
+
+  get totalCount(): number {
+    return this.poolIds.length;
   }
 }

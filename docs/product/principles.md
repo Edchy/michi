@@ -133,7 +133,7 @@ work while halving the polish. See [tech-stack.md](../architecture/tech-stack.md
 
 ## P10 — Depth before breadth
 
-**Rule:** Make Month 1 genuinely excellent before expanding scope. Resist feature
+**Rule:** Make the hiragana curriculum genuinely excellent before expanding scope. Resist feature
 creep and premature breadth (JLPT-to-fluency, AI tutor, etc.).
 
 **Why:** A deep, correct slice teaches more and validates the method better than a

@@ -5,11 +5,10 @@ import { VOWELS } from "./hiragana";
 describe("buildModule1", () => {
   const steps = buildModule1();
 
-  it("opens with a welcome and an intro, then teaches all five vowels in order", () => {
-    expect(steps[0]!.kind).toBe("welcome");
-    expect(steps[1]!.kind).toBe("intro");
+  it("opens with an intro, then teaches all five vowels in order", () => {
+    expect(steps[0]!.kind).toBe("intro");
     for (let i = 0; i < 5; i++) {
-      const s = steps[i + 2]!;
+      const s = steps[i + 1]!;
       expect(s.kind).toBe("teach");
       if (s.kind === "teach") {
         expect(s.kana.id).toBe(VOWELS[i]!.id);
@@ -17,21 +16,25 @@ describe("buildModule1", () => {
     }
   });
 
-  it("reveals the family, then runs sequential drill blocks, then done", () => {
-    expect(steps[7]!.kind).toBe("reveal");
+  it("reveals the family, adds context, then assesses before speaking rehearsal", () => {
+    expect(steps[6]!.kind).toBe("reveal");
+    expect(steps[7]!.kind).toBe("context");
+    expect(steps[steps.length - 2]!.kind).toBe("rehearse");
     const drills = steps.filter((s) => s.kind === "drill");
-    expect(drills).toHaveLength(5); // 4 single-type blocks + 1 mixed capstone
+    expect(drills).toHaveLength(3); // 2 single-type blocks + 1 mixed capstone
     expect(steps[steps.length - 1]!.kind).toBe("done");
   });
 
   it("drill blocks go single-type first, then the mixed capstone last", () => {
     const drills = steps.filter((s) => s.kind === "drill");
-    // first four are single-type, in order
-    const singles = drills.slice(0, 4).map((d) => (d.kind === "drill" ? d.types : []));
-    expect(singles).toEqual([["hearPickChar"], ["seePickSound"], ["sayAloud"], ["trace"]]);
-    // last block mixes all types
-    const mix = drills[4];
-    if (mix?.kind === "drill") expect(mix.types.length).toBeGreaterThan(1);
+    // first two are single-type, in order
+    const singles = drills.slice(0, 2).map((d) => (d.kind === "drill" ? d.types : []));
+    expect(singles).toEqual([["hearPickChar"], ["seePickSound"]]);
+    // the capstone mixes only the two assessable recognition types
+    const mix = drills[2];
+    if (mix?.kind === "drill") {
+      expect(mix.types).toEqual(["hearPickChar", "seePickSound"]);
+    }
   });
 
   it("every drill block carries the full pool of five vowels", () => {

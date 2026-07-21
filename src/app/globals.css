@@ -62,6 +62,189 @@ button:disabled,
 }
 .kana-rise { animation: kana-rise 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
+/* World map — a calm, pannable canvas of module stops joined by one ink path.
+   Palette stays with the app: bg / ink / accent, nothing decorative. */
+.world-page { position: relative; height: 100vh; overflow: hidden; background: var(--color-bg); }
+
+.world-header {
+  position: absolute; z-index: 10; inset: 0 0 auto 0;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 20px 24px; pointer-events: none;
+}
+.world-brand { display: flex; align-items: center; gap: 12px; }
+.world-mark {
+  display: grid; place-items: center; width: 40px; height: 40px; flex: none;
+  border-radius: var(--radius-lg); background: var(--color-ink); color: var(--color-bg);
+  font-size: 22px; line-height: 1;
+}
+.world-brand h1 { font-size: 15px; font-weight: 650; letter-spacing: -0.01em; color: var(--color-ink); }
+.world-brand p { margin-top: 1px; font-size: 12px; color: var(--color-ink-muted); }
+.world-progress { margin-left: auto; font-size: 13px; color: var(--color-ink-muted); }
+.world-progress span { font-weight: 650; color: var(--color-ink); }
+.world-codex {
+  pointer-events: auto; display: flex; min-height: 40px; align-items: center; gap: 7px;
+  margin: -4px 0 -4px 18px; padding: 0 12px;
+  border-radius: var(--radius-btn); background: var(--color-bg); color: var(--color-ink-muted);
+  font-size: 13px; font-weight: 600; transition: background 150ms ease-out, color 150ms ease-out;
+}
+.world-codex:hover { background: var(--color-surface); color: var(--color-ink); }
+.world-codex:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+.worldmap { position: absolute; inset: 0; cursor: grab; touch-action: none; overscroll-behavior: none; user-select: none; -webkit-user-select: none; }
+.worldmap:active { cursor: grabbing; }
+.worldmap-svg { width: 100%; height: 100%; display: block; transition: opacity 180ms ease-out; }
+
+/* the connecting path */
+.wm-path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.wm-path-track { stroke: var(--color-line); stroke-width: 3; }
+.wm-path-done { stroke: var(--color-ink); stroke-width: 3; transition: stroke-dashoffset 700ms cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* stops */
+.wm-stop { --disc: var(--color-bg); }
+.wm-disc { fill: var(--disc); stroke: var(--color-ink); stroke-width: 2.5; transition: stroke-width 160ms ease-out; }
+.wm-num { fill: var(--color-ink); font-size: 22px; font-weight: 650; text-anchor: middle; font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif); }
+.wm-check { fill: none; stroke: var(--color-bg); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+
+.wm-stop.is-done .wm-disc { fill: var(--color-ink); }
+.wm-stop.is-current .wm-disc { stroke-width: 3; }
+.wm-stop.is-current .wm-num { fill: var(--color-accent); }
+.wm-stop.is-locked .wm-disc { stroke: var(--color-ink-faint); }
+.wm-stop.is-locked .wm-num { fill: var(--color-ink-faint); }
+
+.wm-stop.is-clickable { cursor: pointer; }
+/* hover: thicken the ring — hit area never moves, so no stutter */
+.wm-stop.is-clickable:hover .wm-disc { stroke-width: 4; }
+.wm-hit { pointer-events: all; } /* reliable click target over the whole disc */
+.wm-stop { outline: none; }                                   /* no default box on click */
+.wm-stop:focus { outline: none; }
+.wm-stop:focus-visible .wm-disc { stroke: var(--color-accent); stroke-width: 3.5; }
+
+/* optional lore markers sit beside the railway; never numbered, graded, or gated */
+.wm-book-stop { outline: none; cursor: pointer; }
+.wm-book-disc {
+  fill: var(--color-bg); stroke: var(--color-ink-muted); stroke-width: 1.5;
+  transition: fill 150ms ease-out, stroke 150ms ease-out, transform 150ms ease-out;
+}
+.wm-book-glyph {
+  fill: var(--color-ink); font-family: var(--font-kana); font-size: 16px; text-anchor: middle;
+}
+.wm-book-check {
+  fill: var(--color-bg); font-size: 16px; font-weight: 700; text-anchor: middle;
+  font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+}
+.wm-book-kind {
+  fill: var(--color-ink-faint); font-size: 8px; font-weight: 700; letter-spacing: 0.1em;
+  text-anchor: middle; font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+}
+.wm-book-stop:hover .wm-book-disc { fill: var(--color-surface); stroke: var(--color-ink); }
+.wm-book-stop:focus-visible .wm-book-disc { stroke: var(--color-accent); stroke-width: 2.5; }
+.wm-book-stop.is-visited .wm-book-disc { fill: var(--color-ink); stroke: var(--color-ink); }
+.wm-book-stop.is-visited:hover .wm-book-disc { fill: var(--color-ink-muted); stroke: var(--color-ink); }
+
+/* labels under each stop */
+.wm-label { pointer-events: none; }
+.wm-station { fill: var(--color-ink-faint); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-anchor: middle; font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif); }
+.wm-station-kana { font-family: var(--font-kana); font-weight: 400; letter-spacing: 0; }
+.wm-stop.is-current .wm-station { fill: var(--color-accent); }
+.wm-title { fill: var(--color-ink); font-size: 15px; font-weight: 600; text-anchor: middle; font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif); }
+.wm-stop.is-locked .wm-title, .wm-stop.is-locked .wm-station { opacity: 0.55; }
+
+/* avatar — floating "you are here" pin */
+.wm-avatar { transition: transform 800ms cubic-bezier(0.16, 1, 0.3, 1); }
+.wm-avatar-bob { animation: wm-bob 2.4s ease-in-out infinite; transform-origin: center; }
+.wm-avatar-pin { fill: var(--color-accent); }
+.wm-avatar-eye { fill: var(--color-bg); }
+
+@keyframes wm-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+/* module navigation — glide arrows flanking a label that opens the chain */
+.wm-nav {
+  position: absolute; z-index: 10; left: 20px; bottom: 20px;
+  display: flex; align-items: stretch; gap: 8px;
+}
+.wm-arrow {
+  display: grid; place-items: center; width: 40px;
+  border: 1px solid var(--color-line); border-radius: var(--radius-btn);
+  background: var(--color-bg); color: var(--color-ink);
+  font-size: 20px; line-height: 1; box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+  cursor: pointer; transition: background 150ms ease-out, border-color 150ms ease-out;
+}
+.wm-arrow:hover:not(:disabled) { background: var(--color-surface); border-color: var(--color-ink-faint); }
+.wm-arrow:disabled { opacity: 0.4; cursor: not-allowed; }
+.wm-arrow:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+.wm-nav-label {
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+  min-width: 180px; padding: 6px 16px; text-align: left;
+  border: 1px solid var(--color-line); border-radius: var(--radius-btn);
+  background: var(--color-bg); box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+  cursor: pointer; transition: border-color 150ms ease-out, background 150ms ease-out;
+}
+.wm-nav-label:hover { border-color: var(--color-ink-faint); background: var(--color-surface); }
+.wm-nav-label:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.wm-nav-n {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--color-ink-faint);
+}
+.wm-nav-title { font-size: 13.5px; font-weight: 600; color: var(--color-ink); margin-top: 1px; }
+.wm-nav-hint { font-size: 11px; color: var(--color-ink-muted); margin-top: 2px; }
+
+/* the module chain — the vertical trail of modules you zoom out to */
+.wm-chain-wrap { position: absolute; inset: 0; overflow-y: auto; padding-top: 84px; }
+.wm-chain-close {
+  position: sticky; top: 0; z-index: 2; display: block;
+  margin: 0 0 0 20px; padding: 6px 14px;
+  border: 1px solid var(--color-line); border-radius: var(--radius-btn);
+  background: var(--color-bg); color: var(--color-ink); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: border-color 150ms ease-out, background 150ms ease-out;
+}
+.wm-chain-close:hover { border-color: var(--color-ink-faint); background: var(--color-surface); }
+.wm-chain-close:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.wm-chain {
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  padding: 20px 20px 60px;
+}
+.wm-card {
+  position: relative; width: 100%; max-width: 420px;
+  display: flex; flex-direction: column; align-items: flex-start; text-align: left;
+  padding: 16px 20px;
+  border: 1px solid var(--color-line); border-radius: var(--radius-btn);
+  background: var(--color-bg); box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+  cursor: pointer; transition: border-color 150ms ease-out, background 150ms ease-out;
+}
+.wm-card:not(:disabled):hover { border-color: var(--color-ink-faint); background: var(--color-surface); }
+.wm-card:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+/* connecting stroke between cards, so the trail reads as one path */
+.wm-card::before {
+  content: ""; position: absolute; left: 50%; top: -14px; width: 2px; height: 14px;
+  background: var(--color-line);
+}
+.wm-chain .wm-card:first-child::before { display: none; }
+.wm-card-n {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--color-ink-faint);
+}
+.wm-card-title { font-size: 17px; font-weight: 650; color: var(--color-ink); margin-top: 2px; }
+.wm-card-meta { font-size: 12px; color: var(--color-ink-muted); margin-top: 6px; }
+/* state by shape + label, never color alone */
+.wm-card.is-current { border-color: var(--color-accent); border-width: 2px; }
+.wm-card.is-current .wm-card-n { color: var(--color-accent); }
+.wm-card.is-done { background: var(--color-surface); }
+.wm-card.is-done .wm-card-meta::before { content: "✓ "; }
+.wm-card.is-locked { opacity: 0.5; cursor: not-allowed; }
+
+@media (max-width: 640px) {
+  .world-brand p { display: none; }
+  .world-progress { font-size: 12px; }
+  .world-codex { margin-left: 8px; padding: 0 10px; }
+  .world-codex:not(:focus) { font-size: 0; gap: 0; }
+  .world-codex span { font-size: 18px; }
+}
+
+
 @media (prefers-reduced-motion: reduce) {
   .answer-success {
     transform: none;
@@ -73,4 +256,7 @@ button:disabled,
     animation-duration: 0.01ms;
     animation-delay: 0ms !important;
   }
+
+  .wm-avatar-bob { animation: none; }
+  .wm-path-done, .wm-avatar { transition: none; }
 }

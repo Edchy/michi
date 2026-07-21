@@ -91,10 +91,19 @@ throughout as `[P#]`. The short version:
 - **The very first thing** the learner does: **hear a native voice say あ and mimic it
   aloud** — doing before reading. The "why Japanese / three scripts" story is earned
   *after* that hook, then dripped in as each script becomes relevant.
+- **The home surface is a world map** — the course drawn as **one continuous, walkable
+  path** of **stations** (each a lesson, *STATION N 宿*) grouped into **modules**, module
+  1 flowing into module 2 into module 3. The learner walks the path, clicks a station to
+  start it, and moves between modules two ways — glide arrows that pan along the path, or
+  a zoom-out **module chain** to jump; completing a module unlocks the next. It's also
+  where progress lives. Quiet and calm, never gamified.
 
 → Sequencing philosophy: [docs/curriculum/overview.md](./docs/curriculum/overview.md)
 · the experience layer: **[docs/curriculum/session-flow.md](./docs/curriculum/session-flow.md)**
-· the concrete 28-day plan: [docs/curriculum/month-1.md](./docs/curriculum/month-1.md)
+· the world map (modules & stations): [docs/curriculum/world-map.md](./docs/curriculum/world-map.md)
+· how days collapse into stations + book stops/codex: [docs/curriculum/station-map.md](./docs/curriculum/station-map.md)
+· the full station roster (every stop's contents): [docs/curriculum/stations.md](./docs/curriculum/stations.md)
+· the concrete hiragana session sequence: [docs/curriculum/month-1.md](./docs/curriculum/month-1.md)
 
 ---
 
@@ -144,8 +153,8 @@ docs foundation exists, and the key decisions (stack, no-romaji, SRS algorithm,
 stroke-data source) are settled. **No application code exists yet** — the next build
 target is the pure SRS engine (Phase 1).
 
-The roadmap runs: **0 Foundations → 1 SRS engine → 2 Content (hiragana + Month 1) →
-3 Web app → 4 Mobile via Capacitor → 5 Audio production →** then Month 2 and beyond.
+The roadmap runs: **0 Foundations → 1 SRS engine → 2 Content (the hiragana curriculum) →
+3 Web app → 4 Mobile via Capacitor → 5 Audio production →** then katakana, kanji, and beyond.
 
 **Open questions still tracked:** content on-disk format (JSON vs. TS modules), and
 test/lint/TS tooling — both to be settled as their phases begin.
@@ -171,7 +180,10 @@ michi/
     │   ├── overview.md         sequencing philosophy & session shape
     │   ├── session-flow.md     how a session plays out; the first experience; scripts explained
     │   ├── month-1.md          the full 28-day hiragana curriculum
-    │   └── content-model.md    content as structured data
+    │   ├── content-model.md    content as structured data
+    │   ├── world-map.md        modules & stations: the course as a walkable path
+    │   ├── station-map.md      how days collapse into stations; book stops & the codex
+    │   └── stations.md         the full station roster: every stop and what it contains
     ├── architecture/    HOW IT'S BUILT
     │   ├── overview.md         layers, modules, boundaries, data flow
     │   ├── tech-stack.md       platform & technology choices

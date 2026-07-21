@@ -16,7 +16,7 @@ else supports it.
 ```
 docs/
 ├── product/       WHAT & WHY  — vision, pedagogy, principles, glossary
-├── curriculum/    WHAT WE TEACH — sequencing, Month 1 plan, content model
+├── curriculum/    WHAT WE TEACH — sequencing, the hiragana curriculum, content model
 ├── architecture/  HOW IT'S BUILT — tech stack, system shape, data & SRS
 ├── design/        CRAFT — visual system, typography, audio
 ├── decisions/     WHY — Architecture Decision Records (ADRs)
@@ -57,8 +57,11 @@ docs/
 - [overview.md](./curriculum/overview.md) — sequencing philosophy and session shape
 - [session-flow.md](./curriculum/session-flow.md) — how a session plays out (auto-advance),
   the first experience, and where the three scripts get explained
-- [month-1.md](./curriculum/month-1.md) — the full 28-day hiragana curriculum
+- [month-1.md](./curriculum/month-1.md) — the hiragana curriculum (an ordered session sequence)
 - [content-model.md](./curriculum/content-model.md) — how content is structured as data
+- [world-map.md](./curriculum/world-map.md) — modules & stations: the course as a walkable path
+- [station-map.md](./curriculum/station-map.md) — how days collapse into stations; book stops & the codex
+- [stations.md](./curriculum/stations.md) — the full station roster: every stop and what it contains
 
 ### architecture/ — how it's built
 - [overview.md](./architecture/overview.md) — layers, modules, boundaries, data flow

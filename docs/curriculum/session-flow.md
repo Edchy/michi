@@ -160,11 +160,17 @@ Earn It, Don't Front-Load It") and keeps every session
 
 | What's explained | When / where it appears | Why there |
 |---|---|---|
-| **"Japanese has three scripts" — the big picture** | A short beat on **Day 1**, *after* the first sound-mimic hook — not before it. Kept to a couple of sentences + the promise: "learn 46 sounds and you can read anything written in hiragana." | The learner has just *made* a Japanese sound; now a tiny bit of map-of-the-territory motivates the road ahead without front-loading. |
-| **What hiragana is, deeply** | Woven across **Week 1** as characters are learned — plus the origin drip ("invented in the Heian period; あ comes from 安") on **Day 3**, when it adds meaning rather than noise. | You understand hiragana by *learning* it; the history lands best once a few characters feel real. |
-| **What katakana is** | **Month 2, Day 1** of katakana — right as it's introduced. Includes its monk-origin "did you know" and the key idea: *same sounds as hiragana, different shapes, used for loanwords/emphasis.* | Explaining katakana before the learner needs it is pure front-loading. At introduction, it's instantly concrete ("you already know these sounds"). |
-| **What kanji is** | When the **first kanji** appears (Month 2's 一二三四五), embedded in real vocabulary. | Kanji is only graspable in context. Introduced as "borrowed from China, then Japan built hiragana/katakana on top" *at the moment a kanji is on screen.* |
-| **The full origin story** (kanji → kana invented on top; why three scripts coexist) | Assembled gradually across the drips above; optionally revisited as one satisfying recap once all three have been met (late Month 2+). | By then it's a story about things the learner *knows*, not an abstract lecture — exploration, not homework. |
+| **"Japanese has three scripts" — the big picture** | A short beat in the **first session**, *after* the first sound-mimic hook — not before it. Kept to a couple of sentences + the promise: "learn 46 sounds and you can read anything written in hiragana." | The learner has just *made* a Japanese sound; now a tiny bit of map-of-the-territory motivates the road ahead without front-loading. |
+| **What hiragana is, deeply** | Woven across the **first module** as characters are learned — plus the origin drip ("invented in the Heian period; あ comes from 安") at the **vowels-reinforce beat**, when it adds meaning rather than noise. | You understand hiragana by *learning* it; the history lands best once a few characters feel real. |
+| **What katakana is** | at the **start of the katakana module** — right as it's introduced. Includes its monk-origin "did you know" and the key idea: *same sounds as hiragana, different shapes, used for loanwords/emphasis.* | Explaining katakana before the learner needs it is pure front-loading. At introduction, it's instantly concrete ("you already know these sounds"). |
+| **What kanji is** | When the **first kanji** appears (一二三四五), embedded in real vocabulary. | Kanji is only graspable in context. Introduced as "borrowed from China, then Japan built hiragana/katakana on top" *at the moment a kanji is on screen.* |
+| **The full origin story** (kanji → kana invented on top; why three scripts coexist) | Assembled gradually across the drips above; optionally revisited as one satisfying recap once all three have been met (once kanji have begun). | By then it's a story about things the learner *knows*, not an abstract lecture — exploration, not homework. |
+
+### These drips have a persistent home too: each is saved into the **codex**, and some
+also surface as optional **book stops** beside the world-map path — a browsable place
+to re-read the "how Japanese is built" lore without ever front-loading it. Timing here
+still governs *when* a drip first appears; the codex only records what's already been
+met. See [station-map.md §3](./station-map.md#3-book-stops--the-codex--the-lore-without-front-loading).
 
 ### The rule for any script/culture explanation
 

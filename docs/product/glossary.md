@@ -148,6 +148,36 @@ practice. See [P7](./principles.md#p7--sessions-always-complete).
 **Lesson**
 An authored unit of new content (e.g., "the k-row") that introduces items and
 exercises. Composed into the curriculum. See [content-model.md](../curriculum/content-model.md).
+On the world map a lesson is presented as a **Station**.
+
+**Station**
+The map/navigation name for one stop on the path — corresponds one-to-one to a
+**Lesson**. Numbered continuously across the course and labeled *STATION N 宿*
+(*shukuba*, an old-highway post-town). See [world-map.md](../curriculum/world-map.md).
+
+**Module**
+An ordered group of stations (currently ~3–5) — one leg of the one continuous path,
+roughly a curriculum unit. Numbered and named (e.g. "First sounds"). Completing a
+module unlocks the next. The learner moves between modules two ways: glide arrows that
+pan along the path, or a zoom-out module chain to jump. See [world-map.md](../curriculum/world-map.md).
+
+**World map ("the path")**
+The learner-facing surface that presents the whole course as one continuous, walkable
+path of stations grouped into modules — the navigation and progress home.
+Structure in [world-map.md](../curriculum/world-map.md); look & feel in
+[DESIGN.md](../design/DESIGN.md).
+
+**Book stop**
+An optional reading marker beside the path, between stations. Supplementary lore about
+how Japanese is built and where it came from — never required, never drilled, never
+gates a station; unlocks when its topic becomes relevant. See
+[station-map.md §3](../curriculum/station-map.md#3-book-stops--the-codex--the-lore-without-front-loading).
+
+**Codex**
+A browsable collection of every lore drip the learner has encountered — from inline
+"did you know" beats and from book stops — revisitable anytime from the map. Records
+what's been met (never front-loads), decoupled from the required path. See
+[station-map.md §3](../curriculum/station-map.md#3-book-stops--the-codex--the-lore-without-front-loading).
 
 **Exercise**
 A single interactive task: recognition, active recall, drawing, listening, sentence

@@ -111,7 +111,7 @@ Being explicit about non-goals is how a project keeps its soul. Michi is **not**
   authored curriculum with deterministic exercises. Conversational AI practice is a
   possible *later* layer, not the foundation. (Scope guard against feature drift.)
 
-- **Not trying to cover everything on day one.** Michi ships a great Month 1
+- **Not trying to cover everything on day one.** Michi ships a great hiragana curriculum
   (hiragana mastery + first words) before it tries to be a complete JLPT-to-fluency
   platform. Depth first, then breadth.
 
@@ -166,7 +166,7 @@ later; it is not designed around them now.
 - We will **not** optimize for DAU, session count, or streak length as success
   metrics.
 - We will **not** ship features whose primary effect is engagement without learning.
-- We will **not** broaden scope before Month 1 is genuinely excellent.
+- We will **not** broaden scope before the hiragana curriculum is genuinely excellent.
 
 ---
 
@@ -238,7 +238,7 @@ We deliberately avoid engagement vanity metrics. Success is measured in
 **capability and retention**:
 
 - **Literacy velocity** — time to read all 46 hiragana with high accuracy
-  (target: within Month 1).
+  (target: within the hiragana curriculum).
 - **Retention curve** — percentage of items still above the confidence threshold
   after 30 / 60 / 90 days.
 - **Production accuracy** — stroke-order and recall correctness on *from-memory*

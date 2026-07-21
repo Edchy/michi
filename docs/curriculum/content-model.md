@@ -119,11 +119,13 @@ Story {
 An authored unit of a session's *new content*. Lessons are ordered into the
 curriculum; they **seed items into the SRS** on completion but never schedule
 reviews themselves (the [SRS owns scheduling](./overview.md#how-the-curriculum-meets-the-srs)).
+On the world map, a lesson is presented as a **station** — what each station teaches
+and how lessons map to stations is in [station-map.md](./station-map.md).
 
 ```
 Lesson {
   id            // e.g. "m1_d04_k_row"
-  day           // curriculum day number (1..28 for month 1)
+  day           // ordinal session number in the sequence (1..N)
   title         // "K-row: か き く け こ"
   kind          // "intro" | "new" | "reinforce" | "quiz" | "rest" | "assessment"
   introduces    // item ids first taught here (seed into SRS)

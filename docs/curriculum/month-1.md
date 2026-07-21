@@ -1,10 +1,17 @@
-# Japanese Learning App — Month 1 Curriculum
+# The Hiragana Curriculum — Sessions 1–28
+
+> **On "days," "weeks," "Month 1":** Michi is **self-paced — there is no calendar.**
+> The numbered "days" and "weeks" below are an authoring device: an **ordered sequence
+> of sessions** (sittings), not deadlines. The learner advances when they've earned it,
+> however long that takes. This whole curriculum is one leg of the journey — full
+> hiragana — surfaced to the learner as [Modules and Stations](./stations.md), never as
+> a month. ("Month 1" survives only as this file's legacy name.)
 
 ## Overview
 
-Month 1 has one goal: **master hiragana and read your first real Japanese words**.
+This curriculum has one goal: **master hiragana and read your first real Japanese words**.
 
-By the end of week 4, the learner will be able to read all 46 hiragana characters, write them from memory, and read simple Japanese words. This is a real, meaningful milestone. Not abstract points. Not levels. Actual literacy in a new script.
+By its end the learner can read all 46 hiragana characters, write them from memory, and read simple Japanese words. This is a real, meaningful milestone. Not abstract points. Not levels. Actual literacy in a new script.
 
 The pace is slow and deliberate. No character is left behind. Everything cycles back.
 

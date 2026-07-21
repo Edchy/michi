@@ -9,28 +9,28 @@ import type { QuestionType } from "./question";
  * block interleaves them all as a consolidation capstone.
  */
 export type Step =
-  | { kind: "welcome" } // the landing: just the mark and a way in
   | { kind: "intro" } // a brief explainer of what's about to happen
   | { kind: "teach"; kana: Kana } // hear it, say it
   | { kind: "reveal"; kana: Kana[] } // "these sounds have shapes" — the family
+  | { kind: "context" } // name hiragana after the learner has used it
+  | { kind: "rehearse"; pool: Kana[] } // guided speaking, not an assessed drill
   | { kind: "drill"; pool: Kana[]; types: QuestionType[] } // one block; single-type or mixed
   | { kind: "done"; learned: Kana[] };
 
-/** The drill blocks, in order: recognition → production → writing → mixed capstone. */
-const DRILL_BLOCKS: QuestionType[][] = [
+/** Recognition drills and a mixed capstone, after guided speaking rehearsal. */
+const ASSESSED_DRILL_BLOCKS: QuestionType[][] = [
   ["hearPickChar"], // hear → pick the character   (ear → eye)
   ["seePickSound"], // see → pick the sound         (eye → ear)
-  ["sayAloud"], // see → say it aloud            (production)
-  ["trace"], // trace the character          (writing — placeholder)
-  ["hearPickChar", "seePickSound", "sayAloud", "trace"], // the mix
+  ["hearPickChar", "seePickSound"], // mixed recognition assessment
 ];
 
 export function buildModule1(): Step[] {
-  const welcome: Step = { kind: "welcome" };
   const intro: Step = { kind: "intro" };
   const teach: Step[] = VOWELS.map((kana) => ({ kind: "teach", kana }));
   const reveal: Step = { kind: "reveal", kana: VOWELS };
-  const drills: Step[] = DRILL_BLOCKS.map((types) => ({ kind: "drill", pool: VOWELS, types }));
+  const speak: Step = { kind: "rehearse", pool: VOWELS };
+  const context: Step = { kind: "context" };
+  const drills: Step[] = ASSESSED_DRILL_BLOCKS.map((types) => ({ kind: "drill", pool: VOWELS, types }));
   const done: Step = { kind: "done", learned: VOWELS };
-  return [welcome, intro, ...teach, reveal, ...drills, done];
+  return [intro, ...teach, reveal, context, ...drills, speak, done];
 }

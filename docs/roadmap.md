@@ -54,18 +54,18 @@ confidence, proven by tests. No browser required.
 
 ---
 
-## Phase 2 — Content Layer (Hiragana + Month 1)
+## Phase 2 — Content Layer (the Hiragana Curriculum)
 
-**Focus:** Author Month 1 as validated static content.
+**Focus:** Author the full hiragana curriculum as validated static content.
 
 - [ ] Finalize content schema from [content-model.md](./curriculum/content-model.md)
 - [ ] All 46 hiragana as `Character` records (glyphs, readings, stroke data, notes)
-- [ ] Month 1 vocabulary (nature + animals themes) and example sentences
-- [ ] Month 1 lessons (28 days) with exercises, wired to seed the SRS
+- [ ] Hiragana-stage vocabulary (nature + animals themes) and example sentences
+- [ ] The hiragana lessons (an ordered session sequence) with exercises, wired to seed the SRS
 - [ ] First grammar pattern (SOV) content
 - [ ] Content validated against schema in CI
 
-**Done when:** Month 1's full curriculum exists as reviewable, validated data.
+**Done when:** the full hiragana curriculum exists as reviewable, validated data.
 
 ---
 
@@ -81,7 +81,7 @@ confidence, proven by tests. No browser required.
 - [ ] Listening drills (audio playback)
 - [ ] Honest progress surface (capability count + decay)
 
-**Done when:** a learner can complete real Month 1 sessions end to end in a browser,
+**Done when:** a learner can complete real hiragana sessions end to end in a browser,
 fully offline.
 
 **Note:** UI *design* work is intentionally deferred; this phase targets a correct,
@@ -99,7 +99,7 @@ simple, functional UI, not a polished visual system.
 - [ ] Touch-event handling for the drawing canvas
 - [ ] Native audio / haptics polish as needed
 
-**Done when:** Month 1 runs on a real phone, offline, with the drawing mechanic
+**Done when:** the hiragana curriculum runs on a real phone, offline, with the drawing mechanic
 feeling natural to touch.
 
 ---
@@ -119,11 +119,11 @@ have a working generation path.
 
 ---
 
-## Later — Beyond Month 1
+## Later — Beyond Hiragana
 
 Only after the above is genuinely excellent:
 
-- **Month 2 curriculum** — katakana, high-frequency vocab, present-tense verbs, first
+- **Next curriculum** — katakana, high-frequency vocab, present-tense verbs, first
   kanji (一–五), listening comprehension.
 - **Cross-device sync** — Supabase (Postgres + auth), added behind the storage
   interface; never a dependency of the core offline loop.

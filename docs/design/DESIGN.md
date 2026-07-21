@@ -190,6 +190,7 @@ anti-reference (§1).
 | Glyph button (teach / say-aloud) | the character IS the audio control; tap to replay |
 | Trace canvas | placeholder; real version is the signature mechanic (ADR-0004) |
 | Practice mode switcher | Listen · Match · Speak · Write; shared above the floating lesson nav |
+| World map | The course as one continuous ink path of station circles (done / current / locked by shape, not color); move between modules via bottom-left glide arrows that pan along the path, or a zoom-out module chain to jump. Structure in [world-map.md](../curriculum/world-map.md) |
 
 ---
 

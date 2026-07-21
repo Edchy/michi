@@ -4,16 +4,20 @@ import { ChoiceProgress, DrillProgress } from "./drill";
 const IDS = ["a", "i", "u", "e", "o"];
 
 describe("ChoiceProgress", () => {
-  it("moves from two to five options after two consecutive correct answers at each level", () => {
+  it("takes three correct answers at two options, then two at each later level", () => {
     const p = new ChoiceProgress(5);
     expect(p.optionCount).toBe(2);
 
-    for (const expected of [3, 4, 5]) {
+    p.mark(true);
+    p.mark(true);
+    expect(p.optionCount).toBe(2);
+    p.mark(true);
+    expect(p.optionCount).toBe(3);
+
+    for (const expected of [4, 5]) {
       p.mark(true);
-      expect(p.optionCount).toBe(expected - 1);
       p.mark(true);
       expect(p.optionCount).toBe(expected);
-      expect(p.done).toBe(false);
     }
 
     p.mark(true);
@@ -22,13 +26,41 @@ describe("ChoiceProgress", () => {
     expect(p.done).toBe(true);
   });
 
-  it("resets the consistency streak after a miss without dropping a level", () => {
+  it("moves mastery backward on a miss and resets the correct streak", () => {
     const p = new ChoiceProgress(5);
     p.mark(true);
+    expect(p.masteryPoints).toBe(1);
     p.mark(false);
+    expect(p.masteryPoints).toBe(0);
     p.mark(true);
     expect(p.optionCount).toBe(2);
     p.mark(true);
+    expect(p.optionCount).toBe(2);
+    p.mark(true);
+    expect(p.optionCount).toBe(3);
+  });
+
+  it("drops a level after two consecutive misses, but not after one", () => {
+    const p = new ChoiceProgress(5);
+    p.mark(true);
+    p.mark(true);
+    p.mark(true);
+    expect(p.optionCount).toBe(3);
+
+    p.mark(false);
+    expect(p.optionCount).toBe(3);
+    p.mark(false);
+    expect(p.optionCount).toBe(2);
+  });
+
+  it("a correct answer clears the miss streak", () => {
+    const p = new ChoiceProgress(5);
+    p.mark(true);
+    p.mark(true);
+    p.mark(true);
+    p.mark(false);
+    p.mark(true);
+    p.mark(false);
     expect(p.optionCount).toBe(3);
   });
 });

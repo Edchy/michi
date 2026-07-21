@@ -1,7 +1,7 @@
 # Curriculum Overview
 
 This document explains *how* Michi sequences what it teaches and the principles
-behind that sequencing. The concrete day-by-day plan for the first month lives in
+behind that sequencing. The concrete hiragana session sequence lives in
 [month-1.md](./month-1.md); how content is represented as data lives in
 [content-model.md](./content-model.md).
 
@@ -31,7 +31,8 @@ Michi's curriculum follows a small number of rules, all downstream of the
 
 5. **Read real words as early as possible.** As soon as the learner knows enough
    kana to spell a real word, they read one. The first "I can actually read this"
-   moment is engineered to arrive fast (day 5).
+   moment is engineered to arrive fast (by the second station — こい, once the K row
+   is known).
 
 6. **Grammar arrives when it unlocks comprehension, lightly.** Explicit grammar is
    introduced only when it lets the learner understand more — clearly, briefly, in
@@ -66,7 +67,7 @@ explained are all specified in [session-flow.md](./session-flow.md).
 
 ## Progression Map
 
-The long-range arc. Only Month 1 is fully specified today (depth before breadth,
+The long-range arc. Only the hiragana curriculum is fully specified today (depth before breadth,
 [P10](../product/principles.md#p10--depth-before-breadth)).
 
 | Phase | Focus | Status |
