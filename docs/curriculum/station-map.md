@@ -4,7 +4,7 @@ The bridge between the **curriculum** ([month-1.md](./month-1.md), authored as a
 ordered sequence of sessions) and the **world map** ([world-map.md](./world-map.md),
 organized by *station*). It answers three things:
 
-1. How that session sequence collapses into a walkable path of stations and modules —
+1. How that session sequence collapses into a walkable path of stations, tracks and provinces —
    a **self-paced course, no calendar**.
 2. The pedagogical shape a station always has.
 3. Where the gradual "how Japanese is built" lore lives — the **book stops** and the
@@ -25,9 +25,9 @@ the *structure* that curriculum authors and the map both depend on.
 
 ---
 
-## 1. Sessions → Stations → Modules
+## 1. Sessions → Stations → Tracks → Provinces
 
-The course is **self-paced — Course → Modules → Stations, no calendar.** No months, no
+The course is **self-paced — Course → Provinces → Tracks → Stations, no calendar.** No months, no
 weeks, no daily deadlines; a learner advances when they've earned a station, however
 long it takes.
 
@@ -44,11 +44,11 @@ station, not separate stops — they're the sessions you do to clear it.
 The **full station roster** — every station's exact kana/vocab/grammar, drills, drips,
 seeds and end-state — is the companion doc **[stations.md](./stations.md)**. It is the
 authoritative list; this section only explains the *principle* by which sessions group
-into stations and stations into modules.
+into stations, stations into tracks, and tracks into provinces.
 
 The current structure (matches `src/app/worldmap.ts` and [stations.md](./stations.md)):
 
-| Module | Stations | Covers |
+| Track | Stations | Covers |
 |---|---|---|
 | 1 · First sounds | 1–3 | vowels → K row → first look back |
 | 2 · Reading on | 4–7 | S / T / N rows → halfway snapshot |
@@ -91,7 +91,7 @@ fixes what a station *is* and the order stations come in.
 Straight from [overview.md](./overview.md#sequencing-philosophy): scripts before
 everything, **five kana at a time (a gojūon row)**, introduce-then-reinforce, nothing
 abandoned, real words as early as possible. The station map is that philosophy made
-visible — each row is a station, each cluster of rows a module, the whole gojūon a
+visible — each row is a station, each cluster of rows a track, the whole gojūon a
 journey you can see the end of.
 
 ---
@@ -114,16 +114,26 @@ supplementary reading**:
   every one and still learn Japanese ([P1 learning over engagement](../product/principles.md#p1--learning-over-engagement),
   [P7](../product/principles.md#p7--sessions-always-complete)). They add no exercises,
   cost nothing to skip.
+- **Therefore the station must carry the essentials itself.** Because a book stop is
+  optional, nothing a learner genuinely needs may live *only* in one. Every station
+  introduces its own new facts on unskippable slides — a short takeaway line per idea —
+  and the book stop after it *expands* on those ideas for whoever wants the depth. The
+  test: if a learner skipped every book stop in the course, they should still have been
+  told everything required to read Japanese. A book stop that would fail that test is
+  carrying material that belongs back in the station.
+- **Never repeat the station in the book stop.** The station says what a thing is; the
+  book stop says where it came from, why it is that way, or what it connects to. If the
+  book stop restates the station, it has no reason to exist.
 - **Unlock on relevance, per the drip timing.** A book stop appears only once its topic
   has become relevant — the same rule as the inline drips. Example placements, reusing
   session-flow's table:
 
   | Book stop | Appears after | Reads about |
   |---|---|---|
-  | *Three scripts, one language* | Station 1 | The first high-level map of hiragana, katakana, and kanji, and why they coexist |
-  | *Where the letters came from* | early Module 2 | Hiragana was invented in the Heian period, simplified from kanji (あ ← 安) — the shapes have ancestors |
-  | *Sounds you already own* | early Module 2 | Why Japanese sound is regular: mora-timing, no silent letters, the "learn the sounds, read anything" promise |
-  | *A different kind of alphabet* | when katakana / kanji arrive (later modules) | How Japanese writing differs from a Latin alphabet; what katakana and kanji each do |
+  | *Three scripts, one language* | Station 1 | **Why** the three scripts exist: Chinese characters adapted to a language they didn't fit; cursive whole-forms became hiragana, character fragments became katakana; why kanji was kept rather than dropped. Station 1 already told the learner *what* each script is — this book stop only goes deeper |
+  | *Where the letters came from* | early Track 2 | Hiragana was invented in the Heian period, simplified from kanji (あ ← 安) — the shapes have ancestors |
+  | *Sounds you already own* | early Track 2 | Why Japanese sound is regular: mora-timing, no silent letters, the "learn the sounds, read anything" promise |
+  | *A different kind of alphabet* | when katakana / kanji arrive (the katakana and kanji provinces) | How Japanese writing differs from a Latin alphabet; what katakana and kanji each do |
 
 - **Tone: exploration, not homework.** Opening one is "opening a book" — a calm reading
   surface, not a lesson. It matches the quiet, museum-like [DESIGN](../design/DESIGN.md)
@@ -159,9 +169,12 @@ know" beats session-flow already defines) **or** in a **book stop** — is saved
 - **Station derivation.** Stations are hand-listed here and in `worldmap.ts`; once
   lessons are authored data (Phase 2) they should be *generated* from lessons so this
   map and the code stay in lockstep. Tracked in [world-map.md](./world-map.md#open-edges).
-- **Module boundaries beyond hiragana.** The row→station rule is clear; the exact
-  module *groupings* past Module 4 (where the katakana/kanji legs begin, how many
-  stations each) are finalized as that curriculum is authored.
+- **Track boundaries beyond hiragana.** The row→station rule is clear; the exact
+  track *groupings* past Track 4 (how many stations each) are finalized as that
+  curriculum is authored. **Province** boundaries are settled — one script or domain per province
+  (Hiragana, Katakana, First kanji, Words & sentences), which is what made the tier safe
+  to declare before its content exists. See
+  [ADR 0006](../decisions/0006-provinces-and-tracks.md).
 - **Codex authoring format.** The lore entries are content; whether they live with
   curriculum content or separately is an implementation decision for Phase 2, alongside
   the [content on-disk format](../roadmap.md).

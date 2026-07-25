@@ -59,7 +59,7 @@ docs/
   the first experience, and where the three scripts get explained
 - [month-1.md](./curriculum/month-1.md) — the hiragana curriculum (an ordered session sequence)
 - [content-model.md](./curriculum/content-model.md) — how content is structured as data
-- [world-map.md](./curriculum/world-map.md) — modules & stations: the course as a walkable path
+- [world-map.md](./curriculum/world-map.md) — provinces, tracks & stations: the course as a walkable path
 - [station-map.md](./curriculum/station-map.md) — how days collapse into stations; book stops & the codex
 - [stations.md](./curriculum/stations.md) — the full station roster: every stop and what it contains
 
@@ -72,7 +72,8 @@ docs/
 ### design/ — craft
 - [DESIGN.md](./design/DESIGN.md) — the visual system: feel, color (朱 vermilion), typography, motion
 - [typography.md](./design/typography.md) — the typefaces (a pedagogical choice)
-- [audio.md](./design/audio.md) — voiceover strategy and pitch-accent accuracy
+- [audio.md](./design/audio.md) — voiceover strategy, pitch-accent accuracy, and
+  what ships today (macOS `say`/Kyoko for all 46 gojūon)
 
 ### decisions/ — why
 - [decisions/README.md](./decisions/README.md) — what ADRs are + index

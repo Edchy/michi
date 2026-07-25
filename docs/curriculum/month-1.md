@@ -4,7 +4,7 @@
 > The numbered "days" and "weeks" below are an authoring device: an **ordered sequence
 > of sessions** (sittings), not deadlines. The learner advances when they've earned it,
 > however long that takes. This whole curriculum is one leg of the journey — full
-> hiragana — surfaced to the learner as [Modules and Stations](./stations.md), never as
+> hiragana — surfaced to the learner as [Provinces, Tracks and Stations](./stations.md), never as
 > a month. ("Month 1" survives only as this file's legacy name.)
 
 ## Overview

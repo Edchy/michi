@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { buildModule1 } from "./module1";
+import { buildTrack1 } from "./track1";
 import { VOWELS } from "./hiragana";
 
-describe("buildModule1", () => {
-  const steps = buildModule1();
+describe("buildTrack1", () => {
+  const steps = buildTrack1();
 
   it("opens with an intro, then teaches all five vowels in order", () => {
     expect(steps[0]!.kind).toBe("intro");

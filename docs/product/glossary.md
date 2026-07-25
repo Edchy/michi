@@ -109,7 +109,10 @@ gradually, embedded in real vocabulary.
 
 **Gojūon (五十音)**
 "Fifty sounds" — the traditional ordered grid of the kana, arranged by consonant row
-and vowel column. Michi's teaching order follows it.
+and vowel column. Michi's teaching order follows it, one row per station. Named for its
+10 × 5 shape, though only 46 cells are filled (the y- and w-rows have gaps, and ん sits
+outside the grid). Explained to the learner in the codex entry *"Why the kana are
+ordered as they are"*, unlocked after station 8.
 
 **Mora**
 The basic timing unit of Japanese sound. Japanese is *mora-timed*: each mora takes
@@ -152,18 +155,31 @@ On the world map a lesson is presented as a **Station**.
 
 **Station**
 The map/navigation name for one stop on the path — corresponds one-to-one to a
-**Lesson**. Numbered continuously across the course and labeled *STATION N 宿*
-(*shukuba*, an old-highway post-town). See [world-map.md](../curriculum/world-map.md).
+**Lesson**. Presented as a real Tokyo station — its place name in kana (あさくさ) over
+*Asakusa Station 駅* (*eki*, station). Numbered continuously across the course.
+See [world-map.md](../curriculum/world-map.md).
 
-**Module**
-An ordered group of stations (currently ~3–5) — one leg of the one continuous path,
-roughly a curriculum unit. Numbered and named (e.g. "First sounds"). Completing a
-module unlocks the next. The learner moves between modules two ways: glide arrows that
-pan along the path, or a zoom-out module chain to jump. See [world-map.md](../curriculum/world-map.md).
+**Track**
+An ordered group of stations (currently ~3–5) — the run of line they sit on, roughly a
+curriculum unit. Presented as a real **Tokyo Metro line** (*Ginza Line 銀座線*) whose
+official color is the track's hue, alongside what it teaches ("First sounds"). Completing a
+track unlocks the next. Replaces the earlier terms *Module* and, briefly,
+*Province-as-middle-tier*.
+See [world-map.md](../curriculum/world-map.md).
+
+**Province**
+An ordered group of tracks — one **leg of the journey**: a whole script or domain
+(Hiragana, Katakana, First kanji, …). Labeled *PROVINCE N 国* (*kuni*, the old provinces a
+traveller crossed). Provinces bound the map: only the current province's path is drawn,
+and the learner moves via glide arrows within a province, or jumps by tapping the province
+or track name in the nav label — one tap to either list. A province declared without
+content reads "Not yet built". See
+[world-map.md](../curriculum/world-map.md) and
+[ADR 0006](../decisions/0006-provinces-and-tracks.md).
 
 **World map ("the path")**
-The learner-facing surface that presents the whole course as one continuous, walkable
-path of stations grouped into modules — the navigation and progress home.
+The learner-facing surface that presents the course as a walkable path of stations
+grouped into tracks grouped into provinces — the navigation and progress home.
 Structure in [world-map.md](../curriculum/world-map.md); look & feel in
 [DESIGN.md](../design/DESIGN.md).
 

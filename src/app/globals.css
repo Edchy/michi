@@ -1,28 +1,83 @@
 @import "tailwindcss";
 
-/* Design tokens — see docs/design/DESIGN.md. Two pigments split by meaning:
-   朱 vermilion = rare emphasis, 藍 indigo = the ink & primary action.
+/* Design tokens — see docs/design/DESIGN.md. 藍 indigo = the ink & primary action;
+   朱 vermilion = focus rings and lesson/codex emphasis. NOTE: vermilion no longer marks
+   "you are here" on the world map — that is form-only now (thick ring + halo), so it can
+   never collide with a track hue.
    @theme keys generate Tailwind utilities: --color-ink → text-ink/bg-ink, etc. */
 @theme {
   --font-kana: "Klee One", serif;
 
-  /* 藍 indigo — the ink (near-black) + surfaces (barely tinted toward it) */
-  --color-bg: oklch(0.992 0.002 264);
-  --color-surface: oklch(0.968 0.004 264);
-  --color-surface-2: oklch(0.938 0.005 264);
-  --color-line: oklch(0.9 0.005 264);
-  --color-ink: oklch(0.25 0.045 264);
-  --color-ink-muted: oklch(0.52 0.03 264);
-  --color-ink-faint: oklch(0.68 0.022 264);
+  /* ── The two base pigments ──────────────────────────────────────────────────
+     Everything neutral in the app derives from these two. Never write `white`,
+     `black`, or a raw hex anywhere — reach for a token below, and if none fits,
+     add one here.
 
-  /* 朱 vermilion — rare emphasis (kept under 10% of surface) */
-  --color-accent: oklch(0.585 0.181 32);
-  --color-accent-hover: oklch(0.53 0.181 32);
-  --color-accent-weak: oklch(0.955 0.03 32);
+     --color-paper  the off-white — a warm cream, never pure #fff: paper, not a
+                    screen. This is "white" everywhere in Michi.
+     --color-navy   the dark. A deep blue-black, never pure #000 — it's the ink
+                    the whole app is drawn in.                                   */
+  --color-paper: #F6EEE2;
+  --color-navy: oklch(0.22 0.042 264);
+
+  /* Semantic neutrals — all derived from paper/navy so the two stay in charge. */
+  --color-bg: var(--color-paper);
+  --color-surface: oklch(0.938 0.014 78);         /* raised fills, option buttons */
+  --color-surface-2: oklch(0.906 0.018 78);       /* hover on surfaces           */
+  --color-line: oklch(0.872 0.019 78);            /* hairlines, the trace guide  */
+  --color-ink: var(--color-navy);                 /* primary text, the glyph     */
+  --color-ink-muted: oklch(0.50 0.032 264);       /* secondary text, prompts     */
+  --color-ink-faint: oklch(0.62 0.026 264);       /* hints, labels under glyphs  */
+
+  /* 朱 vermilion — focus rings and lesson/codex emphasis. No longer marks
+     "you are here" on the map; that is form-only. Kept under 10% of surface. */
+  --color-accent: oklch(0.545 0.19 32);
+  --color-accent-hover: oklch(0.49 0.19 32);
+  --color-accent-weak: oklch(0.94 0.035 40);
+
+  /* Track hues, mirrored from :root below so Tailwind utilities exist for them
+     (text-track-1, bg-track-2, …). The :root copies are what runtime
+     `var(--color-track-${n})` composition actually reads — see the note there. */
+  --color-track-1: #FD9701;
+  --color-track-2: #F62E34;
+  --color-track-3: #00BC87;
+  --color-track-4: #8F76D7;
+  --color-track-5: #009BBF;
+
+  /* Elevation — tinted with the navy rather than neutral black, so shadows sit
+     in the same family as the ink. */
+  --shadow-card: 0 1px 3px oklch(0.22 0.042 264 / 0.07);
 
   /* small, quiet radius — no pills */
   --radius-btn: 6px;
   --radius-lg: 12px;
+}
+
+/* Track hues — identify which track a stretch of path belongs to. These carry GROUPING
+   only: done/current/locked is still shape + label, never color (DESIGN §2). Cycles if a
+   province ever holds more than 5 tracks.
+
+   These are bright and vary a lot in lightness, so they're used at three strengths, all
+   derived from the one token with color-mix (change the hex, everything follows):
+     full                     path ink, station rings, card edge — nothing textual on them
+     mixed 60% with ink       any surface with LIGHT TEXT on it (the nav track row)
+     mixed 62% with ink       the hue as small TEXT on white (card labels)
+     mixed 55% with bg        unwalked path ink, so a track is identifiable before it's
+                              reached
+   White text fails AA on all four raw hues (2.1–3.8:1); at the 60% mix it clears on every
+   one (4.5–6.9:1, measured). Never put light text on the raw hue.
+
+   Declared HERE as well as in @theme, and this copy is the load-bearing one: Tailwind v4
+   tree-shakes @theme tokens it can't see referenced literally in source, and these are
+   composed at runtime (`var(--color-track-${n})`), so only track-1 survived on its own.
+   The @theme copy exists so `text-track-2`-style utilities also work. Keep the two in
+   sync — they're the one deliberate duplication in this file. */
+:root {
+  --color-track-1: #FD9701;  /* Ginza 銀座線        (official #FF9500) */
+  --color-track-2: #F62E34;  /* Marunouchi 丸ノ内線  (official #F62E36) */
+  --color-track-3: #00BC87;  /* Chiyoda 千代田線     (official #00BB85) */
+  --color-track-4: #8F76D7;  /* Hanzomon 半蔵門線    (official #8F76D6) */
+  --color-track-5: #009BBF;  /* Tozai 東西線 — 5th, if a province exceeds four tracks */
 }
 
 /* Interactive controls should advertise their affordance consistently. */
@@ -40,7 +95,7 @@ button:disabled,
    question advances—there is no rebound or scale-down. */
 .answer-success {
   transform: scale(1.4);
-  filter: drop-shadow(0 0 10px oklch(0.25 0.045 264 / 0.4));
+  filter: drop-shadow(0 0 10px color-mix(in oklab, var(--color-ink) 40%, transparent));
 }
 
 /* Step transition: slide in from the direction of travel, always ending visible. */
@@ -62,52 +117,132 @@ button:disabled,
 }
 .kana-rise { animation: kana-rise 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
-/* World map — a calm, pannable canvas of module stops joined by one ink path.
-   Palette stays with the app: bg / ink / accent, nothing decorative. */
+/* World map — a calm, pannable canvas of station stops joined by one ink path.
+   Color here is track identity (see the track hues above); state is form. */
 .world-page { position: relative; height: 100vh; overflow: hidden; background: var(--color-bg); }
 
+/* One measure for all floating chrome.
+   The MAP itself stays full-bleed on purpose — it's a canvas you drag, so capping its
+   width would letterbox the world and shrink the panning surface. What gets constrained
+   is everything layered ON TOP of it: on a wide display the header's two ends drifted
+   over 1000px apart and stopped reading as one bar. Both the header and the bottom nav
+   align to this same measure, so they share a left and right edge. */
+:root {
+  --chrome-measure: 1200px;  /* header + bottom nav */
+  --chain-measure: 420px;    /* the province/line card column */
+}
+.world-chrome {
+  width: 100%; max-width: var(--chrome-measure); margin-inline: auto;
+}
+
+/* The band spans the viewport; the inner .world-chrome holds the measure. */
 .world-header {
   position: absolute; z-index: 10; inset: 0 0 auto 0;
-  display: flex; align-items: flex-start; justify-content: space-between;
   padding: 20px 24px; pointer-events: none;
 }
-.world-brand { display: flex; align-items: center; gap: 12px; }
+.world-header .world-chrome {
+  display: flex; align-items: flex-start; justify-content: space-between;
+}
+.world-brand-heading { display: block; }
+/* One dark slab: the 道 mark and the province text share a single ink surface, and the
+   whole thing is the button into the province list. */
+.world-brand {
+  pointer-events: auto; display: flex; align-items: center; gap: 12px;
+  padding: 8px 16px 8px 8px; text-align: left; cursor: pointer;
+  border-radius: var(--radius-btn); background: var(--color-ink);
+  box-shadow: var(--shadow-card);
+  transition: background 150ms ease-out;
+}
+.world-brand:hover { background: color-mix(in oklab, var(--color-ink) 88%, var(--color-paper)); }
+.world-brand:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
+/* The mark sits ON the dark slab now, so it inverts: paper glyph, no fill of its own.
+   No radius — there's no box left to round. */
 .world-mark {
   display: grid; place-items: center; width: 40px; height: 40px; flex: none;
-  border-radius: var(--radius-lg); background: var(--color-ink); color: var(--color-bg);
-  font-size: 22px; line-height: 1;
+  color: var(--color-paper); font-size: 26px; line-height: 1;
 }
-.world-brand h1 { font-size: 15px; font-weight: 650; letter-spacing: -0.01em; color: var(--color-ink); }
-.world-brand p { margin-top: 1px; font-size: 12px; color: var(--color-ink-muted); }
-.world-progress { margin-left: auto; font-size: 13px; color: var(--color-ink-muted); }
-.world-progress span { font-weight: 650; color: var(--color-ink); }
+.world-brand-text { display: flex; flex-direction: column; align-items: flex-start; }
+.world-brand-title {
+  font-size: 15px; font-weight: 650; letter-spacing: -0.01em; color: var(--color-paper);
+}
+/* Muted paper, not the ink-muted grey — that was tuned for text on the light bg and
+   would nearly vanish here. Measured 6.6:1 on the ink slab. */
+.world-progress {
+  margin-top: 1px; font-size: 12px;
+  color: color-mix(in oklab, var(--color-paper) 68%, var(--color-ink));
+}
+.world-progress span { font-weight: 650; color: var(--color-paper); }
+/* The Codex is the only other destination on this screen, so it gets a visible
+   button edge rather than sitting as bare text the eye has to find. */
 .world-codex {
   pointer-events: auto; display: flex; min-height: 40px; align-items: center; gap: 7px;
-  margin: -4px 0 -4px 18px; padding: 0 12px;
-  border-radius: var(--radius-btn); background: var(--color-bg); color: var(--color-ink-muted);
-  font-size: 13px; font-weight: 600; transition: background 150ms ease-out, color 150ms ease-out;
+  margin: -4px 0 -4px 18px; padding: 0 14px;
+  border: 1px solid var(--color-line); border-radius: var(--radius-btn);
+  background: var(--color-bg); color: var(--color-ink); box-shadow: var(--shadow-card);
+  font-size: 13px; font-weight: 600;
+  transition: background 150ms ease-out, border-color 150ms ease-out;
 }
-.world-codex:hover { background: var(--color-surface); color: var(--color-ink); }
+.world-codex:hover { background: var(--color-surface); border-color: var(--color-ink-faint); }
 .world-codex:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 
 .worldmap { position: absolute; inset: 0; cursor: grab; touch-action: none; overscroll-behavior: none; user-select: none; -webkit-user-select: none; }
 .worldmap:active { cursor: grabbing; }
 .worldmap-svg { width: 100%; height: 100%; display: block; transition: opacity 180ms ease-out; }
 
-/* the connecting path */
+/* The connecting path — one base + one walked overlay per TRACK, so each track's stretch
+   carries its own hue. `--track` is set inline per <g>; both layers fall back gracefully
+   if it's absent.
+
+   The base (unwalked) ink is the same hue mixed far down toward the neutral hairline, so
+   every track is identifiable from the start — you can see where a track begins before
+   you've reached it — while walked ink stays clearly stronger. Derived with color-mix
+   rather than five more tokens, so changing a hue updates both layers together. */
 .wm-path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
-.wm-path-track { stroke: var(--color-line); stroke-width: 3; }
-.wm-path-done { stroke: var(--color-ink); stroke-width: 3; transition: stroke-dashoffset 700ms cubic-bezier(0.16, 1, 0.3, 1); }
+.wm-path-base {
+  stroke: color-mix(in oklab, var(--track, var(--color-line)) 55%, var(--color-bg));
+  stroke-width: 3;
+}
+.wm-path-done {
+  stroke: var(--track, var(--color-ink)); stroke-width: 3;
+  transition: stroke-dashoffset 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* province boundary — a quiet seam where one province's ink ends and the next begins */
+.wm-province-marker line { stroke: var(--color-line); stroke-width: 1.5; stroke-dasharray: 3 7; }
+.wm-province-marker-label {
+  fill: var(--color-ink-faint); font-size: 11px; font-weight: 700; letter-spacing: 0.14em;
+  text-anchor: middle; font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+}
 
 /* stops */
 .wm-stop { --disc: var(--color-bg); }
 .wm-disc { fill: var(--disc); stroke: var(--color-ink); stroke-width: 2.5; transition: stroke-width 160ms ease-out; }
 .wm-num { fill: var(--color-ink); font-size: 22px; font-weight: 650; text-anchor: middle; font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif); }
-.wm-check { fill: none; stroke: var(--color-bg); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
 
-.wm-stop.is-done .wm-disc { fill: var(--color-ink); }
-.wm-stop.is-current .wm-disc { stroke-width: 3; }
-.wm-stop.is-current .wm-num { fill: var(--color-accent); }
+/* The station number above the disc, carrying its line's hue. Uses the DEEPENED mix,
+   never the raw hue: as small text on paper the raw colors run 1.9–3.4:1 (measured),
+   well under AA — the 55% mix clears it on all five (4.2–6.6:1). */
+.wm-stop-n {
+  fill: color-mix(in oklab, var(--track, var(--color-ink)) 55%, var(--color-ink));
+  font-size: 13px; font-weight: 750; letter-spacing: 0.06em; text-anchor: middle;
+  font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+}
+.wm-stop.is-locked .wm-stop-n { fill: var(--color-ink-faint); }
+.wm-check { fill: none; stroke: var(--color-paper); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Track hue tints the ring and the done fill. State is carried by SHAPE and WEIGHT, never
+   by a hue of its own — so "you are here" reads identically on every track color and can
+   never be confused with the track's own hue. done = filled + check; current = thick ring
+   + a halo + ink-dark number; locked = thin faint ring. */
+.wm-stop.is-done .wm-disc,
+.wm-stop.is-current .wm-disc { stroke: var(--track, var(--color-ink)); }
+.wm-stop.is-done .wm-disc { fill: var(--track, var(--color-ink)); }
+.wm-stop.is-current .wm-disc { stroke-width: 5; }
+.wm-stop.is-current .wm-num { fill: var(--color-ink); font-weight: 750; }
+/* a soft ring OUTSIDE the disc — pure form, no new color */
+.wm-stop.is-current .wm-halo {
+  fill: none; stroke: var(--track, var(--color-ink)); stroke-width: 1.5; opacity: 0.35;
+}
 .wm-stop.is-locked .wm-disc { stroke: var(--color-ink-faint); }
 .wm-stop.is-locked .wm-num { fill: var(--color-ink-faint); }
 
@@ -129,7 +264,7 @@ button:disabled,
   fill: var(--color-ink); font-family: var(--font-kana); font-size: 16px; text-anchor: middle;
 }
 .wm-book-check {
-  fill: var(--color-bg); font-size: 16px; font-weight: 700; text-anchor: middle;
+  fill: var(--color-paper); font-size: 16px; font-weight: 700; text-anchor: middle;
   font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
 }
 .wm-book-kind {
@@ -143,60 +278,112 @@ button:disabled,
 
 /* labels under each stop */
 .wm-label { pointer-events: none; }
+/* the station's Tokyo place name in kana — the headline under the disc */
+.wm-place {
+  fill: var(--color-ink); font-size: 17px; font-weight: 400; text-anchor: middle;
+}
+.wm-stop.is-locked .wm-place { fill: var(--color-ink-faint); }
 .wm-station { fill: var(--color-ink-faint); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-anchor: middle; font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif); }
 .wm-station-kana { font-family: var(--font-kana); font-weight: 400; letter-spacing: 0; }
-.wm-stop.is-current .wm-station { fill: var(--color-accent); }
+.wm-stop.is-current .wm-station { fill: var(--color-ink); font-weight: 800; }
 .wm-title { fill: var(--color-ink); font-size: 15px; font-weight: 600; text-anchor: middle; font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif); }
 .wm-stop.is-locked .wm-title, .wm-stop.is-locked .wm-station { opacity: 0.55; }
 
 /* avatar — floating "you are here" pin */
 .wm-avatar { transition: transform 800ms cubic-bezier(0.16, 1, 0.3, 1); }
 .wm-avatar-bob { animation: wm-bob 2.4s ease-in-out infinite; transform-origin: center; }
-.wm-avatar-pin { fill: var(--color-accent); }
-.wm-avatar-eye { fill: var(--color-bg); }
+.wm-avatar-pin { fill: var(--track, var(--color-ink)); }
+.wm-avatar-eye { fill: var(--color-paper); }
 
 @keyframes wm-bob {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-3px); }
 }
 
-/* module navigation — glide arrows flanking a label that opens the chain */
+/* Track navigation — one centered bar: arrows glide line-to-line, the label opens
+   the lists. Centered because it's the primary control on the screen, not a corner
+   utility; the map has empty space below the path where it can sit without covering
+   a station. */
 .wm-nav {
-  position: absolute; z-index: 10; left: 20px; bottom: 20px;
-  display: flex; align-items: stretch; gap: 8px;
+  position: absolute; z-index: 10; bottom: 24px; left: 0; right: 0;
+  display: flex; justify-content: center; align-items: stretch; gap: 10px;
+  padding-inline: 16px; pointer-events: none;
 }
+/* Only the controls take pointer events — the band itself must stay transparent to
+   drags, or it would carve a dead strip across the bottom of a map you pan by hand. */
+.wm-nav > * { pointer-events: auto; }
 .wm-arrow {
-  display: grid; place-items: center; width: 40px;
+  display: grid; place-items: center; width: 44px; flex: none;
   border: 1px solid var(--color-line); border-radius: var(--radius-btn);
   background: var(--color-bg); color: var(--color-ink);
-  font-size: 20px; line-height: 1; box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+  font-size: 22px; line-height: 1; box-shadow: var(--shadow-card);
   cursor: pointer; transition: background 150ms ease-out, border-color 150ms ease-out;
 }
 .wm-arrow:hover:not(:disabled) { background: var(--color-surface); border-color: var(--color-ink-faint); }
-.wm-arrow:disabled { opacity: 0.4; cursor: not-allowed; }
+/* Disabled = you're at the edge of this province. Keep the button clearly present
+   (a vanished control reads as a bug) but visibly inert. */
+.wm-arrow:disabled {
+  color: var(--color-ink-faint); background: var(--color-surface);
+  box-shadow: none; cursor: not-allowed;
+}
 .wm-arrow:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 
+/* One card, one target: the line you're on, filled with its hue. The province moved to
+   the header, so this is a single row now. */
 .wm-nav-label {
-  display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
-  min-width: 180px; padding: 6px 16px; text-align: left;
-  border: 1px solid var(--color-line); border-radius: var(--radius-btn);
-  background: var(--color-bg); box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
-  cursor: pointer; transition: border-color 150ms ease-out, background 150ms ease-out;
+  display: flex; align-items: stretch;
+  min-width: 210px; text-align: left;
+  border-radius: var(--radius-btn); box-shadow: var(--shadow-card);
 }
-.wm-nav-label:hover { border-color: var(--color-ink-faint); background: var(--color-surface); }
-.wm-nav-label:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+/* The row carries its own radius rather than being clipped by the wrapper's
+   overflow — a clipped corner renders softer than a real one. */
+.wm-nav-track {
+  text-align: left; cursor: pointer; border-radius: var(--radius-btn);
+  transition: background 150ms ease-out, color 150ms ease-out;
+}
+/* The track row is FILLED with its track's hue — the strongest possible tie between the
+   nav and the stretch of path it names. Uses the DEEPENED mix, not the raw hue: light
+   text fails AA on the raw colors (see the token block). */
+.wm-nav-track {
+  display: flex; align-items: center; gap: 11px; flex: 1;
+  padding: 9px 16px 10px;
+  background: color-mix(in oklab, var(--track, var(--color-ink)) 55%, var(--color-ink));
+}
+.wm-nav-track-text { display: flex; flex-direction: column; align-items: flex-start; }
+/* The line roundel — the line's letter code on a paper disc, carrying the RAW hue as
+   its ring. Raw hue is safe here: it's a 2px border, not a text/background pair. */
+.wm-nav-roundel {
+  display: grid; place-items: center; flex: none;
+  width: 27px; height: 27px; border-radius: 50%;
+  border: 2.5px solid var(--track, var(--color-ink));
+  background: var(--color-paper); color: var(--color-ink);
+  font-size: 13px; font-weight: 750; line-height: 1;
+}
+.wm-nav-track:hover { filter: brightness(1.08); }
+.wm-nav-track:focus-visible {
+  outline: 2px solid var(--color-accent); outline-offset: -2px;
+}
+/* No opacity here — at 10px this is small text, and fading it would drop the ~4.9:1
+   contrast the hues give us below the AA floor. */
 .wm-nav-n {
   font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
-  color: var(--color-ink-faint);
+  color: var(--color-paper);
 }
-.wm-nav-title { font-size: 13.5px; font-weight: 600; color: var(--color-ink); margin-top: 1px; }
-.wm-nav-hint { font-size: 11px; color: var(--color-ink-muted); margin-top: 2px; }
+.wm-nav-title {
+  font-size: 14.5px; font-weight: 650; color: var(--color-paper); margin-top: 1px;
+  white-space: nowrap;
+}
 
-/* the module chain — the vertical trail of modules you zoom out to */
+/* the chain — the vertical trail of provinces, or of one province's tracks */
 .wm-chain-wrap { position: absolute; inset: 0; overflow-y: auto; padding-top: 84px; }
+/* Left-aligned with the CARD COLUMN below it (--chain-measure), not the wider page
+   chrome — otherwise on a wide screen the button floats far off to the left of the
+   list it belongs to. */
 .wm-chain-close {
   position: sticky; top: 0; z-index: 2; display: block;
-  margin: 0 0 0 20px; padding: 6px 14px;
+  width: fit-content;
+  margin: 0 auto 0 max(20px, calc((100% - var(--chain-measure)) / 2));
+  padding: 6px 14px;
   border: 1px solid var(--color-line); border-radius: var(--radius-btn);
   background: var(--color-bg); color: var(--color-ink); font-size: 13px; font-weight: 600;
   cursor: pointer; transition: border-color 150ms ease-out, background 150ms ease-out;
@@ -208,13 +395,22 @@ button:disabled,
   padding: 20px 20px 60px;
 }
 .wm-card {
-  position: relative; width: 100%; max-width: 420px;
+  position: relative; width: 100%; max-width: var(--chain-measure);
   display: flex; flex-direction: column; align-items: flex-start; text-align: left;
   padding: 16px 20px;
   border: 1px solid var(--color-line); border-radius: var(--radius-btn);
-  background: var(--color-bg); box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+  background: var(--color-bg); box-shadow: var(--shadow-card);
   cursor: pointer; transition: border-color 150ms ease-out, background 150ms ease-out;
 }
+/* A track card carries its hue as a left edge — ties the list to the path. The edge is a
+   4px border so the raw hue is fine; the LABEL is small text on white, so it takes the
+   deepened mix to stay legible (raw amber/jade on white is ~1.9:1). */
+.wm-card[style*="--track"] { border-left: 4px solid var(--track); padding-left: 18px; }
+.wm-card[style*="--track"] .wm-card-n {
+  color: color-mix(in oklab, var(--track) 55%, var(--color-ink));
+}
+.wm-card[style*="--track"]:disabled { border-left-color: var(--color-line); }
+.wm-card[style*="--track"]:disabled .wm-card-n { color: var(--color-ink-faint); }
 .wm-card:not(:disabled):hover { border-color: var(--color-ink-faint); background: var(--color-surface); }
 .wm-card:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 /* connecting stroke between cards, so the trail reads as one path */
@@ -228,20 +424,23 @@ button:disabled,
   color: var(--color-ink-faint);
 }
 .wm-card-title { font-size: 17px; font-weight: 650; color: var(--color-ink); margin-top: 2px; }
+.wm-card-sub { font-size: 13px; color: var(--color-ink-muted); margin-top: 3px; }
 .wm-card-meta { font-size: 12px; color: var(--color-ink-muted); margin-top: 6px; }
 /* state by shape + label, never color alone */
-.wm-card.is-current { border-color: var(--color-accent); border-width: 2px; }
-.wm-card.is-current .wm-card-n { color: var(--color-accent); }
+.wm-card.is-current { border-color: var(--color-ink); border-width: 2px; }
+.wm-card.is-current .wm-card-n { color: var(--color-ink); }
 .wm-card.is-done { background: var(--color-surface); }
 .wm-card.is-done .wm-card-meta::before { content: "✓ "; }
 .wm-card.is-locked { opacity: 0.5; cursor: not-allowed; }
 
 @media (max-width: 640px) {
-  .world-brand p { display: none; }
-  .world-progress { font-size: 12px; }
+  .world-progress { font-size: 11px; }
   .world-codex { margin-left: 8px; padding: 0 10px; }
-  .world-codex:not(:focus) { font-size: 0; gap: 0; }
-  .world-codex span { font-size: 18px; }
+  /* icon-only on narrow screens — the text label is the part that can go */
+  .world-codex span:not(.font-kana) { display: none; }
+  .world-codex { gap: 0; }
+  .world-codex .font-kana { font-size: 18px; }
+  .wm-nav-label { min-width: 0; }
 }
 
 
@@ -259,4 +458,18 @@ button:disabled,
 
   .wm-avatar-bob { animation: none; }
   .wm-path-done, .wm-avatar { transition: none; }
+}
+
+/* Book-stop drop cap: the initial spans exactly two body lines. The float's box must
+   measure 2 × line-height (56px) EXACTLY or a third line gets pushed over to clear it,
+   which reads as a wedge. Letters like J have a descender that would overflow that box,
+   so line-height is set to the target height and the glyph is scaled to sit inside it
+   rather than padded down. */
+.drop-cap::first-letter {
+  float: left;
+  font-size: 3.1rem;
+  line-height: 3.5rem;    /* 2 × the 1.75rem body line-height */
+  margin-right: 0.1em;
+  font-weight: 600;
+  color: var(--color-ink);
 }

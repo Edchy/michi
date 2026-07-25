@@ -1,5 +1,5 @@
 /**
- * Seed content for Module 1: the five vowels (あ-row of the gojūon).
+ * Seed content for Track 1: the five vowels (あ-row of the gojūon).
  * Deliberately tiny — real content-as-data (content-model.md) comes later.
  * `id` is the join key to a learner's SrsItemState (data-model.md).
  */

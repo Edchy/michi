@@ -32,7 +32,8 @@ as a textbook hand.
 ## 2. Color
 
 **Strategy: restrained.** Tinted-neutral surfaces + two traditional pigments split
-by *meaning*. All values OKLCH.
+by *meaning*, plus one categorical set (track hues) scoped to the world map. All values
+OKLCH.
 
 The two colors are the classic Japanese pairing — **朱 (shu, vermilion)** and
 **藍 (ai, indigo)** — and they never fight because they mean different things:
@@ -49,9 +50,12 @@ The red of torii gates and hanko seals — a mark made deliberately.
 
 | Token | OKLCH | Role |
 |---|---|---|
-| `--accent`        | `oklch(0.585 0.181 32)` | rare emphasis, "the path" |
-| `--accent-hover`  | `oklch(0.530 0.181 32)` | hover/pressed |
-| `--accent-weak`   | `oklch(0.955 0.030 32)` | quiet tint when the accent needs a surface |
+| `--accent`        | `oklch(0.545 0.190 32)` | focus rings, lesson & codex emphasis |
+| `--accent-hover`  | `oklch(0.490 0.190 32)` | hover/pressed |
+| `--accent-weak`   | `oklch(0.940 0.035 40)` | quiet tint when the accent needs a surface |
+
+Vermilion does **not** mark "you are here" on the world map — that is form-only. See
+*Track hues* below.
 
 ### 藍 Indigo — the ink (near-black) & primary action
 
@@ -59,20 +63,83 @@ The ink is indigo rather than a warm-tinted black — cool, deep, structural.
 
 | Token | OKLCH | Role |
 |---|---|---|
-| `--ink`       | `oklch(0.250 0.045 264)` | primary text, the character, primary button fill |
-| `--ink-muted` | `oklch(0.520 0.030 264)` | secondary text, prompts |
-| `--ink-faint` | `oklch(0.680 0.022 264)` | hints, sound labels under glyphs |
+| `--ink`       | = `--color-navy` | primary text, the character, primary button fill |
+| `--ink-muted` | `oklch(0.500 0.032 264)` | secondary text, prompts |
+| `--ink-faint` | `oklch(0.620 0.026 264)` | hints, sound labels under glyphs |
 
-### Neutrals (surface)
+### The two base pigments
 
-Barely-tinted toward the indigo ink (≤0.006 chroma) — cool paper, never cream/sand.
+Every neutral derives from these. **Never write `white`, `black`, or a raw hex** — use a
+token, and add one here if none fits.
 
 | Token | OKLCH | Role |
 |---|---|---|
-| `--bg`        | `oklch(0.992 0.002 264)` | app background (near-paper off-white) |
-| `--surface`   | `oklch(0.968 0.004 264)` | raised fills, option buttons |
-| `--surface-2` | `oklch(0.938 0.005 264)` | hover on surfaces |
-| `--line`      | `oklch(0.900 0.005 264)` | hairline borders, the trace guide |
+| `--color-paper` | `#F6EEE2` | **the off-white** — a warm cream. Michi's "white" everywhere: page, light text on dark fills, check marks. Never `#fff` — paper, not a screen |
+| `--color-navy`  | `oklch(0.220 0.042 264)` | **the dark.** Deep blue-black, never `#000` — the ink the app is drawn in |
+
+Measured on the cream: ink **15.1:1**, muted **5.2:1**, faint **3.2:1**, accent **4.7:1** — all clear.
+The cream is darker than a cool white, so `--ink-faint` and `--accent` are tuned *for it*;
+re-measure all four if the paper ever changes again.
+
+### Neutrals (surface)
+
+Tinted **warm** (hue ~78) to sit on the cream paper rather than reading grey-blue against
+it. `--bg` and `--ink` are aliases of the two pigments above, so the pair stays in charge.
+
+| Token | OKLCH | Role |
+|---|---|---|
+| `--bg`        | = `--color-paper` | app background |
+| `--surface`   | `oklch(0.938 0.014 78)` | raised fills, option buttons |
+| `--surface-2` | `oklch(0.906 0.018 78)` | hover on surfaces |
+| `--line`      | `oklch(0.872 0.019 78)` | hairline borders, the trace guide |
+| `--ink`       | = `--color-navy` | primary text, the glyph |
+| `--shadow-card` | `0 1px 3px navy/7%` | elevation, tinted with the ink rather than neutral black |
+
+### Track hues (world map only)
+
+The one place a third color family is allowed. Each **track** on the
+[world map](../curriculum/world-map.md) is a real **Tokyo Metro line**, drawn in that
+line's official color — so the hue is not decoration, it *is* the line's identity.
+
+| Token | Hex | Line | Official |
+|---|---|---|---|
+| `--color-track-1` | `#FD9701` | Ginza 銀座線 | `#FF9500` |
+| `--color-track-2` | `#F62E34` | Marunouchi 丸ノ内線 | `#F62E36` |
+| `--color-track-3` | `#00BC87` | Chiyoda 千代田線 | `#00BB85` |
+| `--color-track-4` | `#8F76D7` | Hanzomon 半蔵門線 | `#8F76D6` |
+| `--color-track-5` | `#009BBF` | Tozai 東西線 | `#009BBF` |
+
+Each is within 1–5/765 of the official value (community-documented hex; Tokyo Metro
+publishes the color *names* but blocks automated fetches of a brand guideline). Keep any
+new track hue on a real line rather than inventing one.
+
+These are bright and vary widely in lightness, so they are used at **derived strengths**,
+all `color-mix`ed from the one token — change the hex and everything follows:
+
+| Use | Strength |
+|---|---|
+| path ink, station rings, card left edge (nothing textual on them) | full |
+| a surface with light text on it (the nav track row) | 55% with `--ink` |
+| the hue as small text on paper (card labels) | 55% with `--ink` |
+| unwalked path ink — a track is identifiable *before* it's reached | 55% with `--bg` |
+
+The constraints that keep this from breaking §2's discipline:
+
+- **Never light text on a raw hue.** Paper text fails AA on all four (2.1–3.8:1); on the
+  55% fill it clears every one (**4.9–7.0:1**, measured). Don't fade it with `opacity`
+  either — the 10px `TRACK N` label has no headroom.
+- **Grouping only, never state.** done/current/locked are carried by **shape and weight**:
+  done = filled + check, current = thick ring + halo + ink-dark number + pin, locked =
+  thin faint ring. No state has a hue of its own, so "you are here" reads identically on
+  every track color. The map must survive `grayscale(1)` with every state still
+  distinguishable — check that after any change here.
+- **Vermilion no longer marks current state.** It was ~6° from `#F62E34` in OKLCH and lost
+  its meaning on the red track; it's now reserved for focus rings and lesson/codex
+  emphasis.
+- **Categorical, never a ranking** — a track's hue says *which*, never *how far*.
+- **Scoped to the map.** These do not appear in lessons, drills, or the codex.
+- Declared in both `:root` and `@theme` — see the note in `globals.css` for why (runtime
+  composition vs. Tailwind utilities). Keep the two in sync.
 
 ### Semantic (feedback)
 
@@ -87,10 +154,10 @@ A correct press is more rewarding than a correction: it pops to 140%, gains a so
 glyph-only indigo glow, and fully dissolves the alternatives. A revealed answer after
 a miss stays at the quieter 125% treatment. Neither animation rebounds or scales down.
 
-> **Contrast:** `--ink` (indigo) on `--bg` ≈ 12:1; `--ink-muted` on `--bg` ≈ 5.5:1
-> (body ✓); `--ink-faint` is for large glyphs/labels only, not body copy. `--accent`
-> on `--bg` ≈ 4.9:1 (✓ for text and large UI); white on `--ink` ≈ 12:1 (button ✓).
-> Re-check any new pairing against WCAG AA.
+> **Contrast** (measured on the `#F6EEE2` paper): `--ink` **15.1:1**; `--ink-muted`
+> **5.2:1** (body ✓); `--ink-faint` **3.2:1** — large glyphs/labels only, not body copy;
+> `--accent` **4.7:1** (✓ text and large UI); `--color-paper` on `--ink` **15.1:1**
+> (button ✓). Re-check any new pairing against WCAG AA.
 
 ---
 
@@ -190,7 +257,7 @@ anti-reference (§1).
 | Glyph button (teach / say-aloud) | the character IS the audio control; tap to replay |
 | Trace canvas | placeholder; real version is the signature mechanic (ADR-0004) |
 | Practice mode switcher | Listen · Match · Speak · Write; shared above the floating lesson nav |
-| World map | The course as one continuous ink path of station circles (done / current / locked by shape, not color); move between modules via bottom-left glide arrows that pan along the path, or a zoom-out module chain to jump. Structure in [world-map.md](../curriculum/world-map.md) |
+| World map | The course as provinces (国) of tracks (線) of station circles (done / current / locked by shape, not color); each track in its own hue (see *Track hues* above). Move between tracks via bottom-left glide arrows, or tap the province / track name in the nav label for either list. Province boundaries show as a quiet dashed seam. Structure in [world-map.md](../curriculum/world-map.md) |
 
 ---
 

@@ -2,7 +2,7 @@
  * Drill completion tracking (pure, minimal).
  *
  * Practice is blocked: each drill block runs until the learner is consistent,
- * then the module advances to the next block. Choice drills use a progressive
+ * then the session advances to the next block. Choice drills use a progressive
  * difficulty ladder; production drills require every item in the pool once.
  */
 

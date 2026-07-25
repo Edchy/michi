@@ -6,7 +6,7 @@ and *why*, this doc is the flat roster authors build from: each station's kana/
 vocabulary/grammar, what the learner reads, the drills, the cultural drip, SRS seeds,
 end-state, and any book stop after it.
 
-The course is **self-paced: Course → Modules → Stations, no calendar** — no months, no
+The course is **self-paced: Course → Provinces → Tracks → Stations, no calendar** — no months, no
 weeks, no daily deadlines. A learner advances a station when they've earned it, however
 long that takes. The source content in [month-1.md](./month-1.md) is authored as an
 ordered sequence of *sessions* (sittings); this roster reorganizes that sequence into
@@ -15,13 +15,13 @@ that ordered content, not a date.) Drill types are from
 [content-model.md](./content-model.md#exercise); the per-station arc (hear → symbol →
 produce → use → SRS → complete) is from [station-map.md §2](./station-map.md#2-the-shape-of-a-station).
 
-> **Status:** Draft / proposed. **Stations 1–16 (through full hiragana) are specced in
+> **Status:** Draft / proposed. **Stations 1–17 (through full hiragana) are specced in
 > full below; later stations are a one-line outline** to be filled as those curricula
 > are authored ([roadmap](../roadmap.md) Phase 2). Kana readings shown in parentheses
 > are for authoring only — **never rendered to the learner**
 > ([P2](../product/principles.md#p2--no-romaji-ever-as-a-reading-aid)).
 
-> **Code status:** `src/app/worldmap.ts` matches this roster (4 modules, 16 stations,
+> **Code status:** `src/app/worldmap.ts` matches this roster (4 tracks, 17 stations,
 > station ids and titles as below). When stations become authored data they should be
 > *derived* from lessons so code and content can't drift — see
 > [world-map.md → Open edges](./world-map.md#open-edges).
@@ -32,7 +32,7 @@ produce → use → SRS → complete) is from [station-map.md §2](./station-map
 
 Each station entry uses these fields:
 
-- **Module / n** — which module, and the global station number.
+- **Track / n** — which track, and the global station number.
 - **Teaches** — the new items introduced (seed the SRS here).
 - **Reads** — real words/sentences the learner reads at this station (only from
   already-known kana — the "I can actually read this" moments).
@@ -48,27 +48,52 @@ Each station entry uses these fields:
 
 ---
 
-# Module 1 — First sounds
+# Track 1 — First sounds
 
-*Sound before symbol. The foundation: the vowels, the first consonant row, and the
-first real word.*
+*Orientation, then sound before symbol: what the writing system is, the vowels, the
+first consonant row, and the first real word.*
 
-### Station 1 · First sounds
+### Station 1 · The three scripts
+- **Teaches:** no kana and no SRS items — an **orientation stop**. What hiragana,
+  katakana and kanji are, what each is for, and why romaji is named but set aside
+  ([P2](../product/principles.md#p2--no-romaji-ever-as-a-reading-aid)).
+- **Reads:** **one** example word per script, broken into syllables and tappable for
+  audio — **わたし** (I) for hiragana; **カメラ** (camera) for katakana; **山** (mountain)
+  for kanji, with its kana reading beneath. The learner is not asked to retain any of
+  them. One idea per slide; anything deeper waits for the book stop.
+- **Drills:** none. Every step is a read-this beat
+  ([session-flow.md §1](./session-flow.md)).
+- **Drip:** each script's blurb carries its one essential fact, so the learner cannot
+  miss it even if they skip the book stop — a kana always sounds the same; katakana
+  signals a borrowed word; a kanji shows meaning, not pronunciation.
+- **Sessions:** — (new; precedes session 1).
+- **Seeds:** — (nothing enters the SRS).
+- **End-state:** knows what the three scripts are and why the course starts with
+  hiragana, and specifically with its five vowels.
+- **📖 Book stop after:** *"Three scripts, one language"* — **expands** on this station
+  rather than repeating it: how Chinese characters were adapted to a language they did
+  not fit, how cursive whole-forms became hiragana while character fragments became
+  katakana (and why that makes one round and the other angular), why Japanese kept
+  kanji instead of simplifying to kana alone — capped with one sentence
+  (**私はコーヒーを飲みます**) showing all three scripts sharing the work.
+
+### Station 2 · First sounds
 - **Teaches:** the five vowel **sounds** by ear, then the five vowel **characters** —
   あ (a), い (i), う (u), え (e), お (o).
 - **Reads:** — (no words yet).
 - **Drills:** `listen-identify` (audio → pick kana); `recognize-sound` (kana → pick
   sound); final mixed recognition; then hear-and-mimic rehearsal (self-confirm, no
   speech recognition). Drawing begins later with proper stroke guidance.
-- **Drip:** after all five symbols are introduced, name them as **hiragana**: one of
-  Japanese's three scripts, with 46 basic sound symbols; the learner already knows five.
+- **Drip:** **new information, not a repeat of station 1** — Japanese has exactly five
+  vowels and they never shift (unlike English "a" in cat/car/cake), and あいうえお is the
+  ordering Japanese itself uses for dictionaries and lists, the way A-B-C works in
+  English. The remaining 41 kana are rows built on these five.
 - **Sessions:** 1–3.
 - **Seeds:** あ い う え お (5 kana).
-- **End-state:** hear, say, and recognize the five vowels.
-- **📖 Book stop after:** *"Three scripts, one language"* — the first high-level map
-  of hiragana, katakana, and kanji, plus the brief history of why they coexist.
+- **End-state:** hear, say, and recognize the five vowels; 5 of 46.
+- **📖 Book stop after:** — (the three-scripts book stop now sits after station 1).
 
-### Station 2 · The K row
+### Station 3 · The K row
 - **Teaches:** か (ka), き (ki), く (ku), け (ke), こ (ko) — the k-sound across the five
   vowels. Note for the learner: no formula, each is memorized.
 - **Reads:** **こい** (koi) — the first real word; the "I can actually read this" moment.
@@ -81,7 +106,7 @@ first real word.*
 - **End-state:** read the K row; read your first Japanese word.
 - **📖 Book stop after:** —
 
-### Station 3 · A first look back
+### Station 4 · A first look back
 - **Teaches:** no new kana — the first gentle checkpoint + consolidation of all 10.
 - **Reads:** re-reads こい; free reading of any 2-kana combo the learner can form.
 - **Drills:** gentle mini-quiz (recognize all 10; match audio→kana; draw 3 from memory —
@@ -94,18 +119,18 @@ first real word.*
 - **📖 Book stop after:** *"Where the letters came from"* — hiragana was simplified from
   kanji in the Heian period; the shapes have ancestors (あ ← 安).
 
-> **Note:** the vowels-through-K-row content forms Module 1 cleanly as **3 stations**.
-> (The code now matches this — the earlier provisional 5-station Module 1 is gone.)
+> **Note:** Track 1 is **4 stations**: the orientation stop plus the
+> vowels-through-K-row content. (The code matches this.)
 > Real words, sentences, and listening are *capabilities threaded through later
 > stations*, not separate early stops.
 
 ---
 
-# Module 2 — Reading on
+# Track 2 — Reading on
 
 *The rest of the core gojūon rows; real words and the first sentence accumulate.*
 
-### Station 4 · The S row
+### Station 5 · The S row
 - **Teaches:** さ (sa), し (**shi**, not "si"), す (su), せ (se), そ (so).
 - **Reads:** **しま** (shima = island) — first compound from two known kana.
 - **Drills:** full SRS review; `listen-identify` + `recognize-sound` on the s-row;
@@ -117,7 +142,7 @@ first real word.*
 - **End-state:** read the S row; read しま.
 - **📖 Book stop after:** —
 
-### Station 5 · The T row
+### Station 6 · The T row
 - **Teaches:** た (ta), ち (**chi**), つ (**tsu**), て (te), と (to).
 - **Reads:** **とり** (tori = bird), **うた** (uta = song) — real words.
 - **Drills:** SRS review; new-row intro; `draw-character` featuring て (elegant, 2
@@ -129,7 +154,7 @@ first real word.*
 - **End-state:** read the T row; reading real Japanese words now.
 - **📖 Book stop after:** —
 
-### Station 6 · The N row
+### Station 7 · The N row
 - **Teaches:** な (na), に (ni), ぬ (nu), ね (ne), の (no).
 - **Reads:** **ねこ** (neko = cat), **にほん** (nihon = Japan); **first mini-story** —
   "ねこ が いる。ねこ は かわいい。" (There is a cat. The cat is cute.), with audio.
@@ -142,7 +167,7 @@ first real word.*
 - **End-state:** read the N row; read your first Japanese sentence.
 - **📖 Book stop after:** —
 
-### Station 7 · Halfway snapshot
+### Station 8 · Halfway snapshot
 - **Teaches:** no new kana — first weekly **knowledge snapshot** + consolidation.
 - **Reads:** 5 real words using known kana; re-read the mini-story.
 - **Drills:** full recognition pass on all 25; `draw-from-memory` (5 random);
@@ -153,16 +178,20 @@ first real word.*
 - **Sessions:** 14.
 - **Seeds:** — (consolidation).
 - **End-state:** honest checkpoint — over half of hiragana, first sentence read.
-- **📖 Book stop after:** *"Three scripts, one language"* — the fuller picture now that
-  hiragana feels real: kanji borrowed from China, kana built on top, why three coexist.
+- **📖 Book stop after:** *"Why the kana are ordered as they are"* — now that half the
+  set is known, the **gojūon** (五十音) grid itself: five vowels across, consonant rows
+  down; why it counts fifty but holds 46 (empty y/w cells, ん outside the table); the
+  cells that bend (し, ち, つ, ふ) and why romaji makes them look arbitrary; and that
+  this is the order dictionaries and forms sort by. The three-scripts history was told
+  at station 1 and is not repeated here. *(Authored: `src/content/codex.ts`.)*
 
 ---
 
-# Module 3 — Completing the kana
+# Track 3 — Completing the kana
 
 *The remaining rows and the final character; full hiragana literacy.*
 
-### Station 8 · The H row
+### Station 9 · The H row
 - **Teaches:** は (ha), ひ (hi), ふ (**fu**, not "hu"), へ (he), ほ (ho).
 - **Reads:** **ひと** (hito = person), **はな** (hana = flower/nose), **ほし** (hoshi = star).
 - **Drills:** SRS review; new-row intro; `draw-character`; `read-word` on the compounds.
@@ -174,7 +203,7 @@ first real word.*
 - **End-state:** read the H row.
 - **📖 Book stop after:** —
 
-### Station 9 · The M row
+### Station 10 · The M row
 - **Teaches:** ま (ma), み (mi), む (mu), め (me), も (mo).
 - **Reads:** **みず** (mizu = water), **もり** (mori = forest), **うみ** (umi = sea);
   **mini-story 2** — slightly longer, introduces a boy (e.g. こうた) who sees the sea and
@@ -187,7 +216,7 @@ first real word.*
 - **End-state:** read the M row; read a longer story.
 - **📖 Book stop after:** —
 
-### Station 10 · The Y & W rows
+### Station 11 · The Y & W rows
 - **Teaches:** や (ya), ゆ (yu), よ (yo), わ (wa), を (**wo**, said like お, grammar-only).
 - **Reads:** **やまと** (Yamato — an old name for Japan itself).
 - **Drills:** SRS review; new-characters intro; `draw-character`; `recognize-sound` recall.
@@ -198,7 +227,7 @@ first real word.*
 - **End-state:** read the Y and W rows.
 - **📖 Book stop after:** —
 
-### Station 11 · The R row & ん
+### Station 12 · The R row & ん
 - **Teaches:** ら (ra), り (ri), る (ru), れ (re), ろ (ro), then the final character **ん**
   (n) — the only non-syllable kana; never starts a word.
 - **Reads:** **さくら** (sakura = cherry blossom), **そら** (sora = sky), **りんご**
@@ -212,15 +241,15 @@ first real word.*
 - **Seeds:** ら り る れ ろ ん → **46 total (all hiragana)**.
 - **End-state:** **full hiragana literacy.**
 - **📖 Book stop after:** *"A different kind of alphabet"* (preview) — sets up how
-  Japanese writing differs from a Latin alphabet, ahead of katakana/kanji in later modules.
+  Japanese writing differs from a Latin alphabet, ahead of the katakana and kanji provinces.
 
 ---
 
-# Module 4 — First real words & grammar
+# Track 4 — First real words & grammar
 
 *Vocabulary themes, the first grammar concept, and the full-hiragana milestone.*
 
-### Station 12 · Hiragana mastery
+### Station 13 · Hiragana mastery
 - **Teaches:** no new kana — full consolidation of all 46.
 - **Reads:** all 46 in random order; a speed round.
 - **Drills:** recognition drill (all 46 random); `draw-from-memory` (10 random); reading
@@ -232,7 +261,7 @@ first real word.*
 - **End-state:** fluent recognition of all 46.
 - **📖 Book stop after:** —
 
-### Station 13 · Words of nature
+### Station 14 · Words of nature
 - **Teaches:** 10 nature words — かわ (river), やま (mountain), うみ (sea), そら (sky),
   はな (flower), もり (forest), つき (moon), ほし (star), かぜ (wind), ゆき (snow).
 - **Reads:** each word with audio, image, one example sentence.
@@ -243,7 +272,7 @@ first real word.*
 - **End-state:** read and know 10 nature words.
 - **📖 Book stop after:** —
 
-### Station 14 · Words of animals
+### Station 15 · Words of animals
 - **Teaches:** 10 animal words — いぬ (dog), ねこ (cat), とり (bird), さかな (fish),
   うま (horse), くま (bear), うさぎ (rabbit), きつね (fox), たぬき (raccoon dog), さる (monkey).
 - **Reads:** each with audio, image, example sentence.
@@ -254,7 +283,7 @@ first real word.*
 - **End-state:** read and know 10 animal words.
 - **📖 Book stop after:** —
 
-### Station 15 · A first sentence
+### Station 16 · A first sentence
 - **Teaches:** the **first grammar** — Japanese is **Subject–Object–Verb** ("I sushi
   eat"); the verb always goes last.
 - **Reads:** **ねこ が さかな を たべる。** (The cat eats fish.) — each word explained,
@@ -270,7 +299,7 @@ first real word.*
 - **End-state:** understand SOV; arrange simple Japanese sentences.
 - **📖 Book stop after:** —
 
-### Station 16 · Hiragana complete
+### Station 17 · Hiragana complete
 - **Teaches:** no new content — the full-hiragana milestone review + assessment.
 - **Reads:** mini-story 3 (known vocab + SOV), with audio + comprehension questions;
   3 simple sentences to read and explain.
@@ -288,22 +317,29 @@ first real word.*
 
 # Beyond hiragana — Outline (to be specced)
 
-Filled in as each curriculum is authored. One line each; these become full station
-entries above when their content exists.
+Everything above is **Province 1 国 — Hiragana**. The provinces below are *declared* in
+`src/app/worldmap.ts` with empty track lists (so they show as "Not yet built" rather
+than a fake "coming soon"), and filled in as each curriculum is authored. One line each;
+these become full station entries above when their content exists.
 
-**Module 5 — Katakana begins.** Same sounds as hiragana, new shapes — much faster now.
-Stations by row (ア-row, カ-row, …), same introduce→reinforce arc. **Drip / book stop:**
-*"What katakana is"* — invented by Buddhist monks in the 800s; used for loanwords,
-emphasis, onomatopoeia (the deep katakana explanation lands here, at introduction).
+Province boundaries are fixed — one script or domain each. The **track** groupings inside
+them are deliberately open, decided as the curriculum is written.
 
-**Module 6 — First kanji.** 一 二 三 四 五 (numbers 1–5) — simple strokes, high utility,
-embedded in real vocabulary. **Drip / book stop:** *"What kanji is"* — borrowed from
-China, then Japan built kana on top; the full three-scripts origin story assembled as a
-satisfying recap once all three have been met.
+**Province 2 国 — Katakana.** Same sounds as hiragana, new shapes — much faster now.
+Stations by row (ア-row, カ-row, …), same introduce→reinforce arc, grouped into tracks
+as authored. **Drip / book stop:** *"What katakana is"* — invented by Buddhist monks in
+the 800s; used for loanwords, emphasis, onomatopoeia (the deep katakana explanation lands
+here, at introduction).
 
-**Module 7+ — The language starts to feel real.** High-frequency vocab (numbers,
-colors, common verbs), present-tense verb conjugation (positive/negative), listening
-comprehension with short native audio. Stations TBD as this curriculum is authored.
+**Province 3 国 — First kanji.** 一 二 三 四 五 (numbers 1–5) — simple strokes, high
+utility, embedded in real vocabulary. **Drip / book stop:** *"What kanji is"* — borrowed
+from China, then Japan built kana on top; the full three-scripts origin story assembled
+as a satisfying recap once all three have been met.
+
+**Province 4 国 — Words & sentences.** The language starts to feel real: high-frequency
+vocab (numbers, colors, common verbs), present-tense verb conjugation
+(positive/negative), listening comprehension with short native audio. Tracks and
+stations TBD as this curriculum is authored.
 
 ---
 

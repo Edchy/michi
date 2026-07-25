@@ -88,19 +88,30 @@ throughout as `[P#]`. The short version:
 - **Moving through it:** exercises **auto-advance** on completion; only *read-this*
   steps (a new character, a cultural note) wait for a tap. Feedback **teaches, never
   punishes** — no hearts, no lives. A progress bar is always visible.
-- **The very first thing** the learner does: **hear a native voice say あ and mimic it
-  aloud** — doing before reading. The "why Japanese / three scripts" story is earned
-  *after* that hook, then dripped in as each script becomes relevant.
-- **The home surface is a world map** — the course drawn as **one continuous, walkable
-  path** of **stations** (each a lesson, *STATION N 宿*) grouped into **modules**, module
-  1 flowing into module 2 into module 3. The learner walks the path, clicks a station to
-  start it, and moves between modules two ways — glide arrows that pan along the path, or
-  a zoom-out **module chain** to jump; completing a module unlocks the next. It's also
-  where progress lives. Quiet and calm, never gamified.
+- **The first station is orientation:** a short read-through of the three scripts —
+  hiragana, katakana, kanji, with romaji named and set aside — one idea per slide,
+  one real word per script (わたし, カメラ, 山), ending on *why* the course starts
+  with hiragana and its five vowels. Nothing is drilled or seeded there; the depth
+  (origins, a mixed three-script sentence) lives in the book stop that follows.
+- **Then the learning proper begins:** **hear a native voice say あ and mimic it aloud**
+  — doing before reading. Each later script's story is dripped in as it becomes relevant.
+- **Stations carry their own new facts; book stops expand on them.** Because book stops
+  are optional, nothing essential lives only in one — every station introduces its ideas
+  on unskippable slides, and the book stop after it goes deeper rather than repeating.
+- **The home surface is a world map, themed as the Tokyo subway** — the course drawn as a
+  **walkable path** of **stations** (each a lesson, shown by a real Tokyo place name in
+  kana: あさくさ / *Asakusa Station 駅*) grouped into **tracks** (each a real Metro
+  line — *Ginza Line 銀座線* — drawn in that line's official color) grouped into
+  **provinces** (*PROVINCE N 国* — one script or domain each: Hiragana, Katakana,
+  First kanji, Words & sentences). The learner walks the path, clicks a station to start
+  it, and moves by glide arrows within a province or a two-level **chain** (provinces →
+  tracks) between them; completing a track unlocks the next. Only the current
+  province's path is drawn, which is what keeps the map legible as the course grows past 50
+  tracks. It's also where progress lives. Quiet and calm, never gamified.
 
 → Sequencing philosophy: [docs/curriculum/overview.md](./docs/curriculum/overview.md)
 · the experience layer: **[docs/curriculum/session-flow.md](./docs/curriculum/session-flow.md)**
-· the world map (modules & stations): [docs/curriculum/world-map.md](./docs/curriculum/world-map.md)
+· the world map (provinces, tracks & stations): [docs/curriculum/world-map.md](./docs/curriculum/world-map.md)
 · how days collapse into stations + book stops/codex: [docs/curriculum/station-map.md](./docs/curriculum/station-map.md)
 · the full station roster (every stop's contents): [docs/curriculum/stations.md](./docs/curriculum/stations.md)
 · the concrete hiragana session sequence: [docs/curriculum/month-1.md](./docs/curriculum/month-1.md)
@@ -141,6 +152,8 @@ Records:
 | [0002](./docs/decisions/0002-no-romaji.md) | No romaji as a reading aid | Protect the native phonological map from day one |
 | [0003](./docs/decisions/0003-sm2-srs-algorithm.md) | SM-2 for spaced repetition | Tiny, proven, pure; FSRS is a possible future upgrade |
 | [0004](./docs/decisions/0004-stroke-data-source.md) | `strokesvg` (Klee One) for kana strokes | Stroke hints match the teaching typeface; OFL-clean; KanjiVG for kanji later |
+| [0006](./docs/decisions/0006-provinces-and-tracks.md) | Provinces (国) above tracks (線) | Renames the 0005 tiers: province → track → station; one-tap switching |
+| [0007](./docs/decisions/0007-tokyo-subway-theming.md) | Tokyo subway theming | Stations are real Tokyo stations (駅), tracks are real Metro lines in their official colors |
 
 → How ADRs work + index: [docs/decisions/README.md](./docs/decisions/README.md)
 
@@ -148,13 +161,33 @@ Records:
 
 ## 8. Where the project stands
 
-**Phase 0 — Foundations** (planning & structure) is essentially complete: the full
-docs foundation exists, and the key decisions (stack, no-romaji, SRS algorithm,
-stroke-data source) are settled. **No application code exists yet** — the next build
-target is the pure SRS engine (Phase 1).
+**Phase 0 — Foundations** is complete: the docs foundation exists and the key
+decisions (stack, no-romaji, SRS algorithm, stroke-data source) are settled.
+
+**Application code now exists.** Built so far:
+
+- **SRS engine** (Phase 1) — pure SM-2 in `src/srs/`, no framework, under test
+- **Content layer** (Phase 2) — the vowels and Track 1 in `src/content/`, as TS
+  modules with validation tests; the full 46-kana curriculum is still to come
+- **Web app** (Phase 3, in progress) — Next.js App Router in `src/app/`: the
+  world map (provinces → tracks → stations), Station 1 (the three scripts) and
+  Station 2 (the five vowels), and the codex
+- **Kana audio** — all 46 gojūon as placeholder recordings (see the note below)
+
+62 tests pass across 10 files (`npx vitest run`). Phase 3 is scoped to Track 1's first
+two stations (the three scripts, then the five vowels) — generalizing across the full
+curriculum is what remains. Two codex entries are authored: *Three scripts, one
+language* (after station 1) and *Why the kana are ordered as they are* (the gojūon
+grid, after station 8).
 
 The roadmap runs: **0 Foundations → 1 SRS engine → 2 Content (the hiragana curriculum) →
 3 Web app → 4 Mobile via Capacitor → 5 Audio production →** then katakana, kanji, and beyond.
+
+*Audio note:* all 46 gojūon now ship as placeholder recordings generated with
+macOS `say` (Kyoko) — free, offline, regenerable via
+[`scripts/generate-kana-audio.sh`](./scripts/generate-kana-audio.sh). Phase 5
+remains open for production-quality audio.
+See [docs/design/audio.md](./docs/design/audio.md).
 
 **Open questions still tracked:** content on-disk format (JSON vs. TS modules), and
 test/lint/TS tooling — both to be settled as their phases begin.
@@ -181,7 +214,7 @@ michi/
     │   ├── session-flow.md     how a session plays out; the first experience; scripts explained
     │   ├── month-1.md          the full 28-day hiragana curriculum
     │   ├── content-model.md    content as structured data
-    │   ├── world-map.md        modules & stations: the course as a walkable path
+    │   ├── world-map.md        provinces, tracks & stations: the course as a walkable path
     │   ├── station-map.md      how days collapse into stations; book stops & the codex
     │   └── stations.md         the full station roster: every stop and what it contains
     ├── architecture/    HOW IT'S BUILT
@@ -192,8 +225,8 @@ michi/
     ├── design/          CRAFT
     │   ├── DESIGN.md           the visual system (feel, color, motion)
     │   ├── typography.md       the typefaces (a pedagogical choice)
-    │   └── audio.md            voiceover strategy & pitch-accent accuracy
-    ├── decisions/       WHY — ADRs 0001–0004 (+ README, template)
+    │   └── audio.md            voiceover strategy, pitch accent & what ships today
+    ├── decisions/       WHY — ADRs 0001–0007 (+ README, template)
     └── roadmap.md       WHEN — phases, status, open questions
 ```
 

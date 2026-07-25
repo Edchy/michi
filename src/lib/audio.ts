@@ -9,7 +9,12 @@
  * (docs/design/audio.md) — same files keyed by id, no code change here.
  */
 
-import type { Kana } from "@/content/hiragana";
+/**
+ * Anything keyed by a kana id can be played — a Kana, or a Syllable of an example
+ * word. Only the id is ever used, so asking for more would force callers to invent
+ * fields they do not have.
+ */
+type Playable = { id: string };
 
 /** Cache one Audio element per item so repeat taps replay instantly. */
 const cache = new Map<string, HTMLAudioElement>();
@@ -26,7 +31,7 @@ function element(id: string): HTMLAudioElement | null {
 }
 
 /** Play a kana's recording. Tapping again restarts it (spammable). No-op if missing. */
-export function play(kana: Kana): void {
+export function play(kana: Playable): void {
   const el = element(kana.id);
   if (!el) return;
   el.currentTime = 0;
@@ -38,6 +43,6 @@ export function play(kana: Kana): void {
  * Preload the clips for a set of kana on an early user gesture, so the first
  * play is instant and the browser has permission to produce sound.
  */
-export function primeAudio(pool: Kana[]): void {
+export function primeAudio(pool: Playable[]): void {
   for (const k of pool) element(k.id)?.load();
 }

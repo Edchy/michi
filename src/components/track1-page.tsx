@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { buildModule1, type Step } from "@/content/module1";
+import { buildTrack1, type Step } from "@/content/track1";
 import { ChoiceProgress, DrillProgress } from "@/content/drill";
 import { makeQuestion, pickType, type Question, type QuestionType } from "@/content/question";
 import { ShuffleBag } from "@/content/bag";
@@ -15,8 +15,8 @@ const ARROW_KEY_CLASS =
 
 type DrillMeterData = { value: number; max: number };
 
-export default function Module1Page() {
-  const steps = useMemo(() => buildModule1(), []);
+export default function Track1Page() {
+  const steps = useMemo(() => buildTrack1(), []);
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1); // 1 forward, -1 back
   const [drillBack, setDrillBack] = useState<(() => void) | null>(null);
@@ -205,8 +205,6 @@ function FloatingNav({
               <span aria-hidden className="text-lg">←</span>
             </button>
           )}
-          {/* ponytail: Home is a placeholder — no home route yet (single-page module).
-              Wire onClick to router.push("/") once a home page exists. */}
           <a href="/" aria-label="World map" className={`${base} flex items-center justify-center font-kana text-lg`}>
             家
           </a>
@@ -293,7 +291,7 @@ function StepView({
       ) : step.kind === "reveal" ? (
         <RevealStep kana={step.kana} />
       ) : step.kind === "context" ? (
-        <HiraganaContextStep />
+        <HiraganaContextStep kana={step.kana} />
       ) : step.kind === "rehearse" ? (
         <DrillBlock
           pool={step.pool}
@@ -327,7 +325,7 @@ function ListenButton({ kana, label = "Listen" }: { kana: Kana; label?: string }
   return (
     <button
       onClick={() => play(kana)}
-      className="mx-auto flex min-h-[48px] items-center gap-2 rounded-[var(--radius-btn)] bg-ink px-6 text-white transition-colors hover:bg-ink/90"
+      className="mx-auto flex min-h-[48px] items-center gap-2 rounded-[var(--radius-btn)] bg-ink px-6 text-paper transition-colors hover:bg-ink/90"
     >
       <span aria-hidden>▶</span>
       <span className="text-sm font-medium">{label}</span>
@@ -339,7 +337,8 @@ function IntroStep() {
   return (
     <div className="flex flex-col items-center gap-8 text-center">
       <p className="max-w-sm text-base font-medium leading-relaxed text-ink-muted text-balance">
-        Japanese begins with five vowel sounds. Each one has its own symbol.
+        Here is hiragana&rsquo;s whole vowel set. Japanese has exactly five, and they never
+        shift — unlike English, where &ldquo;a&rdquo; sounds different in cat, car and cake.
       </p>
       <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4">
         {VOWELS.map((k) => (
@@ -422,14 +421,20 @@ function RevealStep({ kana }: { kana: Kana[] }) {
   );
 }
 
-function HiraganaContextStep() {
+function HiraganaContextStep({ kana }: { kana: Kana[] }) {
   return (
     <div className="mx-auto flex max-w-md flex-col items-center gap-6 text-center">
-      <p className="font-kana text-6xl leading-none text-ink">ひらがな</p>
-      <p className="text-lg font-medium text-ink">These symbols are hiragana.</p>
+      <p className="flex gap-4 font-kana text-6xl leading-none text-ink">
+        {kana.map((k) => (
+          <span key={k.id}>{k.glyph}</span>
+        ))}
+      </p>
+      <p className="text-lg font-medium text-ink">This is the order they always come in.</p>
       <p className="leading-relaxed text-ink-muted text-pretty">
-        Hiragana is one of the three scripts used to write Japanese. Its 46 basic
-        symbols represent sounds. You already know five.
+        あいうえお is not alphabetical order — it is the order Japanese itself uses, for
+        dictionaries, forms and lists, the way A-B-C works in English. The remaining 41
+        kana are built as rows on top of these five: か き く け こ, さ し す せ そ, and so
+        on. Learn this sequence and you have learned the shape of the whole set.
       </p>
     </div>
   );
@@ -793,10 +798,13 @@ function DoneStep() {
     <div className="flex flex-col items-center gap-6 text-center">
       <p className="text-2xl font-medium text-ink">Station complete.</p>
       <p className="max-w-sm text-ink-muted text-balance">
-        You can hear, say, and recognize all five Japanese vowel sounds.
+        You can hear, say, and recognize all five Japanese vowel sounds — 5 of 46.
       </p>
-      <p className="text-sm font-medium text-ink">A strong first step.</p>
-      <a href="/?completed=first-sounds" className={`mt-3 inline-flex items-center justify-center ${PRIMARY_BTN}`}>
+      <p className="max-w-sm text-sm text-ink-muted text-balance">
+        Next comes the K row: か き く け こ. Those same five vowels again, each with a k in
+        front — and at the end of it you will read your first real Japanese word.
+      </p>
+      <a href="/?completed=vowels" className={`mt-3 inline-flex items-center justify-center ${PRIMARY_BTN}`}>
         Return to the path
       </a>
     </div>
@@ -806,4 +814,4 @@ function DoneStep() {
 /** The primary action — solid indigo (ink) fill, small quiet radius. On nearly
  * every slide, so it's noticeable but never in the way. */
 const PRIMARY_BTN =
-  "min-h-[48px] rounded-[var(--radius-btn)] bg-ink px-10 text-base font-medium text-white transition-colors hover:bg-ink/90";
+  "min-h-[48px] rounded-[var(--radius-btn)] bg-ink px-10 text-base font-medium text-paper transition-colors hover:bg-ink/90";

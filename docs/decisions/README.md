@@ -40,5 +40,8 @@ preserves the history of thinking.
 | [0002](./0002-no-romaji.md) | No romaji as a reading aid | Accepted |
 | [0003](./0003-sm2-srs-algorithm.md) | Use SM-2 for spaced repetition | Accepted |
 | [0004](./0004-stroke-data-source.md) | Stroke-data source for the drawing mechanic | Accepted |
+| [0005](./0005-roads-and-provinces.md) | Roads (街道) and provinces (国) above stations | Superseded by 0006 (naming) |
+| [0006](./0006-provinces-and-tracks.md) | Provinces (国) and tracks (線): renaming the 0005 tiers | Accepted |
+| [0007](./0007-tokyo-subway-theming.md) | Theme the world map as the Tokyo subway | Accepted |
 
 _Add new rows here as ADRs are written._

@@ -3,9 +3,10 @@
 Start by reading **[OVERVIEW.md](./OVERVIEW.md)** — the single entry point that
 summarizes the whole project and links to every doc.
 
-This repository is in the **planning/documentation phase**: no application code yet.
-The work is designing and documenting Michi well before building it. Respect the
-existing docs and their voice (direct, warm, opinionated, honest).
+The app is being built (Next.js under `src/`) against docs that were written first.
+The docs remain the source of truth for intent: when code and docs disagree, treat
+it as a question to settle, not a doc to quietly overwrite. Respect the existing
+docs and their voice (direct, warm, opinionated, honest).
 
 ## Keep OVERVIEW.md in sync (important)
 
@@ -33,3 +34,11 @@ no OVERVIEW.md update is needed — proceed normally.
 - **Honor the principles.** A change that violates one (P1–P10) needs a fix or a
   documented ADR exception.
 - **Verify doc links resolve** when you add or move files.
+
+## Learner-facing copy
+
+- **No em-dashes, ever.** In any text the learner sees (station slides, codex/book-stop
+  entries, UI strings), rewrite with a period, comma, colon, semicolon, or parentheses.
+- **No unexplained jargon or unglossed Japanese.** Every term and example word must be
+  either already introduced, self-evident (sushi, Tokyo), or explained on the spot.
+- **Prose wraps with `text-pretty`** (headings: `text-balance`) to avoid orphans.
