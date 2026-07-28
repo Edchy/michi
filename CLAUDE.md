@@ -1,44 +1,51 @@
-# Michi — project rules for Claude
+# Michi agent instructions
 
-Start by reading **[OVERVIEW.md](./OVERVIEW.md)** — the single entry point that
-summarizes the whole project and links to every doc.
+Read `README.md` and `PLAN.md` before making project decisions.
 
-The app is being built (Next.js under `src/`) against docs that were written first.
-The docs remain the source of truth for intent: when code and docs disagree, treat
-it as a question to settle, not a doc to quietly overwrite. Respect the existing
-docs and their voice (direct, warm, opinionated, honest).
+## Sources of truth
 
-## Keep OVERVIEW.md in sync (important)
+- The working application is the truth about what is implemented.
+- `README.md` is the concise current project description.
+- `PLAN.md` contains the active decisions and sequence of work.
+- `REFERENCE.md` is a historical archive. Do not treat an archived proposal as an
+  accepted requirement unless the user deliberately restores it.
 
-`OVERVIEW.md` is the project's single source-of-entry. It must not silently drift out
-of date.
+When code, current documentation, and a user request disagree, surface the difference
+plainly. Do not silently choose the archived version.
 
-**When you add, remove, or rename a doc under `docs/`, add or change an ADR, or change
-a fact that OVERVIEW.md summarizes, update OVERVIEW.md in the same change** — its
-relevant section *and* the file map in §9. Also update the index in
-[docs/README.md](./docs/README.md).
+## Working with the founder
 
-If a docs change is trivial (a typo or wording tweak that doesn't affect any summary),
-no OVERVIEW.md update is needed — proceed normally.
+- Keep explanations short and concrete.
+- Work one phase and one meaningful decision at a time.
+- Explain unfamiliar learning or technical terms in ordinary language.
+- Do not broaden a narrow request into a product rewrite.
+- Preserve working behavior before restructuring it.
+- Ask before committing unrelated existing changes.
 
-> A `PostToolUse` hook will remind you if you edit `docs/` without touching
-> OVERVIEW.md. Treat the reminder as a prompt to decide whether the change is
-> significant, not as an order to always edit OVERVIEW.md.
+## Learner-facing work
 
-## Working conventions
+- Each screen should have one clear learning job.
+- Give the learner enough exposure and guidance before testing recall.
+- Do not use romaji as a reading or pronunciation aid.
+- Do not use streaks, points, lives, guilt, or punishment mechanics.
+- Keep feedback calm and make mistakes useful.
+- Do not use unexplained jargon or unexplained Japanese.
+- Do not use em dashes in learner-facing copy.
+- Preserve accessible focus, keyboard behavior, reduced motion, and adequate touch
+  targets.
 
-- **Decisions go in ADRs** (`docs/decisions/`) and are immutable once accepted —
-  supersede with a new ADR rather than editing an accepted one.
-- **Cross-link liberally**; cite principles as `[P#]` (see
-  [principles.md](./docs/product/principles.md)).
-- **Honor the principles.** A change that violates one (P1–P10) needs a fix or a
-  documented ADR exception.
-- **Verify doc links resolve** when you add or move files.
+## Verification
 
-## Learner-facing copy
+Use proportionate checks. For broad learning-flow changes, run:
 
-- **No em-dashes, ever.** In any text the learner sees (station slides, codex/book-stop
-  entries, UI strings), rewrite with a period, comma, colon, semicolon, or parentheses.
-- **No unexplained jargon or unglossed Japanese.** Every term and example word must be
-  either already introduced, self-evident (sushi, Tokyo), or explained on the spot.
-- **Prose wraps with `text-pretty`** (headings: `text-balance`) to avoid orphans.
+```sh
+npm test
+npx tsc --noEmit
+```
+
+Also run a production build when routes, application boundaries, or production assets
+change. In the current environment, the validated Node binary is:
+
+```sh
+/Users/eddietovebeppearonelsa/.nvm/versions/node/v22.12.0/bin/node node_modules/next/dist/bin/next build
+```

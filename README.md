@@ -1,80 +1,71 @@
-<div align="center">
-
 # 道 Michi
 
-**A Japanese learning app built on real learning science — not engagement metrics.**
+Michi is a Japanese-learning app for a beginner. It should teach durable, useful
+Japanese without streaks, points, punishment, or other engagement tricks.
 
-*Michi (道) — "the path." A road you walk a little further every day.*
+The project began with extensive documentation and has since grown into a working
+Next.js application. In July 2026, the documentation was deliberately reset because
+the plans had become larger and less coherent than the product itself.
 
-</div>
+## What exists today
 
----
+The working application currently includes:
 
-Michi teaches you to genuinely **acquire** Japanese — reading its scripts, hearing
-its sounds correctly, writing its characters by hand, and building real sentences —
-instead of training you to tap the right box in a streak-driven game.
+- A map organized into provinces, tracks, and stations.
+- Four playable stations: an introduction to Japanese scripts, the five hiragana
+  vowels, the K row, and a first consolidation station.
+- Audio-led kana teaching using licensed human recordings.
+- Guided sound-and-symbol pairing followed by recognition drills.
+- The first readable Japanese word, こい.
+- A gojūon grid that shows the learner's growing place in the hiragana system.
+- Optional book stops collected in a Codex.
+- A tested SM-2 spaced-repetition calculation engine that is not yet connected to
+  the playable learning flow.
 
-It began as a tool for one 14-year-old learner starting from zero, and it's built on
-five pillars of learning science: **comprehensible input, spaced repetition, active
-recall, motor memory, and output**. It is, deliberately, the opposite of an
-engagement machine.
+The current experience is a strong prototype. It is not yet the repeatable learning
+system required for adding many stations and provinces safely.
 
-> 📁 **This repository is currently in the planning phase.** There is no application
-> code yet — this is a fully documented project foundation.
->
-> 👉 **New here (human or agent)? Read [OVERVIEW.md](./OVERVIEW.md)** — the single
-> entry point that summarizes the whole project and links to everything. Or jump
-> straight to the **[Product Vision](./docs/product/vision.md)**.
+## Direction we currently agree on
 
-## Why Michi?
+- Learning matters more than engagement.
+- Japanese should be heard and read directly, without romaji as a pronunciation aid.
+- New material should arrive in small, understandable steps.
+- Learners need guided exposure before they are tested.
+- Recognition is useful early, but lasting knowledge also requires recall,
+  production, application, and review over time.
+- Cultural context should enrich the path without blocking the core lesson.
+- The interface should remain calm and focused.
+- Forgetting is normal. Review should be useful and recoverable, never punitive.
 
-| | Duolingo | Michi |
-|---|---|---|
-| Optimizes for | Engagement (streaks, XP) | Genuine acquisition |
-| Romaji | Used as a crutch | **Never**, as a reading aid |
-| Exercises | Recognition-heavy | Production-heavy |
-| Writing | Afterthought | **Core mechanic** (correct stroke order) |
-| Progress | Abstract points | Honest capability that can decay |
-| Motivation | Extrinsic (guilt, FOMO) | Intrinsic (visible mastery) |
-
-The full argument is in [vision.md](./docs/product/vision.md#7-why-michi-is-good-for-learning--in-contrast-to-duolingo).
-
-## The three signature mechanics
-
-1. **Script-native, no-romaji teaching** — sounds are bound straight to hiragana.
-2. **Handwriting with correct stroke order** — motor memory as a first-class channel.
-3. **Honest progress with decay** — a real, tested capability count that rises when
-   you practice and falls when you don't, always framed as recoverable.
+These are starting agreements, not a complete product specification. We will clarify
+them through the decision-by-decision process in [PLAN.md](./PLAN.md).
 
 ## Documentation
 
-Everything lives in **[`docs/`](./docs/README.md)**. Quick links:
+There are only four active or reference documents:
 
-- 🧭 **[Vision](./docs/product/vision.md)** — what Michi is, what it isn't, and why
-- 🧠 **[Pedagogy](./docs/product/pedagogy.md)** — the learning science
-- 📏 **[Principles](./docs/product/principles.md)** — the ten non-negotiables
-- 📚 **[Curriculum](./docs/curriculum/overview.md)** — how content is sequenced
-  ([Month 1 plan](./docs/curriculum/month-1.md))
-- 🏗️ **[Architecture](./docs/architecture/overview.md)** — how it's built
-- 🗺️ **[Roadmap](./docs/roadmap.md)** — phases, status, open questions
-- 🧩 **[Decisions (ADRs)](./docs/decisions/README.md)** — why key choices were made
+- `README.md`: what the project is and what exists now.
+- [`PLAN.md`](./PLAN.md): the current work, decisions, and checkpoints.
+- [`CLAUDE.md`](./CLAUDE.md): concise rules for agents working in the repository.
+- [`REFERENCE.md`](./REFERENCE.md): the frozen pre-reset documentation archive. It is
+  historical reference, not current authority.
 
-## Planned tech stack
+## Working safely
 
-Next.js (React) + Tailwind, wrapped for mobile with **Capacitor** (one codebase,
-web + iOS + Android). HTML Canvas for the drawing mechanic, a pure-JS **SM-2** SRS
-engine, offline-first storage (IndexedDB / SQLite). Full rationale in
-[tech-stack.md](./docs/architecture/tech-stack.md) and
-[ADR-0001](./docs/decisions/0001-web-first-capacitor.md).
+The documentation reset is being developed on the
+`learning-system-foundation` branch. Baseline commit `936f287` preserves the complete
+application and the former documentation hierarchy before the reset.
 
-## Project status & next steps
+Before expanding the curriculum, we will first establish and prove a reusable way to
+teach, revisit, and measure knowledge.
 
-Following the [roadmap](./docs/roadmap.md): **Phase 0 (Foundations)** is nearly
-complete. The first build target is the **SRS engine** — pure logic, fully testable,
-everything else plugs into it. The stroke-data source for the drawing mechanic is now
-settled ([ADR-0004](./docs/decisions/0004-stroke-data-source.md)).
+## Development
 
-## Working in this repo
+```sh
+npm test
+npx tsc --noEmit
+npm run dev
+```
 
-Read the [principles](./docs/product/principles.md) first — a change that violates one
-needs a fix or a documented [ADR](./docs/decisions/README.md).
+The production build requires the repository's supported Node version. In the current
+development environment, Node 22.12.0 is known to work.
