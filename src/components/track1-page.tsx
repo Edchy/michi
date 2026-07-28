@@ -1,22 +1,179 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { buildTrack1, type Step } from "@/content/track1";
+import {
+  buildTrack1,
+  buildTrack2,
+  buildTrack3,
+  FIRST_TEN,
+  type ReadableWord,
+  type Step,
+} from "@/content/track1";
 import { ChoiceProgress, DrillProgress } from "@/content/drill";
 import { makeQuestion, pickType, type Question, type QuestionType } from "@/content/question";
 import { ShuffleBag } from "@/content/bag";
 import { play, primeAudio } from "@/lib/audio";
-import { VOWELS, type Kana } from "@/content/hiragana";
+import { K_ROW, VOWELS, type Kana } from "@/content/hiragana";
+import { GojuonGrid } from "@/components/gojuon-grid";
+import { Button } from "@/components/button";
+import { StationNav } from "@/components/station-nav";
 
-const SPACE_KEY_CLASS =
+/**
+ * What differs between the kana-teaching stations. Everything else on this page (the
+ * drill blocks, nav, audio, progress) is kana-agnostic, so stations 2 and 3 share it
+ * and hand in only their own copy and content.
+ *
+ * Keyed by a plain string id rather than holding its own `build` function: a route is
+ * a server component, and functions cannot cross into a client component. The id is
+ * serializable, so `<Track1Page station="k-row" />` works from any route.
+ */
+type StationConfig = {
+  /** The step queue for this station. */
+  build: () => Step[];
+  /** The kana taught here, for audio priming and the intro grid. */
+  kana: Kana[];
+  /** The intro slide's framing sentence. */
+  introCopy: React.ReactNode;
+  /** The context slide: the one idea to land after the learner has used the set. */
+  context: { headline: string; body: React.ReactNode };
+  /** The done slide: what they can now do, and what comes next. */
+  done: { capability: string; next: string; completedId: string };
+  /** The closing gojūon slide: which rows are already filled, and which one lands now. */
+  grid: { headline: string; body: React.ReactNode; known: string[]; arriving?: string };
+};
+
+const VOWEL_STATION: StationConfig = {
+  build: buildTrack1,
+  kana: VOWELS,
+  introCopy: (
+    <>
+      Here is hiragana&rsquo;s whole vowel set. Japanese has exactly five, and they never
+      shift, unlike English, where &ldquo;a&rdquo; sounds different in cat, car and cake.
+    </>
+  ),
+  context: {
+    headline: "This is the order they always come in.",
+    body: (
+      <>
+        あいうえお is not alphabetical order. It is the order Japanese itself uses, for
+        dictionaries, forms and lists, the way A-B-C works in English. The remaining 41
+        kana are built as rows on top of these five: か き く け こ, さ し す せ そ, and so
+        on. Learn this sequence and you have learned the shape of the whole set.
+      </>
+    ),
+  },
+  grid: {
+    headline: "Here is where those five sit.",
+    body: (
+      <>
+        All of hiragana, laid out the way Japanese lays it out: rows of five, each row a
+        consonant sound crossed with the vowels you just learned. You have the top row,
+        which is the one every other row is built on.
+      </>
+    ),
+    known: [],
+    arriving: "vowels",
+  },
+  done: {
+    capability: "You can hear, say, and recognize all five Japanese vowel sounds. 5 of 46.",
+    next: "Next comes the K row: か き く け こ. Those same five vowels again, each with a k in front, and at the end of it you will read your first real Japanese word.",
+    completedId: "vowels",
+  },
+};
+
+/** Shared with track0-page so both stations render the same keyboard hint. */
+export const SPACE_KEY_CLASS =
   "inline-flex min-h-[24px] min-w-[64px] items-center justify-center rounded-[var(--radius-btn)] bg-surface px-3 font-sans text-[11px] leading-none text-ink-muted shadow-[inset_0_-2px_0_var(--color-line)]";
-const ARROW_KEY_CLASS =
+export const ARROW_KEY_CLASS =
   "inline-flex min-h-[24px] min-w-[28px] items-center justify-center rounded-[var(--radius-btn)] bg-surface px-2 font-sans text-xs leading-none text-ink-muted shadow-[inset_0_-2px_0_var(--color-line)]";
 
 type DrillMeterData = { value: number; max: number };
 
-export default function Track1Page() {
-  const steps = useMemo(() => buildTrack1(), []);
+const K_ROW_STATION: StationConfig = {
+  build: buildTrack2,
+  kana: K_ROW,
+  introCopy: (
+    <>
+      Now the same five vowels with a k in front. Each one is a single sound, and there is
+      no formula to work them out: five new shapes to learn.
+    </>
+  ),
+  context: {
+    headline: "Ten sounds, and a word you can read.",
+    // One idea, and it must be one the intro did not already state. "Five vowels with a k
+    // in front" is the intro's line, so repeating it here wastes the slide. The new fact
+    // is the capability: ten kana is enough for real words, which sets up the こい beat.
+    // No forward references: the gojūon table and the other rows are the book stop's job.
+    body: (
+      <>
+        With the vowels, that is ten characters. Enough that some real Japanese words are
+        now fully within reach, which is where this station ends.
+      </>
+    ),
+  },
+  grid: {
+    headline: "Two rows down.",
+    body: (
+      <>
+        The k row drops in under the vowels. Every row below works the same way: one
+        consonant sound crossed with あ い う え お, in that order, every time. Two rows
+        are yours, and the rest are the same shape.
+      </>
+    ),
+    known: ["vowels"],
+    arriving: "k-row",
+  },
+  done: {
+    capability: "You can read the K row, and you read your first Japanese word. 10 of 46.",
+    next: "Next is a look back: no new characters, just time with the ten you have, until they come without effort.",
+    completedId: "k-row",
+  },
+};
+
+const FIRST_LOOK_BACK_STATION: StationConfig = {
+  build: buildTrack3,
+  kana: FIRST_TEN,
+  introCopy: (
+    <>
+      No new characters here. Tap through the ten you know, then see which ones come
+      back without help. A pause is useful information, not a failure.
+    </>
+  ),
+  context: {
+    // This checkpoint has no context step; the field stays present because teaching
+    // stations share one serializable configuration shape.
+    headline: "",
+    body: null,
+  },
+  grid: {
+    headline: "Ten characters, held together.",
+    body: (
+      <>
+        Nothing new was added at this stop. The vowels and k row are still the same ten
+        you arrived with—only easier to call back. That is what a look back is for.
+      </>
+    ),
+    known: ["vowels", "k-row"],
+  },
+  done: {
+    capability: "You can recall the vowels and K row together, and read こい again. 10 of 46.",
+    next: "Next comes the S row: さ し す せ そ. Five new characters, built on the vowels you already know.",
+    completedId: "look-back-1",
+  },
+};
+
+/** The stations this page can render, by id. Routes pass the id, never the config. */
+const STATIONS: Record<"vowels" | "k-row" | "look-back-1", StationConfig> = {
+  vowels: VOWEL_STATION,
+  "k-row": K_ROW_STATION,
+  "look-back-1": FIRST_LOOK_BACK_STATION,
+};
+
+export type StationId = keyof typeof STATIONS;
+
+export default function Track1Page({ station: id = "vowels" }: { station?: StationId }) {
+  const station = STATIONS[id];
+  const steps = useMemo(() => station.build(), [station]);
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1); // 1 forward, -1 back
   const [drillBack, setDrillBack] = useState<(() => void) | null>(null);
@@ -27,7 +184,12 @@ export default function Track1Page() {
 
   const step = steps[index]!;
   const atStart = index === 0;
-  const isPracticeStep = step.kind === "drill" || step.kind === "rehearse";
+  // Steps that drive their own completion, so the nav must not offer Next past them.
+  const isPracticeStep =
+    step.kind === "drill" ||
+    step.kind === "rehearse" ||
+    step.kind === "review" ||
+    step.kind === "match";
 
   function go(delta: number) {
     setDrillBack(null);
@@ -70,7 +232,10 @@ export default function Track1Page() {
       drillNext();
       return;
     }
-    if (step.kind === "intro") primeAudio(VOWELS); // last gesture before sound plays
+    // Prime on the last tap before sound plays. The refresher slide leads into a drill on
+    // an *earlier* pool, so prime that pool too rather than only the station's own kana.
+    if (step.kind === "intro") primeAudio(station.kana);
+    else if (step.kind === "reviewIntro") primeAudio(step.pool);
     go(1);
   }
 
@@ -78,6 +243,7 @@ export default function Track1Page() {
     step.kind === "intro" ||
     step.kind === "teach" ||
     step.kind === "reveal" ||
+    step.kind === "match" ||
     drillSound !== null;
 
   useEffect(() => {
@@ -99,12 +265,15 @@ export default function Track1Page() {
           if ((step.kind === "intro" || step.kind === "reveal") && focusedAudioControl) {
             focusedAudioControl.click();
           } else if (step.kind === "intro" || step.kind === "reveal") {
-            const sounds = step.kind === "intro" ? VOWELS : step.kana;
+            const sounds = step.kind === "intro" ? station.kana : step.kana;
             play(sounds[soundCycleIndex.current]!);
             soundCycleIndex.current = (soundCycleIndex.current + 1) % sounds.length;
           } else if (step.kind === "teach") {
             if (focusedAudioControl) focusedAudioControl.click();
             else play(step.kana);
+          } else if (step.kind === "match") {
+            // The step owns which sound is current, so replay via its own control.
+            document.querySelector<HTMLButtonElement>("[data-audio-control]")?.click();
           } else {
             drillSound?.();
           }
@@ -130,8 +299,16 @@ export default function Track1Page() {
   return (
     // pb leaves room for the floating nav so it never covers content
     <main
-      className={`relative mx-auto flex min-h-screen max-w-[600px] flex-col px-5 pt-8 ${
-        isPracticeStep || step.kind === "intro" ? "pb-40" : "pb-28"
+      className={`relative mx-auto flex min-h-screen flex-col px-5 pt-8 ${
+        // The gojūon slide is two columns, so it needs more than the reading measure
+        // every other slide is held to.
+        step.kind === "grid" ? "max-w-[900px]" : "max-w-[600px]"
+      } ${
+        isPracticeStep || step.kind === "intro"
+          ? "pb-40"
+          : step.kind === "grid"
+            ? "pb-20" // the tall two-column slide; its caption already clears the nav
+            : "pb-28"
       }`}
     >
       {/* the moving surface — CSS slide-in keyed per step (always settles visible) */}
@@ -139,6 +316,7 @@ export default function Track1Page() {
         <div key={index} className="w-full step-enter" data-dir={direction}>
           <StepView
             step={step}
+            station={station}
             onAdvance={() => go(1)}
             onDrillBackChange={registerDrillBack}
             onDrillNextChange={registerDrillNext}
@@ -178,8 +356,6 @@ function FloatingNav({
   drillMeter: DrillMeterData | null;
   showShortcutGuide: boolean;
 }) {
-  const base =
-    "min-h-[48px] min-w-[48px] rounded-[var(--radius-btn)] bg-surface px-4 text-ink-muted transition-colors hover:bg-surface-2";
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-10 flex justify-center pb-6">
       <div data-floating-nav className="pointer-events-auto flex flex-col items-center gap-2">
@@ -199,26 +375,12 @@ function FloatingNav({
           </div>
         )}
         {drillMeter && <DrillPath value={drillMeter.value} max={drillMeter.max} />}
-        <nav className="flex items-center gap-2" aria-label="Lesson navigation">
-          {showBack && (
-            <button onClick={onBack} aria-label="Back" title="Back (Left Arrow)" className={base}>
-              <span aria-hidden className="text-lg">←</span>
-            </button>
-          )}
-          <a href="/" aria-label="World map" className={`${base} flex items-center justify-center font-kana text-lg`}>
-            家
-          </a>
-          {showNext && (
-            <button
-              onClick={onNext}
-              aria-label="Next"
-              title="Next (Right Arrow)"
-              className={base}
-            >
-              <span aria-hidden className="text-lg">→</span>
-            </button>
-          )}
-        </nav>
+        <StationNav
+          onBack={onBack}
+          onNext={onNext}
+          canGoBack={showBack}
+          canGoNext={showNext}
+        />
       </div>
     </div>
   );
@@ -266,6 +428,7 @@ function DrillPath({ value, max }: DrillMeterData) {
 
 function StepView({
   step,
+  station,
   onAdvance,
   onDrillBackChange,
   onDrillNextChange,
@@ -273,6 +436,7 @@ function StepView({
   onDrillMeterChange,
 }: {
   step: Step;
+  station: StationConfig;
   onAdvance: () => void;
   onDrillBackChange: (handler: (() => void) | null) => void;
   onDrillNextChange: (handler: (() => void) | null) => void;
@@ -285,13 +449,35 @@ function StepView({
   return (
     <div className="py-10">
       {step.kind === "intro" ? (
-        <IntroStep />
+        <IntroStep station={station} />
       ) : step.kind === "teach" ? (
         <TeachStep kana={step.kana} />
       ) : step.kind === "reveal" ? (
         <RevealStep kana={step.kana} />
       ) : step.kind === "context" ? (
-        <HiraganaContextStep kana={step.kana} />
+        <HiraganaContextStep kana={step.kana} context={station.context} />
+      ) : step.kind === "read" ? (
+        <ReadWordStep word={step.word} />
+      ) : step.kind === "grid" ? (
+        <GridStep grid={station.grid} />
+      ) : step.kind === "match" ? (
+        <MatchStep pool={step.pool} onDone={onAdvance} />
+      ) : step.kind === "reviewIntro" ? (
+        <ReviewIntroStep kana={step.pool} />
+      ) : step.kind === "review" ? (
+        // A warm-up on kana from earlier stations. Reuses the recognition drill as-is,
+        // so it runs the same mastery ladder rather than a shorter revision pass.
+        // ponytail: good enough while the pool is five vowels; when the review pool
+        // grows past a row or two this wants its own shorter, non-gating progress rule.
+        <DrillBlock
+          pool={step.pool}
+          types={["hearPickChar"]}
+          onDone={onAdvance}
+          onNavBackChange={onDrillBackChange}
+          onNavNextChange={onDrillNextChange}
+          onSoundChange={onDrillSoundChange}
+          onMeterChange={onDrillMeterChange}
+        />
       ) : step.kind === "rehearse" ? (
         <DrillBlock
           pool={step.pool}
@@ -313,7 +499,7 @@ function StepView({
           onMeterChange={onDrillMeterChange}
         />
       ) : (
-        <DoneStep />
+        <DoneStep done={station.done} />
       )}
     </div>
   );
@@ -323,25 +509,21 @@ function StepView({
 
 function ListenButton({ kana, label = "Listen" }: { kana: Kana; label?: string }) {
   return (
-    <button
-      onClick={() => play(kana)}
-      className="mx-auto flex min-h-[48px] items-center gap-2 rounded-[var(--radius-btn)] bg-ink px-6 text-paper transition-colors hover:bg-ink/90"
-    >
+    <Button variant="primary" onClick={() => play(kana)} className="mx-auto">
       <span aria-hidden>▶</span>
-      <span className="text-sm font-medium">{label}</span>
-    </button>
+      <span>{label}</span>
+    </Button>
   );
 }
 
-function IntroStep() {
+function IntroStep({ station }: { station: StationConfig }) {
   return (
     <div className="flex flex-col items-center gap-8 text-center">
       <p className="max-w-sm text-base font-medium leading-relaxed text-ink-muted text-balance">
-        Here is hiragana&rsquo;s whole vowel set. Japanese has exactly five, and they never
-        shift — unlike English, where &ldquo;a&rdquo; sounds different in cat, car and cake.
+        {station.introCopy}
       </p>
       <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4">
-        {VOWELS.map((k) => (
+        {station.kana.map((k) => (
           <button
             key={k.id}
             data-audio-control
@@ -358,21 +540,58 @@ function IntroStep() {
   );
 }
 
+/**
+ * Renders hint prose with any kana in it set as a chip: kana font, bordered, on a raised
+ * fill. Inline at body size they read as part of the sentence and are easy to skim past,
+ * which defeats the point of a hint that says "the same vowel as う".
+ */
+/** Every kana the app can gloss, by glyph, so a chip can show its sound alongside it. */
+const SAY_BY_GLYPH = new Map([...VOWELS, ...K_ROW].map((k) => [k.glyph, k.say]));
+
+function KanaInText({ text }: { text: string }) {
+  // Hiragana and katakana blocks, plus the long-vowel mark. Split keeps the separators.
+  const parts = text.split(/([ぁ-ゖァ-ヺー]+)/);
+  return (
+    <>
+      {parts.map((part, i) =>
+        i % 2 === 1 ? (
+          <span
+            key={i}
+            className="mx-px inline-flex items-baseline gap-1 rounded-[var(--radius-btn)] border border-line bg-surface px-1.5 py-0.5 align-baseline text-ink"
+          >
+            <span className="font-kana text-base leading-none">{part}</span>
+            {SAY_BY_GLYPH.get(part) && (
+              <span className="text-xs leading-none text-ink-muted">
+                {SAY_BY_GLYPH.get(part)}
+              </span>
+            )}
+          </span>
+        ) : (
+          part
+        ),
+      )}
+    </>
+  );
+}
+
 function TeachStep({ kana }: { kana: Kana }) {
   const [tapped, setTapped] = useState(false);
 
   // reset the hint pulse for each new character
   useEffect(() => setTapped(false), [kana]);
 
-  // auto-play the sound when the step first appears
+  // auto-play the sound when the step first appears. Just enough delay to let the
+  // slide paint first, so the glyph is on screen when its sound arrives. The old
+  // 250 ms was tuned when playback itself was slow; now that it is ~1 ms, that
+  // padding is pure lag.
   useEffect(() => {
-    const t = setTimeout(() => play(kana), 250);
+    const t = setTimeout(() => play(kana), 60);
     return () => clearTimeout(t);
   }, [kana]);
 
   return (
     <div className="flex flex-col items-center gap-8 text-center">
-      {/* the character IS the sound — tap it (spam it) to hear "ah" */}
+      {/* the character IS the sound — tap it (spam it) to hear "a" */}
       <button
         data-audio-control
         onClick={() => {
@@ -395,7 +614,7 @@ function TeachStep({ kana }: { kana: Kana }) {
         </span>
       </button>
       <p className="max-w-xs text-sm leading-relaxed text-ink-muted text-pretty">
-        {kana.hints[0]}
+        <KanaInText text={kana.hints[0]!} />
       </p>
     </div>
   );
@@ -421,7 +640,13 @@ function RevealStep({ kana }: { kana: Kana[] }) {
   );
 }
 
-function HiraganaContextStep({ kana }: { kana: Kana[] }) {
+function HiraganaContextStep({
+  kana,
+  context,
+}: {
+  kana: Kana[];
+  context: StationConfig["context"];
+}) {
   return (
     <div className="mx-auto flex max-w-md flex-col items-center gap-6 text-center">
       <p className="flex gap-4 font-kana text-6xl leading-none text-ink">
@@ -429,13 +654,187 @@ function HiraganaContextStep({ kana }: { kana: Kana[] }) {
           <span key={k.id}>{k.glyph}</span>
         ))}
       </p>
-      <p className="text-lg font-medium text-ink">This is the order they always come in.</p>
-      <p className="leading-relaxed text-ink-muted text-pretty">
-        あいうえお is not alphabetical order — it is the order Japanese itself uses, for
-        dictionaries, forms and lists, the way A-B-C works in English. The remaining 41
-        kana are built as rows on top of these five: か き く け こ, さ し す せ そ, and so
-        on. Learn this sequence and you have learned the shape of the whole set.
+      <p className="text-lg font-medium text-ink text-balance">{context.headline}</p>
+      <p className="leading-relaxed text-ink-muted text-pretty">{context.body}</p>
+    </div>
+  );
+}
+
+/**
+ * Open-book pairing, between teaching and the graded drills.
+ *
+ * The whole set stays on screen and one sound plays at a time: find it and tap it. This
+ * is deliberately not assessment. Nothing is scored, a wrong tap only replays the sound,
+ * and the answer is always visible somewhere on screen. Its job is to build the
+ * sound-to-shape link while both are in front of the learner, so that the graded drill
+ * that follows is retrieval rather than a coin flip.
+ */
+function MatchStep({ pool, onDone }: { pool: Kana[]; onDone: () => void }) {
+  // Each sound is asked once, in a random order fixed for the life of the step.
+  const order = useRef<Kana[]>([]);
+  if (order.current.length === 0) {
+    const shuffled = [...pool];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j]!, shuffled[i]!];
+    }
+    order.current = shuffled;
+  }
+
+  const [at, setAt] = useState(0);
+  const [wrong, setWrong] = useState<string | null>(null);
+  const [found, setFound] = useState<string[]>([]);
+  const [misses, setMisses] = useState(0);
+  const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const target = order.current[at];
+  // After two misses, name the sound. Open-book means never stuck guessing blind.
+  const showHint = misses >= 2;
+
+  useEffect(() => () => {
+    if (advanceTimer.current) clearTimeout(advanceTimer.current);
+  }, []);
+
+  // Play the current target when it changes, so the learner always has a sound to hunt.
+  useEffect(() => {
+    if (!target) return;
+    const t = setTimeout(() => play(target), 60);
+    return () => clearTimeout(t);
+  }, [target]);
+
+  function tap(k: Kana) {
+    if (!target || advanceTimer.current) return;
+    if (k.id !== target.id) {
+      // A miss is not a failure here: replay the target so the pairing is reinforced.
+      setWrong(k.id);
+      setMisses((m) => m + 1);
+      play(target);
+      setTimeout(() => setWrong(null), 600);
+      return;
+    }
+    setFound((f) => [...f, k.id]);
+    advanceTimer.current = setTimeout(() => {
+      advanceTimer.current = null;
+      setMisses(0);
+      if (at + 1 >= order.current.length) onDone();
+      else setAt((i) => i + 1);
+    }, 650);
+  }
+
+  return (
+    <div className="mx-auto flex max-w-md flex-col items-center gap-8 text-center">
+      <div className="flex flex-col items-center gap-2">
+        <p className={DRILL_PROMPT}>Which one is this? Tap it.</p>
+        <Button
+          icon
+          data-audio-control
+          onClick={() => target && play(target)}
+          aria-label="Play the sound again"
+          title="Play the sound again (Space)"
+        >
+          <span aria-hidden>▶</span>
+        </Button>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-center gap-3">
+        {pool.map((k) => {
+          const isFound = found.includes(k.id);
+          const isWrong = wrong === k.id;
+          return (
+            <button
+              key={k.id}
+              onClick={() => tap(k)}
+              aria-label={`Choose ${k.glyph}`}
+              className={`flex min-h-[92px] min-w-[76px] flex-col items-center justify-center gap-1 rounded-[var(--radius-lg)] border transition-all duration-200 motion-reduce:transition-none ${
+                isFound
+                  ? "border-transparent bg-ink text-paper"
+                  : isWrong
+                    // A miss must be unmistakable without relying on hearing the replay.
+                    ? "-translate-y-0.5 border-accent bg-surface-2 text-ink-faint motion-reduce:translate-y-0"
+                    : "border-line bg-surface text-ink hover:bg-surface-2"
+              }`}
+            >
+              <span className="font-kana text-5xl leading-none">{k.glyph}</span>
+              {/* The sound appears only once found, and is not in the DOM before that:
+                  hiding it with a transparent colour would still let a screen reader
+                  announce every answer. The empty span holds the row height. */}
+              <span className="min-h-[16px] text-xs font-light tracking-wide text-paper/70">
+                {isFound ? k.say : ""}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Reserve the line so revealing the hint does not shift the grid. */}
+      <p className="min-h-[20px] text-sm text-ink-muted">
+        {showHint && target ? `It is the one that sounds like "${target.say}".` : `${found.length} of ${pool.length}`}
       </p>
+    </div>
+  );
+}
+
+/**
+ * Frames the refresher that follows. Without this, a station billed as the k row opens
+ * by drilling あいうえお with no explanation, which reads as a mistake.
+ */
+function ReviewIntroStep({ kana }: { kana: Kana[] }) {
+  return (
+    <div className="mx-auto flex max-w-md flex-col items-center gap-6 text-center">
+      <p className="text-2xl font-medium text-ink text-balance">
+        But first, a quick refresher.
+      </p>
+      <p className="flex gap-4 font-kana text-5xl leading-none text-ink">
+        {kana.map((k) => (
+          <span key={k.id}>{k.glyph}</span>
+        ))}
+      </p>
+      <p className="leading-relaxed text-ink-muted text-pretty">
+        The five vowels from last station, before you build on them. You are about to hear
+        each one and pick it out, so the k row lands on sounds you still have.
+      </p>
+    </div>
+  );
+}
+
+/**
+ * The first-word beat: the learner decodes こい themselves, kana by kana, before the
+ * meaning is shown. Tapping plays the syllables, then the whole word.
+ */
+function ReadWordStep({ word }: { word: ReadableWord }) {
+  const [revealed, setRevealed] = useState(false);
+
+  return (
+    <div className="mx-auto flex max-w-md flex-col items-center gap-6 text-center">
+      <p className={DRILL_PROMPT}>You know every sound in this word. Read it.</p>
+
+      <button
+        data-audio-control
+        onClick={() => {
+          setRevealed(true);
+          word.kana.forEach((k, i) => setTimeout(() => play(k), i * 480));
+        }}
+        aria-label={`Hear ${word.kana.map((k) => k.say).join(" ")}`}
+        className="flex touch-manipulation items-end gap-3 rounded-[var(--radius-lg)] px-6 py-2 transition-transform hover:scale-105 active:scale-95"
+      >
+        {/* No `say` labels here, unlike the teaching slides: this is the one beat that
+            asks the learner to decode unaided, and Latin letters under the kana would
+            be exactly the crutch they could read instead (P2). */}
+        {word.kana.map((k) => (
+          <span key={k.id} className="font-kana text-[7rem] leading-none text-ink">
+            {k.glyph}
+          </span>
+        ))}
+      </button>
+
+      {/* The meaning stays hidden until they have tried, so the decoding is theirs. */}
+      <div className={`flex flex-col gap-2 transition-opacity duration-300 ${revealed ? "opacity-100" : "opacity-0"}`}>
+        <p className="text-2xl font-medium text-ink">{word.meaning}</p>
+        <p className="text-sm leading-relaxed text-ink-muted text-pretty">{word.note}</p>
+      </div>
+
+      {!revealed && (
+        <p className="text-sm text-ink-muted">Say it out loud, then tap to check.</p>
+      )}
     </div>
   );
 }
@@ -660,11 +1059,14 @@ function PickQuestion({
   function choose(k: Kana) {
     if (answered.current) return;
     answered.current = true;
+    const correct = k.id === q.answer.id;
     setPicked(k.id);
-    if (q.type === "seePickSound") {
-      play(k.id === q.answer.id ? k : q.answer);
-    }
-    advanceTimer.current = setTimeout(() => onAnswered(k.id === q.answer.id), 1000);
+    // Always end on the right sound. On seePickSound the answer is a sound, so it plays
+    // either way. On hearPickChar a miss used to play nothing at all, which threw away
+    // the one moment the learner most needs to hear the sound again next to its shape.
+    if (q.type === "seePickSound") play(correct ? k : q.answer);
+    else if (!correct) play(q.answer);
+    advanceTimer.current = setTimeout(() => onAnswered(correct), correct ? 1000 : 1600);
   }
 
   const cols =
@@ -682,15 +1084,16 @@ function PickQuestion({
       {q.type === "hearPickChar" ? (
         <div className="flex flex-col items-center gap-2">
           <p className={DRILL_PROMPT}>Which one did you hear?</p>
-          <button
+          <Button
+            icon
             data-audio-control
             onClick={() => play(q.answer)}
             aria-label="Play sound again. Press Space."
             title="Play sound again (Space)"
-            className="flex min-h-[52px] min-w-[52px] touch-manipulation items-center justify-center rounded-[var(--radius-btn)] bg-surface text-base text-ink transition-colors hover:bg-surface-2 sm:hidden"
+            className="touch-manipulation sm:hidden"
           >
             <span aria-hidden>▶</span>
-          </button>
+          </Button>
         </div>
       ) : (
         <div className="flex flex-col items-center gap-6">
@@ -793,25 +1196,33 @@ function TraceQuestion({ q }: { q: Question }) {
   );
 }
 
-function DoneStep() {
+function GridStep({ grid }: { grid: StationConfig["grid"] }) {
   return (
-    <div className="flex flex-col items-center gap-6 text-center">
-      <p className="text-2xl font-medium text-ink">Station complete.</p>
-      <p className="max-w-sm text-ink-muted text-balance">
-        You can hear, say, and recognize all five Japanese vowel sounds — 5 of 46.
-      </p>
-      <p className="max-w-sm text-sm text-ink-muted text-balance">
-        Next comes the K row: か き く け こ. Those same five vowels again, each with a k in
-        front — and at the end of it you will read your first real Japanese word.
-      </p>
-      <a href="/?completed=vowels" className={`mt-3 inline-flex items-center justify-center ${PRIMARY_BTN}`}>
-        Return to the path
-      </a>
+    // Two columns: the table on the left, the copy centered against it on the right.
+    // Stacked on narrow screens, where the grid sits above the text.
+    // Anchored left rather than centered as a pair: on a wide screen a centered
+    // grid+text unit floats as an island with no edge to line up against.
+    <div className="flex flex-col items-center gap-8 text-center sm:flex-row sm:items-center sm:justify-start sm:gap-12 sm:text-left">
+      <div className="sm:shrink-0">
+        <GojuonGrid known={grid.known} arriving={grid.arriving} />
+      </div>
+      <div className="flex max-w-sm flex-col gap-4">
+        <p className="text-xl font-medium text-ink text-balance">{grid.headline}</p>
+        <p className="text-sm leading-relaxed text-ink-muted text-pretty">{grid.body}</p>
+      </div>
     </div>
   );
 }
 
-/** The primary action — solid indigo (ink) fill, small quiet radius. On nearly
- * every slide, so it's noticeable but never in the way. */
-const PRIMARY_BTN =
-  "min-h-[48px] rounded-[var(--radius-btn)] bg-ink px-10 text-base font-medium text-paper transition-colors hover:bg-ink/90";
+function DoneStep({ done }: { done: StationConfig["done"] }) {
+  return (
+    <div className="flex flex-col items-center gap-6 text-center">
+      <p className="text-2xl font-medium text-ink">Station complete.</p>
+      <p className="max-w-sm text-ink-muted text-balance">{done.capability}</p>
+      <p className="max-w-sm text-sm text-ink-muted text-balance">{done.next}</p>
+      <Button href={`/?completed=${done.completedId}`} variant="primary" wide className="mt-3">
+        Return to the path
+      </Button>
+    </div>
+  );
+}

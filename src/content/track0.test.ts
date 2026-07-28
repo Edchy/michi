@@ -1,6 +1,7 @@
+import { readdirSync } from "node:fs";
 import { describe, it, expect } from "vitest";
 import { buildTrack0 } from "./track0";
-import { SCRIPTS } from "./scripts";
+import { ROMAJI_WORDS, SCRIPTS } from "./scripts";
 
 describe("buildTrack0 — the three-scripts orientation station", () => {
   const steps = buildTrack0();
@@ -27,14 +28,28 @@ describe("buildTrack0 — the three-scripts orientation station", () => {
 });
 
 describe("script example words", () => {
+  const words = [...SCRIPTS.flatMap((s) => s.words), ...ROMAJI_WORDS];
+
   it("every syllable carries a kana id an audio clip can be keyed by", () => {
-    for (const script of SCRIPTS) {
-      for (const word of script.words) {
-        expect(word.syllables.length).toBeGreaterThan(0);
-        for (const s of word.syllables) {
-          expect(s.id).toMatch(/^hira_[a-z]+$/);
-          expect(s.glyph).not.toBe("");
-        }
+    for (const word of words) {
+      expect(word.syllables.length).toBeGreaterThan(0);
+      for (const s of word.syllables) {
+        expect(s.id).toMatch(/^hira_[a-z]+$/);
+        expect(s.glyph).not.toBe("");
+      }
+    }
+  });
+
+  // The ids are hand-written, so a typo would ship a word with one silent syllable.
+  it.each(["webm", "mp3"])("every syllable id has a real %s clip", (ext) => {
+    const clips = new Set(
+      readdirSync("public/audio/hiragana")
+        .filter((f) => f.endsWith(`.${ext}`))
+        .map((f) => f.replace(new RegExp(`\\.${ext}$`), "")),
+    );
+    for (const word of words) {
+      for (const s of word.syllables) {
+        expect(clips, `${word.meaning}: ${s.glyph}`).toContain(s.id);
       }
     }
   });

@@ -6,7 +6,7 @@
  * word per script. Depth (origins, a mixed three-script sentence) lives in the
  * book stop after the station (codex: "Three scripts, one language"), never here.
  *
- * Sound clips reuse the per-kana recordings in public/audio/kana, so every
+ * Sound clips reuse the per-kana recordings in public/audio/hiragana, so every
  * example word can be played syllable by syllable (lib/audio.ts).
  */
 
@@ -35,6 +35,33 @@ export type Script = {
 };
 
 const syl = (glyph: string, id: string, say: string): Syllable => ({ glyph, id, say });
+
+/**
+ * Words for the romaji step: familiar in English, and each one splits cleanly into
+ * its sounds. Kept to two so the station stays light — more examples, and the point
+ * about why the split matters, live in the book stop ("Three scripts, one language").
+ *
+ * Written in hiragana here on purpose. Real text writes these 津波 and カラオケ, but the
+ * station's point is one sound, one symbol, and hiragana is the only script the learner
+ * is about to meet. The book stop shows カラオケ in its own script.
+ */
+export const ROMAJI_WORDS: Word[] = [
+  {
+    word: "つなみ",
+    syllables: [syl("つ", "hira_tsu", "tsu"), syl("な", "hira_na", "na"), syl("み", "hira_mi", "mi")],
+    meaning: "tsunami",
+  },
+  {
+    word: "からおけ",
+    syllables: [
+      syl("か", "hira_ka", "ka"),
+      syl("ら", "hira_ra", "ra"),
+      syl("お", "hira_o", "o"),
+      syl("け", "hira_ke", "ke"),
+    ],
+    meaning: "karaoke",
+  },
+];
 
 export const SCRIPTS: Script[] = [
   {

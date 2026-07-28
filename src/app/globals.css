@@ -117,6 +117,66 @@ button:disabled,
 }
 .kana-rise { animation: kana-rise 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
+/* Gojūon grid: the row just earned lands cell by cell (delay set per cell inline). */
+@keyframes kana-arrive {
+  from { opacity: 0; transform: scale(0.6); }
+  60% { transform: scale(1.12); }
+  to { opacity: 1; transform: scale(1); }
+}
+.kana-arrive { animation: kana-arrive 0.42s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* ============================================================================
+   Buttons — ONE set of button styles for the whole app.
+
+   Every control shares a frame (same radius, same 150ms transition, same focus
+   ring) and differs only in weight:
+     .btn-primary    solid ink. The one action that moves you on.
+     .btn-secondary  bordered on --color-bg with a card shadow. Everything else.
+     .btn-ghost      no chrome until hovered. In-text and list controls.
+   `.btn-icon` squares any of them off for a lone glyph (the nav arrows).
+
+   The world map's own controls (.wm-arrow, .wm-chain-close, .world-codex) were
+   the reference for the secondary look, so station nav now matches the map.
+   ============================================================================ */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  min-height: 44px; padding: 0 18px;
+  border: 1px solid transparent; border-radius: var(--radius-btn);
+  font-size: 14px; font-weight: 600; line-height: 1;
+  cursor: pointer; text-align: center;
+  transition: background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out;
+}
+.btn:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+/* Disabled controls stay visibly present: a control that vanishes at the edge of a
+   range reads as a bug, which is why the map's arrows behave this way too. */
+.btn:disabled { cursor: not-allowed; box-shadow: none; }
+
+.btn-primary { background: var(--color-ink); color: var(--color-paper); }
+.btn-primary:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--color-ink) 88%, var(--color-paper));
+}
+.btn-primary:disabled { background: var(--color-surface-2); color: var(--color-ink-faint); }
+
+.btn-secondary {
+  border-color: var(--color-line); background: var(--color-bg); color: var(--color-ink);
+  box-shadow: var(--shadow-card);
+}
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-surface); border-color: var(--color-ink-faint);
+}
+.btn-secondary:disabled {
+  background: var(--color-surface); color: var(--color-ink-faint);
+}
+
+.btn-ghost { background: transparent; color: var(--color-ink-muted); }
+.btn-ghost:hover:not(:disabled) { background: var(--color-surface); color: var(--color-ink); }
+
+/* A lone glyph: square, no text padding. The 44px min stays — it is the touch target. */
+.btn-icon { width: 44px; min-width: 44px; padding: 0; font-size: 20px; gap: 0; }
+/* The primary action on a slide is wider than a default button, so it reads as the
+   end of the step rather than as one more control in a row. */
+.btn-wide { padding: 0 36px; min-height: 48px; font-size: 15px; }
+
 /* World map — a calm, pannable canvas of station stops joined by one ink path.
    Color here is track identity (see the track hues above); state is form. */
 .world-page { position: relative; height: 100vh; overflow: hidden; background: var(--color-bg); }
@@ -175,15 +235,9 @@ button:disabled,
 /* The Codex is the only other destination on this screen, so it gets a visible
    button edge rather than sitting as bare text the eye has to find. */
 .world-codex {
-  pointer-events: auto; display: flex; min-height: 40px; align-items: center; gap: 7px;
-  margin: -4px 0 -4px 18px; padding: 0 14px;
-  border: 1px solid var(--color-line); border-radius: var(--radius-btn);
-  background: var(--color-bg); color: var(--color-ink); box-shadow: var(--shadow-card);
-  font-size: 13px; font-weight: 600;
-  transition: background 150ms ease-out, border-color 150ms ease-out;
+  pointer-events: auto; min-height: 40px;
+  margin: -4px 0 -4px 18px; padding: 0 14px; font-size: 13px;
 }
-.world-codex:hover { background: var(--color-surface); border-color: var(--color-ink-faint); }
-.world-codex:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 
 .worldmap { position: absolute; inset: 0; cursor: grab; touch-action: none; overscroll-behavior: none; user-select: none; -webkit-user-select: none; }
 .worldmap:active { cursor: grabbing; }
@@ -233,12 +287,15 @@ button:disabled,
 /* Track hue tints the ring and the done fill. State is carried by SHAPE and WEIGHT, never
    by a hue of its own — so "you are here" reads identically on every track color and can
    never be confused with the track's own hue. done = filled + check; current = thick ring
-   + a halo + ink-dark number; locked = thin faint ring. */
+   + a halo + a map mark in place of the number; locked = thin faint ring. */
 .wm-stop.is-done .wm-disc,
 .wm-stop.is-current .wm-disc { stroke: var(--track, var(--color-ink)); }
 .wm-stop.is-done .wm-disc { fill: var(--track, var(--color-ink)); }
 .wm-stop.is-current .wm-disc { stroke-width: 5; }
 .wm-stop.is-current .wm-num { fill: var(--color-ink); font-weight: 750; }
+/* The "you are here" map mark inside the current disc. Ink, not the track hue: state
+   is never carried by color, and the disc is unfilled here so ink reads cleanly. */
+.wm-here { fill: var(--color-ink); }
 /* a soft ring OUTSIDE the disc — pure form, no new color */
 .wm-stop.is-current .wm-halo {
   fill: none; stroke: var(--track, var(--color-ink)); stroke-width: 1.5; opacity: 0.35;
@@ -291,13 +348,13 @@ button:disabled,
 
 /* avatar — floating "you are here" pin */
 .wm-avatar { transition: transform 800ms cubic-bezier(0.16, 1, 0.3, 1); }
-.wm-avatar-bob { animation: wm-bob 2.4s ease-in-out infinite; transform-origin: center; }
+.wm-avatar-bob { animation: wm-bob 1.6s ease-in-out infinite; transform-origin: center; }
 .wm-avatar-pin { fill: var(--track, var(--color-ink)); }
 .wm-avatar-eye { fill: var(--color-paper); }
 
 @keyframes wm-bob {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
+  50% { transform: translateY(-5px); }
 }
 
 /* Track navigation — one centered bar: arrows glide line-to-line, the label opens
@@ -312,21 +369,15 @@ button:disabled,
 /* Only the controls take pointer events — the band itself must stay transparent to
    drags, or it would carve a dead strip across the bottom of a map you pan by hand. */
 .wm-nav > * { pointer-events: auto; }
+/* The same secondary button as everywhere else (.btn-secondary + .btn-icon), with
+   only what this spot needs on top: it stretches to the nav row's height, and the
+   glyph is larger because it sits beside a two-line label card.
+   Disabled = you're at the edge of this province; it stays present but inert, which
+   is the rule .btn:disabled encodes for the whole app. */
 .wm-arrow {
-  display: grid; place-items: center; width: 44px; flex: none;
-  border: 1px solid var(--color-line); border-radius: var(--radius-btn);
-  background: var(--color-bg); color: var(--color-ink);
-  font-size: 22px; line-height: 1; box-shadow: var(--shadow-card);
-  cursor: pointer; transition: background 150ms ease-out, border-color 150ms ease-out;
+  flex: none; height: auto; align-self: stretch;
+  font-size: 22px;
 }
-.wm-arrow:hover:not(:disabled) { background: var(--color-surface); border-color: var(--color-ink-faint); }
-/* Disabled = you're at the edge of this province. Keep the button clearly present
-   (a vanished control reads as a bug) but visibly inert. */
-.wm-arrow:disabled {
-  color: var(--color-ink-faint); background: var(--color-surface);
-  box-shadow: none; cursor: not-allowed;
-}
-.wm-arrow:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 
 /* One card, one target: the line you're on, filled with its hue. The province moved to
    the header, so this is a single row now. */
@@ -365,12 +416,15 @@ button:disabled,
 }
 /* No opacity here — at 10px this is small text, and fading it would drop the ~4.9:1
    contrast the hues give us below the AA floor. */
+/* Sits UNDER the title now, so it is the muted paper rather than full white — it is
+   the subordinate fact. Still 68% mix, which measures ~4.9:1 on the deepened hue. */
 .wm-nav-n {
+  margin-top: 2px;
   font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
-  color: var(--color-paper);
+  color: color-mix(in oklab, var(--color-paper) 78%, var(--color-ink));
 }
 .wm-nav-title {
-  font-size: 14.5px; font-weight: 650; color: var(--color-paper); margin-top: 1px;
+  font-size: 14.5px; font-weight: 650; color: var(--color-paper);
   white-space: nowrap;
 }
 
@@ -379,17 +433,14 @@ button:disabled,
 /* Left-aligned with the CARD COLUMN below it (--chain-measure), not the wider page
    chrome — otherwise on a wide screen the button floats far off to the left of the
    list it belongs to. */
+/* .btn-secondary, positioned: sticky and aligned to the card column below it, and
+   more compact than a default button since it is a utility, not a step action. */
 .wm-chain-close {
-  position: sticky; top: 0; z-index: 2; display: block;
+  position: sticky; top: 0; z-index: 2;
   width: fit-content;
   margin: 0 auto 0 max(20px, calc((100% - var(--chain-measure)) / 2));
-  padding: 6px 14px;
-  border: 1px solid var(--color-line); border-radius: var(--radius-btn);
-  background: var(--color-bg); color: var(--color-ink); font-size: 13px; font-weight: 600;
-  cursor: pointer; transition: border-color 150ms ease-out, background 150ms ease-out;
+  min-height: 34px; padding: 0 14px; font-size: 13px;
 }
-.wm-chain-close:hover { border-color: var(--color-ink-faint); background: var(--color-surface); }
-.wm-chain-close:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 .wm-chain {
   display: flex; flex-direction: column; align-items: center; gap: 14px;
   padding: 20px 20px 60px;
@@ -451,7 +502,8 @@ button:disabled,
 
   .step-enter,
   .step-enter[data-dir="-1"],
-  .kana-rise {
+  .kana-rise,
+  .kana-arrive {
     animation-duration: 0.01ms;
     animation-delay: 0ms !important;
   }

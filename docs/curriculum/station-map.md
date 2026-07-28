@@ -20,8 +20,10 @@ the *structure* that curriculum authors and the map both depend on.
 
 > **Status:** Draft / proposed. The station shape and groupings here are settled; the
 > per-station content is finalized as it's authored ([roadmap](../roadmap.md) Phase 2).
-> The first book stop and Codex slice are implemented; later entries are authored as
-> their stations become relevant.
+> The book stops after stations 1, 2 and 3 and the Codex slice are implemented; later
+> entries are authored as their stations become relevant. Note the cadence is **relevance,
+> not one per station**: a station gets a book stop when it has real depth behind it, and
+> station 4 (a consolidation checkpoint) deliberately has none.
 
 ---
 
@@ -131,8 +133,9 @@ supplementary reading**:
   | Book stop | Appears after | Reads about |
   |---|---|---|
   | *Three scripts, one language* | Station 1 | **Why** the three scripts exist: Chinese characters adapted to a language they didn't fit; cursive whole-forms became hiragana, character fragments became katakana; why kanji was kept rather than dropped. Station 1 already told the learner *what* each script is — this book stop only goes deeper |
+  | *Five sounds that hold still* | Station 2 | The **mora** idea (borrowed words split into even one-symbol sounds; why romaji misleads on grouping and stress), then **why** the vowels never shifting is remarkable: English spells five sounds with one letter a (cat/car/cake/about/many) because its spelling froze while pronunciation moved; what the stability buys you (pronounce an unseen word correctly); long vowels change length, not quality |
+  | *Rows, and the table they sit in* | Station 3 | A consonant run across the five vowels **is** a row, so 46 characters are nine rows of five; the rows stack into the gojūon grid; why the vowel row was worth its own station; the four or five cells (し, ち, つ, ふ) that bend |
   | *Where the letters came from* | early Track 2 | Hiragana was invented in the Heian period, simplified from kanji (あ ← 安) — the shapes have ancestors |
-  | *Sounds you already own* | early Track 2 | Why Japanese sound is regular: mora-timing, no silent letters, the "learn the sounds, read anything" promise |
   | *A different kind of alphabet* | when katakana / kanji arrive (the katakana and kanji provinces) | How Japanese writing differs from a Latin alphabet; what katakana and kanji each do |
 
 - **Tone: exploration, not homework.** Opening one is "opening a book" — a calm reading

@@ -1,5 +1,10 @@
 # Michi Documentation
 
+> **Regaining control of the project?** Start with
+> **[project-control.md](./project-control.md)**. It explains the current terms, the
+> reusable station idea, and the one-phase-at-a-time implementation plan in plain
+> language.
+
 This is the documentation **index** for Michi — a map of what exists in `docs/`.
 
 > 🧭 **Want the project explained, not just listed?** Read
@@ -15,6 +20,7 @@ else supports it.
 
 ```
 docs/
+├── project-control.md  NOW — current terms, working plan, and checkpoints
 ├── product/       WHAT & WHY  — vision, pedagogy, principles, glossary
 ├── curriculum/    WHAT WE TEACH — sequencing, the hiragana curriculum, content model
 ├── architecture/  HOW IT'S BUILT — tech stack, system shape, data & SRS
@@ -46,6 +52,9 @@ docs/
 
 ## Full index
 
+- **[project-control.md](./project-control.md)** — the active, step-by-step control
+  document for the learning-system foundation work
+
 ### product/ — what & why
 - **[vision.md](./product/vision.md)** — ⭐ flagship: what Michi is / is not, goals,
   why it beats Duolingo
@@ -73,7 +82,7 @@ docs/
 - [DESIGN.md](./design/DESIGN.md) — the visual system: feel, color (朱 vermilion), typography, motion
 - [typography.md](./design/typography.md) — the typefaces (a pedagogical choice)
 - [audio.md](./design/audio.md) — voiceover strategy, pitch-accent accuracy, and
-  what ships today (macOS `say`/Kyoko for all 46 gojūon)
+  what ships today (human recordings, one speaker, for all 46 gojūon)
 
 ### decisions/ — why
 - [decisions/README.md](./decisions/README.md) — what ADRs are + index

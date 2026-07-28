@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { CODEX_ENTRIES, codexEntry } from "@/content/codex";
 import { stationBadge } from "@/app/worldmap";
 import MarkVisited from "./MarkVisited";
+import { Button } from "@/components/button";
 
 export function generateStaticParams() {
   return CODEX_ENTRIES.map((entry) => ({ slug: entry.slug }));
@@ -87,12 +88,9 @@ export default async function CodexEntryPage({
       </article>
 
       <footer className="mt-16 flex items-center justify-between gap-4 border-t border-line pt-8">
-        <a
-          href="/"
-          className="rounded-[var(--radius-btn)] bg-surface px-4 py-3 text-sm text-ink-muted transition-colors hover:bg-surface-2"
-        >
-          ← Return to the path
-        </a>
+        <Button href="/">
+          <span aria-hidden>‹</span> Return to the path
+        </Button>
         <a href="/codex" className="text-sm text-ink-muted transition-colors hover:text-ink">
           More in the codex
         </a>

@@ -359,9 +359,21 @@ export default function WorldMap({
                     number entirely and you can't tell station 3 from station 12. */}
                 <text className="wm-stop-n" dy={-R - 11} aria-hidden>{s.n}</text>
                 <circle r={R} className="wm-disc" />
-                {done
-                  ? <path d="M -10 1 L -3 8 L 11 -7" className="wm-check" />
-                  : <text className="wm-num" dy="0.35em">{s.n}</text>}
+                {done ? (
+                  <path d="M -10 1 L -3 8 L 11 -7" className="wm-check" />
+                ) : isCurrent ? (
+                  // The stop you're on shows a map mark rather than its number: the
+                  // number is already above the disc, so repeating it inside says
+                  // nothing, where this says "you are here". Pinhead Map Icons (CC0),
+                  // 15×15 viewBox scaled to ~27px. Centred on the mark's own bounding
+                  // box (7.5, 7.35 — it does not fill the viewBox vertically), not on
+                  // the viewBox centre, which would sit it fractionally low.
+                  <g transform="translate(-14 -13.72) scale(1.8667)" aria-hidden>
+                    <path className="wm-here" d="M13.1 10.34c-2.01 2.91-3.88 4.35-5.59 4.35c-1.72 0-3.59-1.44-5.6-4.35a3.69 3.69 0 0 1-.4-3.41C1.84 6.08 2 5.41 2 4.9C2 3.67 3.65 0 7.51 0c4.44 0 5.5 3.67 5.5 4.9c0 .51.16 1.18.49 2.03a3.69 3.69 0 0 1-.4 3.41M4.49 3.38l.97 2.36c.1.23.32.38.56.38h2.97c.24 0 .46-.15.56-.38l.97-2.36c.08-.21.05-.44-.09-.61c-.79-1.03-1.77-1.55-2.92-1.55c-1.16 0-2.14.52-2.93 1.55c-.14.17-.17.4-.09.61m3.02 10.09c.67 0 1.22-.56 1.22-1.23a1.225 1.225 0 0 0-2.45 0c0 .67.55 1.23 1.23 1.23" />
+                  </g>
+                ) : (
+                  <text className="wm-num" dy="0.35em">{s.n}</text>
+                )}
                 <g className="wm-label" transform={`translate(0 ${R + 24})`}>
                   {/* Place name in kana is the headline — the learner meets real Japanese
                       here. The romaji line names the STATION, a label on a place, never a
@@ -417,10 +429,11 @@ export default function WorldMap({
 
           {/* The pin sits ABOVE the station number (which is at -R-11), not on top of it. */}
           {current && (
-            <g transform={`translate(${current.x} ${current.y - R - 34})`} className="wm-avatar">
+            <g transform={`translate(${current.x} ${current.y - R - 42})`} className="wm-avatar">
+              {/* 1.5× the original pin, so it carries across the map at a glance. */}
               <g className="wm-avatar-bob">
-                <path d="M 0 8 C -7 -2 -7 -9 0 -9 C 7 -9 7 -2 0 8 Z" className="wm-avatar-pin" />
-                <circle cy={-4} r={2.6} className="wm-avatar-eye" />
+                <path d="M 0 12 C -10.5 -3 -10.5 -13.5 0 -13.5 C 10.5 -13.5 10.5 -3 0 12 Z" className="wm-avatar-pin" />
+                <circle cy={-6} r={3.9} className="wm-avatar-eye" />
               </g>
             </g>
           )}
@@ -431,7 +444,7 @@ export default function WorldMap({
           Everything that used to be scattered across three corners lives here. */}
       <div className="wm-nav">
         <button
-          className="wm-arrow"
+          className="btn btn-secondary btn-icon wm-arrow"
           type="button"
           onClick={() => stepTrack(-1)}
           disabled={focusedTrack <= provinceBounds.first}
@@ -454,20 +467,23 @@ export default function WorldMap({
             aria-label={`${TRACKS[focusedTrack]!.line} Line, line ${TRACKS[focusedTrack]!.n} of ${PROVINCES[focusedProvince]!.tracks.length} — browse all lines in ${PROVINCES[focusedProvince]!.title}`}
           >
             <span className="wm-nav-roundel" aria-hidden>{TRACKS[focusedTrack]!.code}</span>
+            {/* Title first: "The Ginza Line" says what this is. A bare "Ginza 銀座線"
+                reads as two words rather than as the name of a line, and putting the
+                count on top made the least useful fact the most prominent one. */}
             <span className="wm-nav-track-text">
+              <span className="wm-nav-title">
+                The {TRACKS[focusedTrack]!.line} Line{" "}
+                <span className="font-kana">{TRACKS[focusedTrack]!.lineKanji}</span>
+              </span>
               <span className="wm-nav-n">
                 Line {TRACKS[focusedTrack]!.n} of {PROVINCES[focusedProvince]!.tracks.length}
-              </span>
-              <span className="wm-nav-title">
-                {TRACKS[focusedTrack]!.line}{" "}
-                <span className="font-kana">{TRACKS[focusedTrack]!.lineKanji}</span>
               </span>
             </span>
           </button>
         </div>
 
         <button
-          className="wm-arrow"
+          className="btn btn-secondary btn-icon wm-arrow"
           type="button"
           onClick={() => stepTrack(1)}
           disabled={focusedTrack >= provinceBounds.last}
@@ -499,7 +515,7 @@ function Chain({
   if (province === null) {
     return (
       <div className="wm-chain-wrap">
-        <button className="wm-chain-close" type="button" onClick={onClose} aria-label="Back to the path">
+        <button className="btn btn-secondary wm-chain-close" type="button" onClick={onClose} aria-label="Back to the path">
           ‹ The path
         </button>
         <div className="wm-chain" role="list" aria-label="Provinces">
@@ -548,7 +564,7 @@ function Chain({
   const offset = firstTrackOfProvince(province);
   return (
     <div className="wm-chain-wrap">
-      <button className="wm-chain-close" type="button" onClick={onUpToProvinces} aria-label="All provinces">
+      <button className="btn btn-secondary wm-chain-close" type="button" onClick={onUpToProvinces} aria-label="All provinces">
         ‹ Provinces
       </button>
       <div className="wm-chain" role="list" aria-label={`Tracks in Province ${r.n}`}>

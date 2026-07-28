@@ -81,15 +81,15 @@ export default function CodexPage() {
         {/* Credits live on the Codex sheet: it is the reference volume, and the world
             map is full-bleed with nowhere honest to put a footer.
 
-            REQUIRED, do not remove. The vowel recordings are used by permission from
+            REQUIRED, do not remove. All 46 kana recordings are used by permission from
             Kia Leng Koh, granted on the condition that they are attributed with a link
             back to learn-japanese-adventure.com. The credit and its href ARE the terms
             of that permission, not decoration: dropping either breaks the agreement.
-            Record of the grant: public/audio/kana/PERMISSION.md. */}
+            Record of the grant: public/audio/hiragana/PERMISSION.md. */}
         <footer className="mt-16 border-t border-line pt-8">
           <h2 className="font-serif text-sm font-medium text-ink">Credits</h2>
           <p className="mt-3 font-serif leading-7 text-ink-muted text-pretty">
-            The five vowel recordings (あ, い, う, え, お) come from{" "}
+            The kana recordings come from{" "}
             <a
               href="https://www.learn-japanese-adventure.com/"
               target="_blank"
@@ -98,8 +98,7 @@ export default function CodexPage() {
             >
               Learn Japanese Adventure
             </a>
-            , by Kia Leng Koh. The remaining kana are spoken by a synthetic voice while
-            the set is being recorded properly.
+            , by Kia Leng Koh. Every sound you hear is her voice.
           </p>
         </footer>
       </div>

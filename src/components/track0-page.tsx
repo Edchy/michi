@@ -1,9 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { buildTrack0, type ScriptStep } from "@/content/track0";
-import { type Script, type Syllable, type Word } from "@/content/scripts";
+import { ROMAJI_WORDS, type Script, type Syllable, type Word } from "@/content/scripts";
 import { play } from "@/lib/audio";
+import { ARROW_KEY_CLASS, SPACE_KEY_CLASS } from "@/components/track1-page";
+import { GojuonGrid } from "@/components/gojuon-grid";
+import { Button } from "@/components/button";
+import { StationNav } from "@/components/station-nav";
 
 /** Clips are keyed by kana id; the Word syllables carry those ids directly. */
 function playSyllable(s: Syllable) {
@@ -19,6 +23,7 @@ export default function Track0Page() {
   const steps = useMemo(() => buildTrack0(), []);
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1);
+  const soundCycleIndex = useRef(0);
 
   const step = steps[index]!;
   const atStart = index === 0;
@@ -26,6 +31,7 @@ export default function Track0Page() {
 
   function go(delta: number) {
     setDirection(delta);
+    soundCycleIndex.current = 0;
     setIndex((i) => Math.min(steps.length - 1, Math.max(0, i + delta)));
   }
 
@@ -34,6 +40,26 @@ export default function Track0Page() {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
       const target = event.target instanceof HTMLElement ? event.target : null;
       if (target && (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))) return;
+
+      if (event.code === "Space") {
+        // Space plays sound wherever focus sits, so it behaves the same as on the later
+        // stations. A focused word card plays itself; otherwise cycle the slide's cards.
+        const cards = Array.from(
+          document.querySelectorAll<HTMLButtonElement>("[data-audio-control]"),
+        );
+        if (cards.length === 0) return;
+        event.preventDefault();
+        target?.closest<HTMLButtonElement>("[data-floating-nav] button")?.blur();
+        const focused = target?.closest<HTMLButtonElement>("[data-audio-control]");
+        if (focused) {
+          focused.click();
+        } else {
+          cards[soundCycleIndex.current % cards.length]!.click();
+          soundCycleIndex.current = (soundCycleIndex.current + 1) % cards.length;
+        }
+        return;
+      }
+
       if (event.key === "ArrowLeft" && !atStart) {
         event.preventDefault();
         go(-1);
@@ -49,7 +75,14 @@ export default function Track0Page() {
   return (
     // pb clears the floating nav (~112px incl. its own pb-6) plus breathing room, so a
     // tall script slide scrolls to a readable end instead of stopping under the buttons.
-    <main className="relative mx-auto flex min-h-screen max-w-[600px] flex-col px-5 pb-44 pt-8">
+    <main
+      className={`relative mx-auto flex min-h-screen flex-col px-5 pt-8 ${
+        // The closing gojūon slide is two columns, so it needs more than the reading
+        // measure the script slides are held to. It also carries its own button rather
+        // than a Next arrow, so it needs less bottom clearance than the script slides.
+        step.kind === "handoff" ? "max-w-[900px] pb-28" : "max-w-[600px] pb-44"
+      }`}
+    >
       <div className="flex flex-1 items-center justify-center">
         <div key={index} className="w-full step-enter py-6" data-dir={direction}>
           <StepView step={step} />
@@ -60,33 +93,31 @@ export default function Track0Page() {
           than colliding with the buttons. */}
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-10 flex justify-center bg-gradient-to-t from-paper via-paper/95 to-transparent pb-6 pt-10">
         <div data-floating-nav className="pointer-events-auto flex flex-col items-center gap-2">
+          {step.kind === "open" && (
+            <div className="mb-2 hidden flex-col items-center gap-2 text-xs text-ink-faint sm:flex">
+              <p className="flex items-center gap-1.5">
+                <kbd className={ARROW_KEY_CLASS}>←</kbd>
+                <kbd className={ARROW_KEY_CLASS}>→</kbd>
+                <span>keys to navigate</span>
+              </p>
+              <p className="flex items-center gap-1.5">
+                <kbd className={SPACE_KEY_CLASS}>Space</kbd>
+                <span>key to play sounds</span>
+              </p>
+            </div>
+          )}
           <Dots count={steps.length} at={index} />
-          <nav className="flex items-center gap-2" aria-label="Lesson navigation">
-            {!atStart && (
-              <button onClick={() => go(-1)} aria-label="Back" title="Back (Left Arrow)" className={NAV_BTN}>
-                <span aria-hidden className="text-lg">←</span>
-              </button>
-            )}
-            <a href="/" aria-label="World map" className={`${NAV_BTN} flex items-center justify-center font-kana text-lg`}>
-              家
-            </a>
-            {!atEnd && (
-              <button onClick={() => go(1)} aria-label="Next" title="Next (Right Arrow)" className={NAV_BTN}>
-                <span aria-hidden className="text-lg">→</span>
-              </button>
-            )}
-          </nav>
+          <StationNav
+            onBack={() => go(-1)}
+            onNext={() => go(1)}
+            canGoBack={!atStart}
+            canGoNext={!atEnd}
+          />
         </div>
       </div>
     </main>
   );
 }
-
-const NAV_BTN =
-  "min-h-[48px] min-w-[48px] rounded-[var(--radius-btn)] bg-surface px-4 text-ink-muted transition-colors hover:bg-surface-2";
-
-const PRIMARY_BTN =
-  "min-h-[48px] rounded-[var(--radius-btn)] bg-ink px-10 text-base font-medium text-paper transition-colors hover:bg-ink/90";
 
 function Dots({ count, at }: { count: number; at: number }) {
   return (
@@ -176,7 +207,9 @@ function WordCard({ word }: { word: Word }) {
   return (
     <button
       onClick={() => playWord(word.syllables)}
-      aria-label={`Hear ${word.word}`}
+      data-audio-control
+      aria-label={`Hear ${word.word}. Press Space.`}
+      title={`Hear ${word.word} (Space)`}
       className="relative flex flex-col items-center gap-2 rounded-[var(--radius-lg)] bg-ink px-4 py-4 transition-colors hover:bg-ink/90"
     >
       <SpeakerIcon className="pointer-events-none absolute right-3 top-3 text-paper/50" />
@@ -238,8 +271,8 @@ function RomajiStep() {
       </p>
       <p className="text-sm leading-relaxed text-ink-muted text-pretty">
         You have probably seen Japanese words written in English letters: sushi, Tokyo,
-        samurai. That is romaji, Japanese spelled with the Latin alphabet. It is not one
-        of the three scripts, and Japanese is not written this way. It exists for
+        tsunami, karaoke. That is romaji, Japanese spelled with the Latin alphabet. It is
+        not one of the three scripts, and Japanese is not written this way. It exists for
         keyboards, street signs, and people who cannot read the scripts.
       </p>
       <div className="flex items-center gap-4 rounded-[var(--radius-lg)] bg-surface px-6 py-5">
@@ -251,39 +284,48 @@ function RomajiStep() {
       </div>
       <p className="text-sm leading-relaxed text-ink-muted text-pretty">
         Michi never teaches through romaji, because reading Japanese through English
-        spelling is a habit that is hard to undo. Here, sushi is written すし, and that is
-        how you will learn to read it.
+        spelling is a habit that is hard to undo. Here, sushi is written すし: two
+        symbols, two sounds, su-shi.
       </p>
+      <p className="text-sm leading-relaxed text-ink-muted text-pretty">
+        That is the pattern for every Japanese word. It splits into small, even sounds,
+        and each sound gets one symbol. Tap to hear them.
+      </p>
+      <div className="flex w-full flex-col gap-3">
+        {ROMAJI_WORDS.map((w) => (
+          <WordCard key={w.word} word={w} />
+        ))}
+      </div>
     </div>
   );
 }
 
 function HandoffStep() {
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col items-center gap-6 text-center">
-      <p className="text-2xl font-medium text-ink text-balance">We start with hiragana.</p>
-      <p className="leading-relaxed text-ink-muted text-pretty">
-        Its 46 symbols can write anything in Japanese, and each one stands for a single
-        sound. Learn them and you can read any hiragana word out loud.
-      </p>
-      <p className="flex gap-4 font-kana text-5xl leading-none text-ink">
-        <span>あ</span>
-        <span>い</span>
-        <span>う</span>
-        <span>え</span>
-        <span>お</span>
-      </p>
-      <p className="leading-relaxed text-ink-muted text-pretty">
-        These are the five vowels, and they are where you begin. Nearly every other
-        symbol is a consonant joined to one of these five sounds, so knowing them makes
-        the other 41 far easier.
-      </p>
-      <a
-        href="/?completed=three-scripts"
-        className={`mt-2 inline-flex items-center justify-center ${PRIMARY_BTN}`}
-      >
-        Return to the path
-      </a>
+    // Two columns: the table on the left, copy and the return button on the right, so
+    // all 46 fit on screen without scrolling. Stacked on narrow screens.
+    // The text column is centered against the table rather than top-aligned: the two
+    // are very different heights, and hanging a short block off the top leaves the
+    // slide looking unbalanced. The pair itself is anchored left, not centered, so it
+    // does not float as an island on a wide screen.
+    <div className="mx-auto flex w-full flex-col items-center gap-8 text-center sm:flex-row sm:items-center sm:justify-start sm:gap-12 sm:text-left">
+      {/* Nothing is filled in: the learner has not learned a single kana yet. The vowel
+          row is only outlined, marking where they start rather than claiming it. */}
+      <div className="sm:shrink-0">
+        <GojuonGrid next="vowels" caption={false} />
+      </div>
+      <div className="flex max-w-sm flex-col items-center gap-5 sm:items-start">
+        <p className="text-2xl font-medium text-ink text-balance">We start with hiragana.</p>
+        <p className="text-sm leading-relaxed text-ink-muted text-pretty">
+          Its 46 symbols can write anything in Japanese, and each one stands for a single
+          sound. Here they all are, in rows of five. You begin at the top row, the five
+          vowels, because nearly every symbol below it is a consonant joined to one of
+          those five sounds.
+        </p>
+        <Button href="/?completed=three-scripts" variant="primary" wide>
+          Return to the path
+        </Button>
+      </div>
     </div>
   );
 }

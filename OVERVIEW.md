@@ -90,9 +90,11 @@ throughout as `[P#]`. The short version:
   punishes** — no hearts, no lives. A progress bar is always visible.
 - **The first station is orientation:** a short read-through of the three scripts —
   hiragana, katakana, kanji, with romaji named and set aside — one idea per slide,
-  one real word per script (わたし, カメラ, 山), ending on *why* the course starts
+  one real word per script (わたし, カメラ, 山), plus the first hint that a word splits
+  into even one-symbol sounds (すし, つなみ, からおけ), ending on *why* the course starts
   with hiragana and its five vowels. Nothing is drilled or seeded there; the depth
-  (origins, a mixed three-script sentence) lives in the book stop that follows.
+  (origins, the mora idea in full, a mixed three-script sentence) lives in the book
+  stop that follows.
 - **Then the learning proper begins:** **hear a native voice say あ and mimic it aloud**
   — doing before reading. Each later script's story is dripped in as it becomes relevant.
 - **Stations carry their own new facts; book stops expand on them.** Because book stops
@@ -167,27 +169,42 @@ decisions (stack, no-romaji, SRS algorithm, stroke-data source) are settled.
 **Application code now exists.** Built so far:
 
 - **SRS engine** (Phase 1) — pure SM-2 in `src/srs/`, no framework, under test
-- **Content layer** (Phase 2) — the vowels and Track 1 in `src/content/`, as TS
-  modules with validation tests; the full 46-kana curriculum is still to come
+- **Content layer** (Phase 2) — the vowels, the k-row and their first consolidation station in
+  `src/content/`, as TS modules with validation tests; the full 46-kana curriculum
+  is still to come
 - **Web app** (Phase 3, in progress) — Next.js App Router in `src/app/`: the
-  world map (provinces → tracks → stations), Station 1 (the three scripts) and
-  Station 2 (the five vowels), and the codex
-- **Kana audio** — all 46 gojūon as placeholder recordings (see the note below)
+  world map (provinces → tracks → stations), Station 1 (the three scripts),
+  Station 2 (the five vowels), Station 3 (the K row), Station 4 (the first look
+  back), and the codex
+- **Kana audio** — all 46 gojūon as human recordings, one speaker (see the note below)
 
-62 tests pass across 10 files (`npx vitest run`). Phase 3 is scoped to Track 1's first
-two stations (the three scripts, then the five vowels) — generalizing across the full
-curriculum is what remains. Two codex entries are authored: *Three scripts, one
-language* (after station 1) and *Why the kana are ordered as they are* (the gojūon
-grid, after station 8).
+82 tests pass across 11 files (`npx vitest run`). Phase 3 is scoped to Track 1's four
+stations (the three scripts, the five vowels, the K row, then consolidation) — generalizing
+across the full curriculum is what remains. Stations 2–4 share one page component
+(`src/components/track1-page.tsx`), which takes a station id and supplies the copy and
+kana per station; the drill machinery underneath is kana-agnostic. Every control in the
+app is one shared button (`src/components/button.tsx` over `.btn-*` in `globals.css`)
+in three weights (primary / secondary / ghost); the world map's controls compose the
+same classes, so station nav and map nav match. All four stations
+close on the **gojūon grid** (`src/content/gojuon.ts`, `src/components/gojuon-grid.tsx`):
+the whole 46-kana table, with the row just learned animating into place and the rest
+left faint, so the learner sees the set they are filling in rather than a stream of
+unrelated rows. Four codex entries are
+authored: *Three scripts, one language* (after station 1), *Five sounds that hold still*
+(after station 2), *Rows, and the table they sit in* (after station 3) and *Why the kana
+are ordered as they are* (after station 8).
 
 The roadmap runs: **0 Foundations → 1 SRS engine → 2 Content (the hiragana curriculum) →
 3 Web app → 4 Mobile via Capacitor → 5 Audio production →** then katakana, kanji, and beyond.
 
-*Audio note:* all 46 gojūon now ship as placeholder recordings generated with
-macOS `say` (Kyoko) — free, offline, regenerable via
-[`scripts/generate-kana-audio.sh`](./scripts/generate-kana-audio.sh). Phase 5
-remains open for production-quality audio.
-See [docs/design/audio.md](./docs/design/audio.md).
+*Audio note:* all 46 gojūon ship as human recordings by Kia Leng Koh
+([Learn Japanese Adventure](https://www.learn-japanese-adventure.com/)), used by
+permission on condition of credit and a link — the Credits footer on the codex page is
+load-bearing, not decoration. One speaker throughout, trimmed to their onset and
+loudness-matched, in [`public/audio/hiragana/`](./public/audio/hiragana/); terms and
+recipe in that folder's `ATTRIBUTION.md`. Phase 5 remains open for production-quality
+audio, and the grant is non-commercial: re-ask before any paid release. See
+[docs/design/audio.md](./docs/design/audio.md).
 
 **Open questions still tracked:** content on-disk format (JSON vs. TS modules), and
 test/lint/TS tooling — both to be settled as their phases begin.

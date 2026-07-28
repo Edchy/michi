@@ -106,8 +106,8 @@ line's official color — so the hue is not decoration, it *is* the line's ident
 | `--color-track-1` | `#FD9701` | Ginza 銀座線 | `#FF9500` |
 | `--color-track-2` | `#F62E34` | Marunouchi 丸ノ内線 | `#F62E36` |
 | `--color-track-3` | `#00BC87` | Chiyoda 千代田線 | `#00BB85` |
-| `--color-track-4` | `#8F76D7` | Hanzomon 半蔵門線 | `#8F76D6` |
-| `--color-track-5` | `#009BBF` | Tozai 東西線 | `#009BBF` |
+| `--color-track-4` | `#8F76D7` | Hanzōmon 半蔵門線 | `#8F76D6` |
+| `--color-track-5` | `#009BBF` | Tōzai 東西線 | `#009BBF` |
 
 Each is within 1–5/765 of the official value (community-documented hex; Tokyo Metro
 publishes the color *names* but blocks automated fetches of a brand guideline). Keep any
@@ -129,7 +129,7 @@ The constraints that keep this from breaking §2's discipline:
   55% fill it clears every one (**4.9–7.0:1**, measured). Don't fade it with `opacity`
   either — the 10px `TRACK N` label has no headroom.
 - **Grouping only, never state.** done/current/locked are carried by **shape and weight**:
-  done = filled + check, current = thick ring + halo + ink-dark number + pin, locked =
+  done = filled + check, current = thick ring + halo + a map mark + pin, locked =
   thin faint ring. No state has a hue of its own, so "you are here" reads identically on
   every track color. The map must survive `grayscale(1)` with every state still
   distinguishable — check that after any change here.
@@ -213,6 +213,39 @@ Full reasoning in [typography.md](./typography.md). Tokens:
   a clear 52px replay control or a tappable glyph, with tap-specific copy only.
 - Listen drills invert that treatment on desktop: the replay button disappears in
   favor of a quiet Space hint, leaving the larger answer glyphs as the visual focus.
+
+### Buttons — one set, three weights
+
+Every control in the app is the same button, differing only in weight. The styles
+live in `globals.css` (`.btn`, `.btn-primary`, `.btn-secondary`, `.btn-ghost`,
+plus the `.btn-icon` / `.btn-wide` modifiers); `src/components/button.tsx` wraps
+them and renders an `<a>` when given `href`, so a link that acts like a control is
+never styled by hand.
+
+| Variant | Look | Use |
+|---|---|---|
+| `primary` | solid ink, paper text | the one action that ends a step ("Return to the path", Listen) |
+| `secondary` | `--color-bg` with a `--color-line` border and card shadow | everything else: station nav, map arrows, codex footer |
+| `ghost` | no chrome until hover | in-text and list controls |
+
+The **secondary** look is the world map's (`.wm-arrow`, `.world-codex`,
+`.wm-chain-close` all now compose `.btn-secondary`), so the nav inside a station
+matches the nav on the map instead of being a second, softer style.
+
+**A control at the edge of a range is disabled, never hidden.** A button that
+vanishes reads as a bug, and a nav row whose buttons shift position under the
+cursor is worse than an inert one. The station's back arrow on slide 1 and the
+map's line arrows at a province boundary both stay put and grey out.
+
+**The two navs are the same buttons, not the same shape.** The map's row is
+`‹ [line card] ›`, because there you are choosing *which* line to look at, so the
+card names the current one and opens the list. A station's row is `‹ ⌂ ›`: inside a
+lesson there is no such choice, you can already see where you are, and a card
+restating it would be one more thing to read without being one more thing to do.
+
+Drill answer buttons are the deliberate exception: they carry no button chrome,
+because they animate on answer (scale, fade, `answer-success`) and a frame would
+fight that.
 
 ### Radius — small and quiet
 

@@ -11,7 +11,7 @@
 // 50+ tracks. See docs/decisions/0005-provinces-and-tracks.md.
 //
 // Structure mirrors the authored roster in docs/curriculum/stations.md.
-// `href` is set only where a lesson actually exists yet (Stations 1–2 today).
+// `href` is set only where a lesson actually exists yet (Stations 1–4 today).
 
 export type Station = {
   id: string;
@@ -69,8 +69,8 @@ export const PROVINCES: Province[] = [
           // use しんばし (Shinbashi), the Ginza Line's original terminus.
           { id: "three-scripts", n: 1, title: "The three scripts", place: "しんばし",  placeRomaji: "Shinbashi", href: "/tracks/three-scripts", x: 240, y: 500 },
           { id: "vowels",       n: 2, title: "First sounds",     place: "あさくさ",   placeRomaji: "Asakusa",  href: "/tracks/first-sounds", x: 560, y: 620 },
-          { id: "k-row",        n: 3, title: "The K row",        place: "うえの",     placeRomaji: "Ueno",     x: 880,  y: 470 },
-          { id: "look-back-1",  n: 4, title: "A first look back", place: "なかの",    placeRomaji: "Nakano",   x: 1200,  y: 560 },
+          { id: "k-row",        n: 3, title: "The K row",        place: "うえの",     placeRomaji: "Ueno",     href: "/tracks/k-row", x: 880,  y: 470 },
+          { id: "look-back-1",  n: 4, title: "A first look back", place: "なかの",    placeRomaji: "Nakano",   href: "/tracks/first-look-back", x: 1200,  y: 560 },
         ],
       },
       // Marunouchi 丸ノ内線 — まるのうち itself is basic-46-clean.
@@ -79,7 +79,7 @@ export const PROVINCES: Province[] = [
         line: "Marunouchi", lineKanji: "丸ノ内線", code: "M",
         stations: [
           { id: "s-row",        n: 5, title: "The S row",        place: "しんじゅく", placeRomaji: "Shinjuku", x: 1520, y: 400 },
-          { id: "t-row",        n: 6, title: "The T row",        place: "おおてまち", placeRomaji: "Otemachi", x: 1840, y: 560 },
+          { id: "t-row",        n: 6, title: "The T row",        place: "おおてまち", placeRomaji: "Ōtemachi", x: 1840, y: 560 },
           { id: "n-row",        n: 7, title: "The N row",        place: "いけぶくろ", placeRomaji: "Ikebukuro", x: 2160, y: 440 },
           { id: "snapshot-1",   n: 8, title: "Halfway snapshot",  place: "ぎんざ",    placeRomaji: "Ginza",    x: 2480, y: 580 },
         ],
@@ -89,22 +89,23 @@ export const PROVINCES: Province[] = [
         id: "completing-kana", n: 3, title: "Completing the kana",
         line: "Chiyoda", lineKanji: "千代田線", code: "C",
         stations: [
-          { id: "h-row",        n: 9,  title: "The H row",       place: "おもてさんどう", placeRomaji: "Omotesando", x: 2800, y: 420 },
+          { id: "h-row",        n: 9,  title: "The H row",       place: "おもてさんどう", placeRomaji: "Omotesandō", x: 2800, y: 420 },
           { id: "m-row",        n: 10,  title: "The M row",       place: "ろっぽんぎ", placeRomaji: "Roppongi", x: 3120, y: 560 },
           { id: "yw-rows",      n: 11, title: "The Y & W rows",  place: "よよぎ",     placeRomaji: "Yoyogi",   x: 3440, y: 400 },
           { id: "r-row-n",      n: 12, title: "The R row & ん",   place: "おちゃのみず", placeRomaji: "Ochanomizu", x: 3760, y: 540 },
         ],
       },
-      // Hanzomon 半蔵門線
+      // Hanzōmon 半蔵門線 — code Z, not H: Tokyo Metro gave H to Hibiya, so Hanzōmon
+      // takes its letter from the last syllable instead. The real system's choice.
       {
         id: "words-grammar", n: 4, title: "First words & grammar",
-        line: "Hanzomon", lineKanji: "半蔵門線", code: "Z",
+        line: "Hanzōmon", lineKanji: "半蔵門線", code: "Z",
         stations: [
           { id: "mastery",      n: 13, title: "Hiragana mastery", place: "しぶや",   placeRomaji: "Shibuya",  x: 4080, y: 420 },
           { id: "words-nature", n: 14, title: "Words of nature",  place: "かんだ",   placeRomaji: "Kanda",    x: 4400, y: 560 },
           { id: "words-animals",n: 15, title: "Words of animals", place: "あきはばら", placeRomaji: "Akihabara", x: 4720, y: 440 },
           { id: "first-sentence",n: 16, title: "A first sentence", place: "にほんばし", placeRomaji: "Nihonbashi", x: 5040, y: 580 },
-          { id: "hiragana-complete", n: 17, title: "Hiragana complete", place: "とうきょう", placeRomaji: "Tokyo", x: 5360, y: 440 },
+          { id: "hiragana-complete", n: 17, title: "Hiragana complete", place: "とうきょう", placeRomaji: "Tōkyō", x: 5360, y: 440 },
         ],
       },
     ],
@@ -132,6 +133,26 @@ export const BOOK_STOPS: BookStop[] = [
     unlockAfterStation: 1,
     x: 400,
     y: 585,
+  },
+  {
+    id: "five-sounds-that-hold-still",
+    title: "Five sounds that hold still",
+    href: "/codex/five-sounds-that-hold-still",
+    // On the curve between あさくさ (2) and うえの (3): the bézier passes (720, 547),
+    // and the marker sits a few px below the ink as the first stop does.
+    unlockAfterStation: 2,
+    x: 720,
+    y: 554,
+  },
+  {
+    id: "rows-and-the-table",
+    title: "Rows, and the table they sit in",
+    href: "/codex/rows-and-the-table",
+    // On the curve between うえの (3) and なかの (4): the bézier passes (1040, 514),
+    // and the marker sits a few px below the ink as the first stop does.
+    unlockAfterStation: 3,
+    x: 1040,
+    y: 521,
   },
   {
     id: "why-the-kana-are-ordered",

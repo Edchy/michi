@@ -72,7 +72,7 @@ export default function WorldPage() {
               </span>
             </button>
           </h1>
-          <a href="/codex" className="world-codex" aria-label="Open Codex">
+          <a href="/codex" className="btn btn-secondary world-codex" aria-label="Open Codex">
             <span className="font-kana" aria-hidden>文</span>
             <span>Codex</span>
           </a>
