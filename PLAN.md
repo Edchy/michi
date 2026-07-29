@@ -69,13 +69,13 @@ We will answer these questions one at a time:
 
 - [x] What should a learner be able to do after completing a station?
 - [x] What is the difference between visiting, completing, learning, and mastering?
-- [ ] What kinds of practice build a new memory?
-- [ ] What evidence tells us that the learner can recall something?
+- [x] What kinds of practice build a new memory?
+- [x] What evidence tells us that the learner can recall something?
 - [x] How should earlier knowledge return inside later stations?
 - [x] What should spaced repetition control, and what should authored curriculum
   control?
-- [ ] When should speaking and writing enter the learning flow?
-- [ ] What makes a session feel complete without pretending its knowledge is permanent?
+- [x] When should speaking and writing enter the learning flow?
+- [x] What makes a session feel complete without pretending its knowledge is permanent?
 
 Output: a short, approved learning blueprint written in this file.
 
@@ -176,6 +176,119 @@ Station types may omit phases that do not apply. For example, an orientation sta
 may introduce no reviewable items, while a consolidation station introduces no new
 knowledge.
 
+### Approved rule 7: practice has different evidence strength
+
+Different exercises support different claims:
+
+1. **Guided exposure** builds the connection while the answer or help remains
+   available. It does not prove recall.
+2. **Supported recognition** asks the learner to choose from a small set. It shows
+   growing familiarity but remains guessable.
+3. **Full-set discrimination** asks the learner to distinguish every new item from the
+   rest of that station's new set, normally about five items.
+4. **Unaided production** asks the learner to speak, write, or construct an answer
+   without choices. It counts as verified evidence only when Michi can judge the
+   response reliably.
+5. **Real use** applies the knowledge in a word, sentence, listening task, or other
+   meaningful context.
+
+For the current kana acquisition stations, the final checkpoint tests every new kana
+in both automatically verifiable directions:
+
+- Hear the sound and select its symbol from the complete new set.
+- See the symbol and select its sound from the complete new set.
+
+Mistakes are retaught and requeued according to rule 2. Passing this checkpoint is
+strong enough for initial station completion, but not for a claim of production,
+long-term retention, or mastery.
+
+Speaking rehearsal remains valuable practice but does not affect completion while it
+is self-confirmed. Writing can provide stronger verified evidence once reliable stroke
+checking exists. Later reviews may mix in older, easily confused items rather than
+continually expanding the choice set.
+
+### Approved rule 8: speaking begins as honest rehearsal
+
+Speaking enters the learning flow in three forms:
+
+1. During teaching, the learner hears a native recording and imitates it while the
+   model is fresh.
+2. After the sound-symbol connection is established, the learner sees the symbol,
+   attempts the sound before hearing it, and then plays the recording to compare.
+3. Once words become readable, the learner reads them aloud before hearing the native
+   recording.
+
+Michi does not ask the learner to grade themselves with “got it” or “forgot.” Without
+reliable evaluation, speaking does not affect station completion, advance an SRS
+schedule, or count toward mastery. It remains a required learning opportunity while
+Michi stays honest that participation and pronunciation are not verified.
+
+Reliable speech evaluation may be added in the future. If it becomes accurate enough
+for beginner Japanese pronunciation, speaking can become its own scheduled capability
+with explicit evidence rules. The current learning system must not depend on that
+future feature.
+
+### Approved rule 9: writing grows from guided motion to blank recall
+
+Writing begins only after the learner has connected a kana's sound and symbol.
+
+1. On the first writing encounter, the learner traces the correct strokes over a faint
+   guide at roughly 20% opacity. Michi presents the strokes in the correct order and
+   guides generously rather than assigning a correctness grade.
+2. On a later writing review, the learner starts with an empty surface and draws the
+   kana from memory. Michi then overlays the correct form for comparison and offers a
+   clean retry without asking the learner to grade themselves.
+3. Automated structural evaluation is a later layer. It may compare stroke count,
+   order, direction, path proximity, and coverage against normalized reference paths.
+   It must tolerate wobble and reasonable variation in size, placement, and proportion.
+
+Tracing and ungraded blank recall do not affect station completion or mastery.
+`Writing` becomes its own scheduled capability only after evaluation is reliable
+enough to avoid teaching through false rejection. Thresholds must be tested with real
+learner drawings rather than chosen only from synthetic examples.
+
+The writing surface is a quiet, responsive tool:
+
+- The drawing area scales to the available phone, tablet, or desktop space while using
+  normalized coordinates so the same reference data works everywhere.
+- Ink follows the pointer in the same frame with no perceptible lag and supports touch,
+  mouse, and stylus input.
+- The learner draws with a substantial ink stroke rather than a thin digital line.
+- A restrained change in width or taper may respond to real pointer pressure, with a
+  consistent fallback when pressure is unavailable.
+- The physical feeling should suggest Japanese brush writing through stroke weight,
+  taper, and rhythm, not through decorative paper texture or ornamental chrome.
+- Clear and retry actions remain immediately available, and the surface never becomes
+  a completion barrier before its judgement is trustworthy.
+
+### Approved rule 10: review is bounded and prerequisites guide recovery
+
+Michi supports three session modes:
+
+1. A **normal station** begins with roughly five minutes or 5–10 prompts of prioritized
+   review, then continues into new content and its final checkpoint. The review favors
+   prerequisites, then weak and overdue targets. It ends when its budget is reached,
+   even if other knowledge remains due.
+2. A **recovery session** is recommended when important prerequisites cannot be
+   refreshed in the opening review or a returning learner has a meaningful overdue
+   backlog. It lasts roughly 10–15 minutes, prioritizes prerequisite and weak knowledge,
+   and ends without requiring the complete backlog to disappear.
+3. An optional **review-only session** lets the learner work through a bounded selection
+   of due knowledge without beginning new content.
+
+A long absence does not automatically prove forgetting. Stored history selects likely
+review needs, while the learner's actual opening responses reveal whether recovery is
+necessary. Unrelated overdue knowledge does not block a new station.
+
+Every mode has a truthful end:
+
+- A normal station completes after its bounded review and final station checkpoint.
+- A recovery session completes when its fixed review budget is finished.
+- A review-only session completes when its selected queue has been attempted.
+
+Anything still due is scheduled forward rather than becoming an endless obligation.
+Recovery language remains calm and practical, never punitive.
+
 ## Phase 2: describe stations consistently
 
 Goal: represent the existing stations through one understandable content structure.
@@ -245,11 +358,20 @@ Goal: show that adding content is mostly authoring rather than rebuilding the ap
 
 Only after this phase should we scale into more tracks and provinces.
 
-## Next decision
+## Phase 1 result
 
-Define what kinds of practice count as learning evidence:
+The shared learning blueprint now defines:
 
-> When is choosing an answer useful, and when must the learner recall, speak, write, or
-> use the knowledge without choices?
+- What station completion proves.
+- How final checkpoints handle complete coverage and mistakes.
+- The difference between path progress and current memory.
+- How learning items, capabilities, review targets, and due schedules relate.
+- How authored curriculum, local storage, the SRS engine, and the session planner divide
+  responsibility.
+- How earlier knowledge returns without creating endless sessions.
+- What different forms of practice can honestly prove.
+- How speaking and writing enter progressively without false grading.
+- The reusable sequence shared by different station types.
 
-We will answer this before assigning evidence rules to exercise types.
+Phase 1 is complete. The next work belongs to Phase 2: define the small station
+specification in ordinary language before changing application code.
