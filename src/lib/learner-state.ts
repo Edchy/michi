@@ -4,7 +4,7 @@ import { reviewTargetKey, type ReviewTarget } from "../content/station-spec";
 
 export const LEARNER_STATE_KEY = "michi-learner-state-v1";
 
-export type AttemptSource = "checkpoint" | "review" | "recovery";
+export type AttemptSource = "checkpoint" | "review" | "recovery" | "replay";
 
 export interface AttemptEvidence {
   answeredAt: Date;
@@ -76,14 +76,22 @@ export function recordReviewAttempt(
   if (!current) throw new Error(`Cannot record ${key} before it is introduced.`);
 
   const grade: Grade = result.correct ? "got_it" : "forgot";
+  const isReplay =
+    result.correct && result.source === "checkpoint" && current.schedule.lastReviewed !== null;
+  const source: AttemptSource = isReplay ? "replay" : result.source;
   const next: ReviewRecord = {
     ...current,
     // An immediate retry helps finish today's checkpoint but must not masquerade as
-    // spaced recall or cancel the future review created by the original miss.
-    schedule: result.source === "recovery" ? current.schedule : review(current.schedule, grade, now),
+    // spaced recall or cancel the future review created by the original miss. Replaying
+    // a completed station is practice too: only the target's first checkpoint and later
+    // generated reviews are allowed to move its SRS clock.
+    schedule:
+      source === "recovery" || source === "replay"
+        ? current.schedule
+        : review(current.schedule, grade, now),
     attemptCount: current.attemptCount + 1,
     correctCount: current.correctCount + (result.correct ? 1 : 0),
-    lastAttempt: { answeredAt: now, ...result },
+    lastAttempt: { answeredAt: now, correct: result.correct, source },
   };
 
   return {
@@ -183,7 +191,8 @@ export function loadLearnerState(
           typeof lastAttempt.correct !== "boolean" ||
           lastAttempt.source !== "checkpoint" &&
           lastAttempt.source !== "review" &&
-          lastAttempt.source !== "recovery"
+          lastAttempt.source !== "recovery" &&
+          lastAttempt.source !== "replay"
         ) {
           continue;
         }

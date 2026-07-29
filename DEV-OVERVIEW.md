@@ -144,6 +144,7 @@ approved learner experience all at once.
 | SRS calculation | Calculates intervals, due dates, and confidence | `src/srs/engine.ts` |
 | Learner review state | Persists item-capability evidence and schedules | `src/lib/learner-state.ts` |
 | Session planner | Selects bounded prerequisite review and finite recovery | `src/learning/session-planner.ts` |
+| Capability projection | Derives learning, mastered, and review-due status | `src/learning/capability-progress.ts` |
 | Shared controls | Buttons and station navigation | `src/components/button.tsx`, `src/components/station-nav.tsx` |
 
 Most of these areas have focused tests beside them as `*.test.ts` or `*.test.tsx`.
@@ -194,6 +195,26 @@ Learner state
 A learning item is content such as `あ`. A capability is something the learner can do
 with it, such as hear its sound and identify the symbol. One item-capability pair is a
 review target.
+
+Present capability is derived rather than stored:
+
+```text
+No review record                         → Not introduced
+Introduced or one successful session     → Learning
+Two successful spaced sessions, not due  → Mastered
+That mastered target reaches its due time → Review due
+A later miss                             → Learning again
+```
+
+This calculation lives in `src/learning/capability-progress.ts` and has no map-position
+input. The map can therefore keep a completed station complete while its individual
+knowledge honestly becomes due for review.
+
+Learner-facing memory language remains inside the station flow rather than becoming a
+map dashboard. Generated review begins with the number of due connections and explains
+that pauses are useful information. Misses receive one “see those once more” transition;
+after the finite recovery pass, Michi continues and says plainly that the learner's place
+on the path has not changed. The map itself reports only stations completed.
 
 ## Planned responsibility boundaries
 

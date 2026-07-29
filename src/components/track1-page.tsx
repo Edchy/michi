@@ -515,7 +515,10 @@ function StepView({
       ) : step.kind === "match" ? (
         <MatchStep pool={step.pool} onDone={onAdvance} />
       ) : step.kind === "reviewIntro" ? (
-        <ReviewIntroStep kana={plannedReviewKana.length > 0 ? plannedReviewKana : step.pool} />
+        <ReviewIntroStep
+          kana={plannedReviewKana.length > 0 ? plannedReviewKana : step.pool}
+          targetCount={openingReview?.targets.length ?? step.pool.length}
+        />
       ) : step.kind === "review" ? (
         <DrillBlock
           pool={step.pool}
@@ -832,11 +835,11 @@ function MatchStep({ pool, onDone }: { pool: Kana[]; onDone: () => void }) {
  * Frames the refresher that follows. Without this, a station billed as the k row opens
  * by drilling あいうえお with no explanation, which reads as a mistake.
  */
-function ReviewIntroStep({ kana }: { kana: Kana[] }) {
+function ReviewIntroStep({ kana, targetCount }: { kana: Kana[]; targetCount: number }) {
   return (
     <div className="mx-auto flex max-w-md flex-col items-center gap-6 text-center">
       <p className="text-2xl font-medium text-ink text-balance">
-        But first, a quick refresher.
+        A quick look back.
       </p>
       <p className="flex gap-4 font-kana text-5xl leading-none text-ink">
         {kana.map((k) => (
@@ -844,8 +847,45 @@ function ReviewIntroStep({ kana }: { kana: Kana[] }) {
         ))}
       </p>
       <p className="leading-relaxed text-ink-muted text-pretty">
-        The five vowels from last station, before you build on them. You are about to hear
-        each one and pick it out, so the k row lands on sounds you still have.
+        {targetCount} earlier {targetCount === 1 ? "connection is" : "connections are"}
+        {" "}ready for another pass. A pause is useful information, not a failure.
+      </p>
+    </div>
+  );
+}
+
+function ReviewTransition({
+  kind,
+  recoveryCount,
+  recoveryHadMiss,
+}: {
+  kind: "recovery" | "complete";
+  recoveryCount: number;
+  recoveryHadMiss: boolean;
+}) {
+  if (kind === "recovery") {
+    return (
+      <div className="mx-auto flex max-w-sm flex-col items-center gap-4 text-center">
+        <p className="text-2xl font-medium text-ink text-balance">
+          Let&rsquo;s see {recoveryCount === 1 ? "that one" : `${recoveryCount} of those`} once
+          more.
+        </p>
+        <p className="leading-relaxed text-ink-muted text-pretty">
+          No need to restart. Only the connections that paused are coming back.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto flex max-w-sm flex-col items-center gap-4 text-center">
+      <p className="text-2xl font-medium text-ink text-balance">
+        {recoveryHadMiss ? "That’s enough for today." : "Good. Let’s continue."}
+      </p>
+      <p className="leading-relaxed text-ink-muted text-pretty">
+        {recoveryHadMiss
+          ? "We’ll bring those connections back again later. Your place on the path has not changed."
+          : "The earlier sounds are ready for what comes next."}
       </p>
     </div>
   );
@@ -952,6 +992,7 @@ function DrillBlock({
   const isSpeakBlock = types.length === 1 && types[0] === "sayAloud";
   const speakTarget = pool.length * 2;
   const [qNum, setQNum] = useState(0); // increments per question → fresh sub-component
+  const [reviewInterstitial, setReviewInterstitial] = useState<"recovery" | "complete" | null>(null);
 
   function makeCheckpointQuestion(): Question {
     const target = checkpoint.current.current;
@@ -1067,6 +1108,19 @@ function DrillBlock({
         : isSpeakBlock
           ? spokenAttempts.current >= speakTarget
           : progress.current.done;
+    if (isBoundedReview && done) {
+      setReviewInterstitial("complete");
+      return;
+    }
+    if (
+      isBoundedReview &&
+      activeReviewTarget &&
+      !activeReviewTarget.recovery &&
+      boundedReview.current.current.recovery
+    ) {
+      setReviewInterstitial("recovery");
+      return;
+    }
     if (done) {
       onDone();
       return;
@@ -1116,6 +1170,27 @@ function DrillBlock({
   }
 
   useEffect(() => {
+    if (reviewInterstitial) {
+      onNavBackChange(null);
+      onSoundChange(null, null);
+      let used = false;
+      onNavNextChange(() => {
+        if (used) return;
+        used = true;
+        if (reviewInterstitial === "complete") {
+          onDone();
+          return;
+        }
+        setQ(makeReviewQuestion());
+        setQNum((n) => n + 1);
+        setReviewInterstitial(null);
+      });
+      return () => {
+        onNavNextChange(null);
+        onSoundChange(null, null);
+      };
+    }
+
     const usesQuestionHistory = q.type === "sayAloud" || q.type === "trace";
     if (usesQuestionHistory && history.current.length > 0) {
       let used = false;
@@ -1153,11 +1228,24 @@ function DrillBlock({
       onNavNextChange(null);
       onSoundChange(null, null);
     };
-  }, [qNum, q.type, onNavBackChange, onNavNextChange, onSoundChange]);
+  }, [
+    qNum,
+    q.type,
+    reviewInterstitial,
+    onNavBackChange,
+    onNavNextChange,
+    onSoundChange,
+  ]);
 
   return (
     <div className="w-full">
-      {q.type === "trace" ? (
+      {reviewInterstitial ? (
+        <ReviewTransition
+          kind={reviewInterstitial}
+          recoveryCount={boundedReview.current.recoveryCount}
+          recoveryHadMiss={boundedReview.current.recoveryHadMiss}
+        />
+      ) : q.type === "trace" ? (
         <TraceQuestion key={qNum} q={q} />
       ) : q.type === "sayAloud" ? (
         <SayAloudQuestion

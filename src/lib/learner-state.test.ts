@@ -108,6 +108,49 @@ describe("one-target learner-state lifecycle", () => {
     expect(introduceReviewTarget(state, A_SOUND_TO_SYMBOL, NOW)).toBe(state);
   });
 
+  it("records an immediate station replay without advancing the SRS schedule", () => {
+    let state = introduceReviewTarget(emptyLearnerState(), A_SOUND_TO_SYMBOL, NOW);
+    state = recordReviewAttempt(
+      state,
+      A_SOUND_TO_SYMBOL,
+      { correct: true, source: "checkpoint" },
+      NOW,
+    );
+    const scheduled = state.reviewRecords["hira_a:sound-to-symbol"]!.schedule;
+
+    state = recordReviewAttempt(
+      state,
+      A_SOUND_TO_SYMBOL,
+      { correct: true, source: "checkpoint" },
+      new Date(NOW.getTime() + 60_000),
+    );
+    const replayed = state.reviewRecords["hira_a:sound-to-symbol"]!;
+
+    expect(replayed.lastAttempt?.source).toBe("replay");
+    expect(replayed.schedule).toEqual(scheduled);
+  });
+
+  it("treats a missed station replay as real evidence of forgetting", () => {
+    let state = introduceReviewTarget(emptyLearnerState(), A_SOUND_TO_SYMBOL, NOW);
+    state = recordReviewAttempt(
+      state,
+      A_SOUND_TO_SYMBOL,
+      { correct: true, source: "checkpoint" },
+      NOW,
+    );
+    state = recordReviewAttempt(
+      state,
+      A_SOUND_TO_SYMBOL,
+      { correct: false, source: "checkpoint" },
+      new Date(NOW.getTime() + 60_000),
+    );
+
+    const missed = state.reviewRecords["hira_a:sound-to-symbol"]!;
+    expect(missed.lastAttempt?.source).toBe("checkpoint");
+    expect(missed.schedule.repetitions).toBe(0);
+    expect(missed.schedule.dueDate).toEqual(new Date(NOW.getTime() + 6 * 60_000));
+  });
+
   it("refuses evidence for a target that was never introduced", () => {
     expect(() =>
       recordReviewAttempt(

@@ -107,6 +107,8 @@ export class BoundedReviewProgress {
   private pending: PlannedReviewPrompt[];
   private readonly misses: ReviewTarget[] = [];
   private recoveryStarted = false;
+  private recoveryMissed = false;
+  private recoveryPlanned = 0;
   private completed = 0;
   private total: number;
 
@@ -131,11 +133,13 @@ export class BoundedReviewProgress {
     if (!prompt.recovery && !wasCorrect) {
       this.misses.push({ itemId: prompt.itemId, capability: prompt.capability });
     }
+    if (prompt.recovery && !wasCorrect) this.recoveryMissed = true;
 
     if (this.pending.length === 0 && !this.recoveryStarted) {
       this.recoveryStarted = true;
       const recovery = planRecovery({ misses: this.misses, limit: this.recoveryLimit });
       this.pending = recovery.targets.map((target) => ({ ...target, recovery: true }));
+      this.recoveryPlanned = this.pending.length;
       this.total += this.pending.length;
     }
   }
@@ -150,5 +154,17 @@ export class BoundedReviewProgress {
 
   get promptCount(): number {
     return this.total;
+  }
+
+  get recoveryCount(): number {
+    return this.recoveryPlanned;
+  }
+
+  get hadRecovery(): boolean {
+    return this.recoveryStarted && this.misses.length > 0;
+  }
+
+  get recoveryHadMiss(): boolean {
+    return this.recoveryMissed;
   }
 }

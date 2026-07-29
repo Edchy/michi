@@ -54,7 +54,7 @@ export default function WorldPage() {
               className="world-brand"
               onClick={() => api?.openProvinces()}
               aria-label={`Province ${p.n}: ${p.title}${
-                range.count === 0 ? " (not yet built)" : `, ${done} of ${range.count} stations visited`
+                range.count === 0 ? " (not yet built)" : `, ${done} of ${range.count} stations completed`
               } — browse all provinces`}
             >
               <span className="world-mark font-kana" aria-hidden>道</span>
@@ -67,7 +67,7 @@ export default function WorldPage() {
                 <span className="world-progress">
                   {range.count === 0
                     ? "Not yet built"
-                    : <><span>{done}</span> of {range.count} stations visited</>}
+                    : <><span>{done}</span> of {range.count} stations completed</>}
                 </span>
               </span>
             </button>

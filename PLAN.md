@@ -877,14 +877,57 @@ learner-facing progress model.
 
 Goal: show travel and present capability as related but different things.
 
-- [ ] Keep map position as course progression.
-- [ ] Track introduced knowledge separately.
-- [ ] Define what counts as demonstrated recall.
-- [ ] Avoid calling easy recognition permanent mastery.
-- [ ] Let current capability weaken when knowledge becomes overdue.
-- [ ] Explain recovery calmly and without guilt.
+- [x] Keep map position as course progression.
+- [x] Track introduced knowledge separately.
+- [x] Define what counts as demonstrated recall.
+- [x] Avoid calling easy recognition permanent mastery.
+- [x] Let current capability weaken when knowledge becomes overdue.
+- [x] Explain recovery calmly and without guilt.
 
 Output: progress language describes something the learner can actually do.
+
+### Implemented capability projection
+
+`src/learning/capability-progress.ts` now derives present capability from review evidence
+without changing or reading map position. The state is never stored as a second truth:
+
+- **Not introduced:** no item-capability record exists.
+- **Learning:** introduced, but fewer than two successful spaced retrievals are present,
+  or a later miss reset the schedule.
+- **Mastered:** at least two consecutive successful retrievals across scheduled sessions
+  produced the first six-day interval, and the target is not currently due.
+- **Review due:** the target reached that evidence threshold previously, but its next
+  scheduled review has arrived. This weakens the present claim without erasing history or
+  moving the learner backward on the map.
+
+One successful final checkpoint is demonstrated recall, but remains `learning`; easy
+multiple-choice recognition is not permanent mastery. Immediate recovery never advances
+the schedule. A correct station replay is stored as replay practice and cannot inflate
+mastery, while a wrong replay is accepted as real forgetting evidence and resets the
+schedule toward relearning.
+
+The world map continues to use only `michi-world-position` for course travel. Capability
+summaries use only review records and time. Focused tests prove those boundaries and the
+transitions from introduced to recalled, mastered, review-due, and learning again.
+
+The learner-facing treatment now keeps these concepts in their proper places:
+
+- The map says “stations completed,” a permanent travel measure.
+- Due prerequisites open with “A quick look back” and the exact number of connections,
+  explaining that a pause is useful information rather than failure.
+- Actual misses receive a quiet transition before their one recovery pass. It explicitly
+  says the learner does not restart and only paused connections return.
+- Review closes on its own teaching beat. If recovery still contained a miss, the learner
+  is told that enough has been done today, the connections will return later, and their
+  place on the path has not changed.
+
+There is no red warning, lost-progress state, streak, percentage, mastery badge, or
+capability dashboard. Internal `mastered` remains learner-facing “steady” language for a
+future optional detail view; it is not promoted on the map now while only the opening
+curriculum is persisted.
+
+Phase 4 is complete: course travel remains permanent, present capability can weaken
+honestly, and the only visible memory language appears when it helps the learner act.
 
 ## Phase 5: add production carefully
 

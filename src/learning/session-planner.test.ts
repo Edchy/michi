@@ -127,10 +127,13 @@ describe("BoundedReviewProgress", () => {
     progress.mark(true);
     expect(progress.current).toMatchObject({ itemId: "hira_a", recovery: true });
     expect(progress.promptCount).toBe(3);
+    expect(progress.recoveryCount).toBe(1);
+    expect(progress.hadRecovery).toBe(true);
     progress.mark(false);
 
     expect(progress.done).toBe(true);
     expect(progress.completedCount).toBe(3);
+    expect(progress.recoveryHadMiss).toBe(true);
   });
 
   it("finishes after the opening pass when nothing was missed", () => {
