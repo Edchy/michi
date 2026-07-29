@@ -27,7 +27,12 @@ export type Step =
   // The gojūon table, with the row just learned landing into it. Ends the station by
   // placing the five new characters in the map of the whole set.
   | { kind: "grid" }
-  | { kind: "drill"; pool: Kana[]; types: QuestionType[] } // one block; single-type or mixed
+  | {
+      kind: "drill";
+      pool: Kana[];
+      types: QuestionType[];
+      role: "practice" | "checkpoint" | "consolidation";
+    }
   | { kind: "done"; learned: Kana[] };
 
 /** A word the learner can decode unaided, because every kana in it is already taught. */
@@ -41,10 +46,13 @@ export type ReadableWord = { kana: Kana[]; meaning: string; note: string };
  * which makes it recall-like and much harder on a set met minutes ago. Running it first
  * (as this did) meant guessing, and guessing teaches nothing.
  */
-const ASSESSED_DRILL_BLOCKS: QuestionType[][] = [
-  ["seePickSound"], // see → pick the sound         (eye → ear, cue stays visible)
-  ["hearPickChar"], // hear → pick the character    (ear → eye, recall-like)
-  ["hearPickChar", "seePickSound"], // mixed recognition assessment
+const ASSESSED_DRILL_BLOCKS: Array<{
+  types: QuestionType[];
+  role: "practice" | "checkpoint";
+}> = [
+  { types: ["seePickSound"], role: "practice" },
+  { types: ["hearPickChar"], role: "practice" },
+  { types: ["hearPickChar", "seePickSound"], role: "checkpoint" },
 ];
 
 export function buildTrack1(): Step[] {
@@ -54,7 +62,9 @@ export function buildTrack1(): Step[] {
   const match: Step = { kind: "match", pool: VOWELS };
   const speak: Step = { kind: "rehearse", pool: VOWELS };
   const context: Step = { kind: "context", kana: VOWELS };
-  const drills: Step[] = ASSESSED_DRILL_BLOCKS.map((types) => ({ kind: "drill", pool: VOWELS, types }));
+  const drills: Step[] = ASSESSED_DRILL_BLOCKS.map(({ types, role }) => ({
+    kind: "drill", pool: VOWELS, types, role,
+  }));
   const grid: Step = { kind: "grid" };
   const done: Step = { kind: "done", learned: VOWELS };
   return [intro, ...teach, reveal, match, context, ...drills, speak, grid, done];
@@ -83,7 +93,9 @@ export function buildTrack2(): Step[] {
   const reveal: Step = { kind: "reveal", kana: K_ROW };
   const match: Step = { kind: "match", pool: K_ROW };
   const context: Step = { kind: "context", kana: K_ROW };
-  const drills: Step[] = ASSESSED_DRILL_BLOCKS.map((types) => ({ kind: "drill", pool: K_ROW, types }));
+  const drills: Step[] = ASSESSED_DRILL_BLOCKS.map(({ types, role }) => ({
+    kind: "drill", pool: K_ROW, types, role,
+  }));
   const speak: Step = { kind: "rehearse", pool: K_ROW };
   const read: Step = { kind: "read", word: KOI };
   const grid: Step = { kind: "grid" };
@@ -111,6 +123,7 @@ export function buildTrack3(): Step[] {
     kind: "drill",
     pool: FIRST_TEN,
     types: ["hearPickChar", "seePickSound"],
+    role: "consolidation",
   };
   const read: Step = { kind: "read", word: KOI };
   const grid: Step = { kind: "grid" };

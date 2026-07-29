@@ -131,6 +131,7 @@ approved learner experience all at once.
 | Station routes | Make individual stations addressable | `src/app/tracks/*/page.tsx` |
 | Orientation station | Three-script content and rendering | `src/content/track0.ts`, `src/components/track0-page.tsx` |
 | Kana stations | Vowel, K-row, and consolidation content | `src/content/track1.ts` |
+| Station specifications | Typed seven-section definitions and course-order validation | `src/content/station-spec.ts` |
 | Kana station runner | Renders and controls Stations 2–4 | `src/components/track1-page.tsx` |
 | Kana items | Vowel and K-row content records | `src/content/hiragana.ts` |
 | Questions | Builds choice and rehearsal questions | `src/content/question.ts` |
@@ -141,6 +142,8 @@ approved learner experience all at once.
 | Codex content | Optional book-stop articles | `src/content/codex.ts`, `src/app/codex/` |
 | Codex state | Remembers visited book stops | `src/lib/codex-progress.ts` |
 | SRS calculation | Calculates intervals, due dates, and confidence | `src/srs/engine.ts` |
+| Learner review state | Persists item-capability evidence and schedules | `src/lib/learner-state.ts` |
+| Session planner | Selects bounded prerequisite review and finite recovery | `src/learning/session-planner.ts` |
 | Shared controls | Buttons and station navigation | `src/components/button.tsx`, `src/components/station-nav.tsx` |
 
 Most of these areas have focused tests beside them as `*.test.ts` or `*.test.tsx`.
@@ -151,11 +154,27 @@ Most of these areas have focused tests beside them as `*.test.ts` or `*.test.tsx
 
 ```text
 localStorage
-└── furthest unlocked station
+├── furthest unlocked station
+└── versioned learner review state
+    └── all ten vowel item-capability targets connected to the final checkpoint
 
 SRS engine
-└── tested calculation functions, not connected to stations
+├── tested calculation functions
+└── connected to learner state and one real checkpoint target
 ```
+
+The vowel checkpoint now asks every vowel in both directions exactly once before targeted
+retries. Correct first attempts schedule future review; a miss schedules relearning, and
+its immediate recovery cannot advance the SRS clock. Supported practice writes no
+persistent evidence. The K-row checkpoint shares guaranteed coverage but is not connected
+to persistence yet; authored consolidation retains a distinct, shorter role.
+
+The session planner is implemented as a pure, tested boundary. Given persistent state, a
+station's prerequisite targets, and the current time, it selects no more than five
+relevant due prompts and reports what was deferred. The K-row page consumes that plan:
+it removes the authored review placeholders when nothing is due, or renders exact target
+directions and one finite recovery pass when review is needed. Older course progress with
+no review records seeds the declared vowel prerequisites as due without inventing recall.
 
 ### Planned
 
@@ -259,6 +278,132 @@ Session planner checks prerequisites and due review
                                        ▼
                                 save review evidence
 ```
+
+## First specification proof: Station 2, vowels
+
+The vowel station is the first existing station translated into the seven-part
+contract:
+
+```text
+Identity
+Acquisition station: vowels / First sounds
+
+Outcome
+Connect あいうえお to their five sounds in both directions
+
+Prerequisites
+Course orientation completed; no earlier learning capabilities
+
+Introduces
+Five kana × sound-to-symbol and symbol-to-sound
+
+Sequence
+Orient → model → reveal → guided match → context
+→ supported practice both directions → full-set checkpoint
+→ ungraded speaking rehearsal → gojūon grid
+
+Application
+The vowel row as the organizing foundation; first real word waits for the K row
+
+Completion
+All five kana correct in both directions; misses are retaught and individually requeued
+```
+
+The translation exposes current implementation gaps without changing code: the current
+mixed capstone does not guarantee all five items in both directions, its completion
+copy overclaims unverified speaking, learner review targets are not persisted, and
+guided tracing is not implemented yet. The detailed specification and exact truthful
+completion copy live in `PLAN.md`.
+
+## Second specification proof: Station 3, K row
+
+```text
+Identity
+Acquisition station: k-row / The K row
+
+Outcome
+Connect かきくけこ to their sounds in both directions and decode こい
+
+Prerequisites
+Vowels usable in sound-to-symbol and symbol-to-sound
+
+Introduces
+Five K-row kana × sound-to-symbol and symbol-to-sound
+
+Sequence
+Generated prerequisite review → orient → model → reveal → guided match
+→ supported practice both directions → full-set checkpoint
+→ ungraded speaking → context → decode こい → gojūon grid
+
+Application
+Decode こい; its meaning is not a required vocabulary target here
+
+Completion
+All five new kana correct in both directions; こい completed as ungraded application
+```
+
+The K-row station adds no new structural field. Prerequisites belong in the station
+specification, generated review belongs to the session planner, and a real word fits in
+application without automatically becoming memorized vocabulary. Generated prerequisite
+review, bounded recovery, and complete capstone coverage are now implemented. Remaining
+gaps are persistent K-row target creation, broader readiness UI, and guided tracing.
+
+## Third specification proof: Station 4, first look back
+
+```text
+Identity
+Consolidation station: look-back-1 / A first look back
+
+Outcome
+Retrieve the first ten hiragana from one mixed set and decode こい again
+
+Prerequisites
+Vowels and K row already introduced in both directions
+
+Introduces
+No new items or review targets
+
+Sequence
+Prepare → optional generated due review → mixed first-ten checkpoint
+→ targeted mistake recovery → decode こい → gojūon grid
+
+Application
+Decode こい as a sequence; its meaning remains ungraded context
+
+Completion
+Every kana appears once in a direction-balanced initial pass; misses are requeued
+```
+
+This station is authored consolidation, not a manually fixed SRS queue. It changes the
+retrieval context by mixing two previously separate rows. The checkpoint samples every
+kana once and balances directions; scheduled review remains responsible for revisiting
+each exact item-capability pair over time.
+
+The proof shows that sequence phases may be omitted without creating another page model:
+acquisition teaches and seeds targets, while consolidation mixes and applies existing
+targets. Current implementation gaps are incomplete guaranteed coverage, no generated
+review or recovery, no persistent attempt records, and use of the existing kana-specific
+page instead of the future shared runner.
+
+## Station-definition validator
+
+The first four approved station specifications now also exist as typed content data in
+`src/content/station-spec.ts`. `validateStationCourse()` walks them in course order and
+checks three boundaries before a station can ship:
+
+```text
+Earlier stations ──introduce──> prerequisite targets
+Known + newly introduced items ──permit──> application material
+Declared station outcome ──requires──> explicit completion coverage and recovery
+```
+
+It also catches duplicate ids and targets, empty outcomes or sequences, and missing
+completion evidence. Tests live in `src/content/station-spec.test.ts`.
+
+This data is not connected to the current pages yet. That is intentional: Phase 2 proves
+and validates the authored contract; a later phase will make the shared runner consume
+it. Until then, `track0.ts`, `track1.ts`, and their page components remain the runtime
+source of the learner experience.
 
 ## Province structure
 

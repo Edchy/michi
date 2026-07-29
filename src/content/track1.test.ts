@@ -38,7 +38,9 @@ describe("buildTrack1", () => {
     const mix = drills[2];
     if (mix?.kind === "drill") {
       expect(mix.types).toEqual(["hearPickChar", "seePickSound"]);
+      expect(mix.role).toBe("checkpoint");
     }
+    expect(drills.slice(0, 2).map((drill) => drill.role)).toEqual(["practice", "practice"]);
   });
 
   it("every drill block carries the full pool of five vowels", () => {
@@ -136,6 +138,7 @@ describe("buildTrack3 — the first look back", () => {
     if (drill.kind === "drill") {
       expect(drill.pool).toEqual(FIRST_TEN);
       expect(drill.types).toEqual(["hearPickChar", "seePickSound"]);
+      expect(drill.role).toBe("consolidation");
     }
   });
 

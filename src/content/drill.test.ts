@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ChoiceProgress, DrillProgress } from "./drill";
+import { CheckpointProgress, ChoiceProgress, DrillProgress } from "./drill";
 
 const IDS = ["a", "i", "u", "e", "o"];
 
@@ -87,5 +87,48 @@ describe("DrillProgress", () => {
     expect(p.done).toBe(true);
     p.mark("a", false); // miss it again
     expect(p.done).toBe(true);
+  });
+});
+
+describe("CheckpointProgress", () => {
+  it("covers every item in every declared direction exactly once when correct", () => {
+    const checkpoint = new CheckpointProgress(
+      ["a", "i"],
+      ["hearPickChar", "seePickSound"],
+      () => 0.999,
+    );
+    const seen: string[] = [];
+    while (!checkpoint.done) {
+      seen.push(`${checkpoint.current.itemId}:${checkpoint.current.type}`);
+      checkpoint.mark(true);
+    }
+
+    expect(new Set(seen)).toEqual(
+      new Set([
+        "a:hearPickChar",
+        "a:seePickSound",
+        "i:hearPickChar",
+        "i:seePickSound",
+      ]),
+    );
+    expect(checkpoint.completedCount).toBe(4);
+    expect(checkpoint.targetCount).toBe(4);
+  });
+
+  it("requeues only a miss after intervening targets and marks it as recovery", () => {
+    const checkpoint = new CheckpointProgress(
+      ["a", "i", "u"],
+      ["hearPickChar"],
+      () => 0.999,
+    );
+    expect(checkpoint.current.itemId).toBe("a");
+    checkpoint.mark(false);
+    expect(checkpoint.current.itemId).toBe("i");
+    checkpoint.mark(true);
+    expect(checkpoint.current.itemId).toBe("u");
+    checkpoint.mark(true);
+    expect(checkpoint.current).toMatchObject({ itemId: "a", recovery: true });
+    checkpoint.mark(true);
+    expect(checkpoint.done).toBe(true);
   });
 });

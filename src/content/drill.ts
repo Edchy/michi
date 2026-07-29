@@ -85,3 +85,57 @@ export class DrillProgress {
     return this.poolIds.length;
   }
 }
+
+export interface CheckpointTarget {
+  itemId: string;
+  type: "hearPickChar" | "seePickSound";
+  recovery?: boolean;
+}
+
+/** A finite shuffled checkpoint. Misses requeue without resetting correct targets. */
+export class CheckpointProgress {
+  private readonly total: number;
+  private completed = 0;
+  private pending: CheckpointTarget[];
+
+  constructor(
+    itemIds: readonly string[],
+    types: readonly CheckpointTarget["type"][],
+    random: () => number = Math.random,
+  ) {
+    this.pending = itemIds.flatMap((itemId) => types.map((type) => ({ itemId, type })));
+    this.total = this.pending.length;
+    for (let i = this.pending.length - 1; i > 0; i--) {
+      const j = Math.floor(random() * (i + 1));
+      [this.pending[i], this.pending[j]] = [this.pending[j]!, this.pending[i]!];
+    }
+  }
+
+  get current(): CheckpointTarget {
+    const target = this.pending[0];
+    if (!target) throw new Error("Checkpoint is already complete.");
+    return target;
+  }
+
+  mark(wasCorrect: boolean): void {
+    const target = this.pending.shift();
+    if (!target) return;
+    if (wasCorrect) {
+      this.completed += 1;
+      return;
+    }
+    this.pending.splice(Math.min(2, this.pending.length), 0, { ...target, recovery: true });
+  }
+
+  get done(): boolean {
+    return this.pending.length === 0;
+  }
+
+  get completedCount(): number {
+    return this.completed;
+  }
+
+  get targetCount(): number {
+    return this.total;
+  }
+}

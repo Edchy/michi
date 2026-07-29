@@ -9,7 +9,7 @@ import {
   type ReadableWord,
   type Step,
 } from "@/content/track1";
-import { ChoiceProgress, DrillProgress } from "@/content/drill";
+import { CheckpointProgress, ChoiceProgress, DrillProgress } from "@/content/drill";
 import { makeQuestion, pickType, type Question, type QuestionType } from "@/content/question";
 import { ShuffleBag } from "@/content/bag";
 import { play, primeAudio } from "@/lib/audio";
@@ -17,6 +17,21 @@ import { K_ROW, VOWELS, type Kana } from "@/content/hiragana";
 import { GojuonGrid } from "@/components/gojuon-grid";
 import { Button } from "@/components/button";
 import { StationNav } from "@/components/station-nav";
+import {
+  loadLearnerState,
+  persistIntroducedReviewTarget,
+  persistReviewAttempt,
+} from "@/lib/learner-state";
+import {
+  FIRST_STATIONS,
+  reviewTargetKey,
+  type ReviewTarget,
+} from "@/content/station-spec";
+import {
+  BoundedReviewProgress,
+  planOpeningReview,
+  type OpeningReviewPlan,
+} from "@/learning/session-planner";
 
 /**
  * What differs between the kana-teaching stations. Everything else on this page (the
@@ -171,9 +186,19 @@ const STATIONS: Record<"vowels" | "k-row" | "look-back-1", StationConfig> = {
 
 export type StationId = keyof typeof STATIONS;
 
+const K_ROW_PREREQUISITES =
+  FIRST_STATIONS.find((station) => station.identity.id === "k-row")?.prerequisites ?? [];
+
 export default function Track1Page({ station: id = "vowels" }: { station?: StationId }) {
   const station = STATIONS[id];
-  const steps = useMemo(() => station.build(), [station]);
+  const [openingReview, setOpeningReview] = useState<OpeningReviewPlan | null>(null);
+  const steps = useMemo(() => {
+    const authored = station.build();
+    if (id === "k-row" && openingReview?.kind === "none") {
+      return authored.filter((step) => step.kind !== "reviewIntro" && step.kind !== "review");
+    }
+    return authored;
+  }, [id, openingReview, station]);
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1); // 1 forward, -1 back
   const [drillBack, setDrillBack] = useState<(() => void) | null>(null);
@@ -181,6 +206,27 @@ export default function Track1Page({ station: id = "vowels" }: { station?: Stati
   const [drillSound, setDrillSound] = useState<(() => void) | null>(null);
   const [drillMeter, setDrillMeter] = useState<DrillMeterData | null>(null);
   const soundCycleIndex = useRef(0);
+
+  useEffect(() => {
+    if (id !== "k-row") {
+      setOpeningReview(null);
+      return;
+    }
+
+    // Compatibility bridge: learners who completed vowels before review-state existed
+    // have no records yet. Course order tells us the targets were introduced, so seed
+    // them due-now rather than silently skipping prerequisite review.
+    let state = loadLearnerState();
+    for (const target of K_ROW_PREREQUISITES) {
+      if (!state.reviewRecords[reviewTargetKey(target)]) {
+        persistIntroducedReviewTarget(target, new Date());
+        state = loadLearnerState();
+      }
+    }
+    setOpeningReview(
+      planOpeningReview({ state, prerequisites: K_ROW_PREREQUISITES, now: new Date() }),
+    );
+  }, [id]);
 
   const step = steps[index]!;
   const atStart = index === 0;
@@ -322,6 +368,7 @@ export default function Track1Page({ station: id = "vowels" }: { station?: Stati
             onDrillNextChange={registerDrillNext}
             onDrillSoundChange={registerDrillSound}
             onDrillMeterChange={registerDrillMeter}
+            openingReview={openingReview}
           />
         </div>
       </div>
@@ -434,6 +481,7 @@ function StepView({
   onDrillNextChange,
   onDrillSoundChange,
   onDrillMeterChange,
+  openingReview,
 }: {
   step: Step;
   station: StationConfig;
@@ -445,7 +493,11 @@ function StepView({
     kind: "button" | "glyph" | null,
   ) => void;
   onDrillMeterChange: (meter: DrillMeterData | null) => void;
+  openingReview: OpeningReviewPlan | null;
 }) {
+  const plannedReviewIds = new Set(openingReview?.targets.map((target) => target.itemId));
+  const plannedReviewKana = VOWELS.filter((kana) => plannedReviewIds.has(kana.id));
+
   return (
     <div className="py-10">
       {step.kind === "intro" ? (
@@ -463,20 +515,18 @@ function StepView({
       ) : step.kind === "match" ? (
         <MatchStep pool={step.pool} onDone={onAdvance} />
       ) : step.kind === "reviewIntro" ? (
-        <ReviewIntroStep kana={step.pool} />
+        <ReviewIntroStep kana={plannedReviewKana.length > 0 ? plannedReviewKana : step.pool} />
       ) : step.kind === "review" ? (
-        // A warm-up on kana from earlier stations. Reuses the recognition drill as-is,
-        // so it runs the same mastery ladder rather than a shorter revision pass.
-        // ponytail: good enough while the pool is five vowels; when the review pool
-        // grows past a row or two this wants its own shorter, non-gating progress rule.
         <DrillBlock
           pool={step.pool}
-          types={["hearPickChar"]}
+          types={["hearPickChar", "seePickSound"]}
           onDone={onAdvance}
           onNavBackChange={onDrillBackChange}
           onNavNextChange={onDrillNextChange}
           onSoundChange={onDrillSoundChange}
           onMeterChange={onDrillMeterChange}
+          role="opening-review"
+          reviewTargets={openingReview?.targets ?? []}
         />
       ) : step.kind === "rehearse" ? (
         <DrillBlock
@@ -487,6 +537,7 @@ function StepView({
           onNavNextChange={onDrillNextChange}
           onSoundChange={onDrillSoundChange}
           onMeterChange={onDrillMeterChange}
+          role="practice"
         />
       ) : step.kind === "drill" ? (
         <DrillBlock
@@ -497,6 +548,10 @@ function StepView({
           onNavNextChange={onDrillNextChange}
           onSoundChange={onDrillSoundChange}
           onMeterChange={onDrillMeterChange}
+          role={step.role}
+          persistCheckpointEvidence={
+            station.done.completedId === "vowels" && step.role === "checkpoint"
+          }
         />
       ) : (
         <DoneStep done={station.done} />
@@ -852,6 +907,9 @@ function DrillBlock({
   onNavNextChange,
   onSoundChange,
   onMeterChange,
+  role,
+  persistCheckpointEvidence = false,
+  reviewTargets = [],
 }: {
   pool: Kana[];
   types: QuestionType[];
@@ -863,11 +921,24 @@ function DrillBlock({
     kind: "button" | "glyph" | null,
   ) => void;
   onMeterChange: (meter: DrillMeterData | null) => void;
+  role: "practice" | "checkpoint" | "consolidation" | "opening-review";
+  persistCheckpointEvidence?: boolean;
+  reviewTargets?: readonly ReviewTarget[];
 }) {
   // A shuffle bag draws every vowel once before repeating, so all five come up.
   const bag = useRef(new ShuffleBag(pool));
   const progress = useRef(new DrillProgress(pool.map((k) => k.id)));
   const choices = useRef(new ChoiceProgress(pool.length));
+  const checkpoint = useRef(
+    new CheckpointProgress(
+      pool.map((kana) => kana.id),
+      types.filter(
+        (type): type is "hearPickChar" | "seePickSound" =>
+          type === "hearPickChar" || type === "seePickSound",
+      ),
+    ),
+  );
+  const boundedReview = useRef(new BoundedReviewProgress(reviewTargets));
   const history = useRef<Question[]>([]);
   const future = useRef<Question[]>([]);
   const spokenAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -876,27 +947,68 @@ function DrillBlock({
   const isChoiceBlock = types.every(
     (type) => type === "hearPickChar" || type === "seePickSound",
   );
+  const isCoverageCheckpoint = role === "checkpoint";
+  const isBoundedReview = role === "opening-review" && reviewTargets.length > 0;
   const isSpeakBlock = types.length === 1 && types[0] === "sayAloud";
   const speakTarget = pool.length * 2;
   const [qNum, setQNum] = useState(0); // increments per question → fresh sub-component
+
+  function makeCheckpointQuestion(): Question {
+    const target = checkpoint.current.current;
+    const answer = pool.find((kana) => kana.id === target.itemId);
+    if (!answer) throw new Error(`Checkpoint item ${target.itemId} is not in its pool.`);
+    return makeQuestion(pool, answer, target.type, pool.length);
+  }
+
+  function makeReviewQuestion(): Question {
+    const target = boundedReview.current.current;
+    const answer = pool.find((kana) => kana.id === target.itemId);
+    if (!answer) throw new Error(`Review item ${target.itemId} is not in its pool.`);
+    const type =
+      target.capability === "sound-to-symbol" ? "hearPickChar" : "seePickSound";
+    return makeQuestion(pool, answer, type, pool.length);
+  }
+
   const [q, setQ] = useState<Question>(() =>
-    makeQuestion(
-      pool,
-      bag.current.next(),
-      pickType(types),
-      isChoiceBlock ? choices.current.optionCount : pool.length,
-    ),
+    isBoundedReview
+      ? makeReviewQuestion()
+      : isCoverageCheckpoint
+      ? makeCheckpointQuestion()
+      : makeQuestion(
+          pool,
+          bag.current.next(),
+          pickType(types),
+          isChoiceBlock ? choices.current.optionCount : pool.length,
+        ),
   );
-  const progressValue = isChoiceBlock
-    ? choices.current.masteryPoints
-    : isSpeakBlock
-      ? spokenAttempts.current
-      : progress.current.completedCount;
-  const progressMax = isChoiceBlock
-    ? choices.current.maxPoints
-    : isSpeakBlock
-      ? speakTarget
-      : progress.current.totalCount;
+  const progressValue = isBoundedReview
+    ? boundedReview.current.completedCount
+    : isCoverageCheckpoint
+      ? checkpoint.current.completedCount
+    : isChoiceBlock
+      ? choices.current.masteryPoints
+      : isSpeakBlock
+        ? spokenAttempts.current
+        : progress.current.completedCount;
+  const progressMax = isBoundedReview
+    ? boundedReview.current.promptCount
+    : isCoverageCheckpoint
+      ? checkpoint.current.targetCount
+    : isChoiceBlock
+      ? choices.current.maxPoints
+      : isSpeakBlock
+        ? speakTarget
+        : progress.current.totalCount;
+
+  useEffect(() => {
+    if (!persistCheckpointEvidence) return;
+    const now = new Date();
+    for (const kana of pool) {
+      for (const capability of ["sound-to-symbol", "symbol-to-sound"] as const) {
+        persistIntroducedReviewTarget({ itemId: kana.id, capability }, now);
+      }
+    }
+  }, [persistCheckpointEvidence, pool]);
 
   useEffect(() => {
     onMeterChange({ value: progressValue, max: progressMax });
@@ -911,15 +1023,50 @@ function DrillBlock({
   }, [qNum]);
 
   function advance(correct: boolean) {
-    if (isChoiceBlock) choices.current.mark(correct);
+    const activeCheckpointTarget = isCoverageCheckpoint ? checkpoint.current.current : null;
+    const activeReviewTarget = isBoundedReview ? boundedReview.current.current : null;
+    const capability =
+      q.type === "hearPickChar"
+        ? "sound-to-symbol"
+        : q.type === "seePickSound"
+          ? "symbol-to-sound"
+          : null;
+    if (persistCheckpointEvidence && capability) {
+      persistReviewAttempt(
+        { itemId: q.answer.id, capability },
+        {
+          correct,
+          source: activeCheckpointTarget?.recovery ? "recovery" : "checkpoint",
+        },
+        new Date(),
+      );
+    }
+    if (activeReviewTarget) {
+      persistReviewAttempt(
+        { itemId: activeReviewTarget.itemId, capability: activeReviewTarget.capability },
+        {
+          correct,
+          source: activeReviewTarget.recovery ? "recovery" : "review",
+        },
+        new Date(),
+      );
+    }
+
+    if (isBoundedReview) boundedReview.current.mark(correct);
+    else if (isCoverageCheckpoint) checkpoint.current.mark(correct);
+    else if (isChoiceBlock) choices.current.mark(correct);
     else if (isSpeakBlock) spokenAttempts.current += 1;
     else progress.current.mark(q.answer.id, correct);
 
-    const done = isChoiceBlock
-      ? choices.current.done
-      : isSpeakBlock
-        ? spokenAttempts.current >= speakTarget
-        : progress.current.done;
+    const done = isBoundedReview
+      ? boundedReview.current.done
+      : isCoverageCheckpoint
+        ? checkpoint.current.done
+      : isChoiceBlock
+        ? choices.current.done
+        : isSpeakBlock
+          ? spokenAttempts.current >= speakTarget
+          : progress.current.done;
     if (done) {
       onDone();
       return;
@@ -928,12 +1075,16 @@ function DrillBlock({
     history.current.push(q);
     future.current = [];
     setQ(
-      makeQuestion(
-        pool,
-        bag.current.next(q.answer.id),
-        pickType(types),
-        isChoiceBlock ? choices.current.optionCount : pool.length,
-      ),
+      isBoundedReview
+        ? makeReviewQuestion()
+        : isCoverageCheckpoint
+          ? makeCheckpointQuestion()
+        : makeQuestion(
+            pool,
+            bag.current.next(q.answer.id),
+            pickType(types),
+            isChoiceBlock ? choices.current.optionCount : pool.length,
+          ),
     );
     setQNum((n) => n + 1);
   }

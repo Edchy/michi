@@ -294,12 +294,12 @@ Recovery language remains calm and practical, never punitive.
 Goal: represent the existing stations through one understandable content structure.
 
 - [x] Define a small station specification in ordinary language first.
-- [ ] Translate the vowels station into it without changing the experience.
-- [ ] Translate the K-row station into it.
-- [ ] Translate the consolidation station into it.
-- [ ] Confirm that orientation, teaching, and consolidation can differ without needing
+- [x] Translate the vowels station into it without changing the experience.
+- [x] Translate the K-row station into it.
+- [x] Translate the consolidation station into it.
+- [x] Confirm that orientation, teaching, and consolidation can differ without needing
   unrelated custom page systems.
-- [ ] Add validation that catches missing prerequisites, unintroduced material, and
+- [x] Add validation that catches missing prerequisites, unintroduced material, and
   unclear completion conditions.
 
 Output: the existing stations behave as they do now, but their teaching structure is
@@ -327,19 +327,355 @@ The approved station types are orientation, acquisition, consolidation, applicat
 and assessment. The shared runner may omit phases that do not apply to a particular
 type.
 
-The next Phase 2 task is translating the current vowel station into this specification
-without changing its learner experience.
+The first proof below translates the current vowel station without changing its learner
+experience.
 
-### Open province decision
+### Vowel station specification
+
+This specification describes Station 2 through the approved seven-part structure. It
+does not change application code. Differences between the current implementation and
+the approved contract are listed separately below.
+
+#### 1. Identity
+
+- ID: `vowels`.
+- Type: acquisition.
+- Title: First sounds.
+
+#### 2. Outcome
+
+Connect the five Japanese vowel sounds to `あいうえお` in both directions during the
+session.
+
+#### 3. Prerequisites
+
+- Course order: the three-script orientation station has been completed.
+- Learning capabilities: none. The station begins the reviewable curriculum.
+
+#### 4. Introduced capabilities
+
+Items: `hira_a`, `hira_i`, `hira_u`, `hira_e`, and `hira_o`.
+
+For each item, the station introduces:
+
+- Sound-to-symbol discrimination.
+- Symbol-to-sound discrimination.
+
+Speaking imitation and symbol-to-sound speaking rehearsal are included but unverified,
+so they do not create scheduled speaking targets yet.
+
+#### 5. Learning sequence
+
+1. Orient: Japanese has five stable vowel sounds.
+2. Model: hear and imitate each vowel in `あいうえお` order.
+3. Reveal: see the five sounds as one symbol family.
+4. Connect: complete open-book sound-symbol matching with the full set visible.
+5. Context: learn that `あいうえお` is the ordering used by the Japanese sound system.
+6. Practise symbol-to-sound with choices that grow from two to the full five.
+7. Practise sound-to-symbol with choices that grow from two to the full five.
+8. Check both directions in a final mixed full-set checkpoint.
+9. Rehearse speaking: see each symbol, attempt its sound, then play the native recording
+   for comparison. This remains ungraded.
+10. Place the vowel row into the gojūon grid.
+
+Guided tracing is an approved future addition after the sound-symbol connection is
+stable, but it is not part of the current implemented learner experience.
+
+#### 6. Application
+
+No real-word application is required in this station because the five vowels alone do
+not yet provide a suitable first decoding moment. The gojūon grid applies them as the
+organizing foundation of the wider hiragana system. The first real word arrives in the
+K-row station.
+
+#### 7. Completion contract
+
+- Test every vowel once in sound-to-symbol using all five symbols.
+- Test every vowel once in symbol-to-sound using all five sounds.
+- Shuffle item order and option placement.
+- On a mistake, show or replay the correct answer and requeue only that target after
+  other questions.
+- Preserve correct work on other targets.
+- Complete when all ten item-capability targets have been answered correctly in the
+  final checkpoint.
+
+Truthful completion message:
+
+> You connected the five Japanese vowel sounds to `あいうえお` in both directions. The
+> first 5 of 46 basic hiragana are now introduced.
+
+Handoff: the K row combines these same five vowel sounds with `k` and ends with the
+learner's first decoded Japanese word.
+
+### Vowel station implementation gaps
+
+These are documented gaps, not changes made during the specification step:
+
+1. The current mixed capstone randomly chooses direction and completes through a
+   general difficulty ladder. It does not guarantee that every vowel is checked in
+   both directions.
+2. The current completion message says the learner can “hear, say, and recognize” all
+   five sounds. Speaking is rehearsed but unverified, so this overstates the evidence.
+3. Completion currently unlocks the next map position but does not create persistent
+   item-capability review records.
+4. Guided tracing is not implemented and remains outside completion evidence.
+
+The K-row translation below applies the same seven sections and checks whether the
+second acquisition station introduces any new structural requirement.
+
+### K-row station specification
+
+This specification describes Station 3 through the same seven sections. It adds no
+K-row-specific field to the station contract.
+
+#### 1. Identity
+
+- ID: `k-row`.
+- Type: acquisition.
+- Title: The K row.
+
+#### 2. Outcome
+
+Connect `かきくけこ` to their five sounds in both directions and use known kana to
+decode the first real Japanese word, `こい`.
+
+#### 3. Prerequisites
+
+The following capabilities for `あいうえお` must be usable:
+
+- Sound-to-symbol discrimination.
+- Symbol-to-sound discrimination.
+
+The station declares these prerequisites. The future session planner decides which
+vowel targets are due, whether a short review is sufficient, and whether recovery is
+needed. The station does not own a permanent manual vowel-review block.
+
+#### 4. Introduced capabilities
+
+Items: `hira_ka`, `hira_ki`, `hira_ku`, `hira_ke`, and `hira_ko`.
+
+For each item, the station introduces:
+
+- Sound-to-symbol discrimination.
+- Symbol-to-sound discrimination.
+
+Speaking remains unverified rehearsal. `こい` is application of kana decoding in this
+station, not automatically a vocabulary target whose meaning must be memorized. A
+future station may deliberately introduce it as a word item with its own capabilities.
+
+#### 5. Learning sequence
+
+1. Prepare and review the vowel prerequisites through the generated session review.
+2. Orient: the known five vowel sounds now appear with `k` in front.
+3. Model: hear and imitate each K-row sound in gojūon order.
+4. Reveal: see the five sounds as the K-row symbol family.
+5. Connect: complete open-book sound-symbol matching with the full new set visible.
+6. Practise symbol-to-sound with choices that grow from two to the full five.
+7. Practise sound-to-symbol with choices that grow from two to the full five.
+8. Check both directions in a final mixed full-set checkpoint.
+9. Rehearse speaking: see each symbol, attempt its sound, then play the native recording
+   for comparison. This remains ungraded.
+10. Context: ten known kana are enough to decode a real Japanese word.
+11. Use: decode `こい` before hearing it and revealing its meaning.
+12. Place the K row beneath the vowels in the gojūon grid.
+
+Guided tracing is an approved future addition after the sound-symbol connection is
+stable, but it is not part of the current implemented learner experience.
+
+#### 6. Application
+
+The learner decodes `こい` using only `こ` and `い`, both already introduced. The word
+proves that the kana system is becoming usable. Its meaning is revealed after the
+decoding attempt, but memorizing “carp” is not required for station completion.
+
+#### 7. Completion contract
+
+- Test every K-row kana once in sound-to-symbol using all five new symbols.
+- Test every K-row kana once in symbol-to-sound using all five new sounds.
+- Shuffle item order and option placement.
+- On a mistake, show or replay the correct answer and requeue only that target after
+  other questions.
+- Preserve correct work on other targets.
+- Complete when all ten new item-capability targets have been answered correctly in the
+  final checkpoint.
+- `こい` remains required application in the station sequence but is not a graded
+  vocabulary checkpoint.
+
+Truthful completion message:
+
+> You connected the five K-row sounds to `かきくけこ` in both directions and decoded
+> your first Japanese word, `こい`. The first 10 of 46 basic hiragana are now
+> introduced.
+
+Handoff: the next station consolidates the vowels and K row together without adding new
+kana.
+
+### K-row station implementation gaps
+
+1. The authored step queue still contains a vowel-review placeholder, but the live page
+   now fills or removes it from the bounded session plan.
+2. The K-row checkpoint now guarantees all five kana in both directions.
+3. Due prerequisite review and one finite recovery pass are tracked; broader readiness
+   language and recovery UI remain future work.
+4. Completion does not yet create persistent K-row review targets.
+5. Guided tracing is not implemented and remains outside completion evidence.
+
+The K-row translation confirms that prerequisites and application fit the existing
+seven sections. It does not require another station field. The next Phase 2 task is the
+consolidation station, which tests whether a station with no introduced capabilities
+also fits the contract.
+
+### First consolidation station specification
+
+This specification describes Station 4 through the same seven sections. Unlike the two
+acquisition stations, it creates no new review targets. It deliberately brings the
+vowels and K row together so the learner must distinguish across the complete known set.
+
+#### 1. Identity
+
+- ID: `look-back-1`.
+- Type: consolidation.
+- Title: A first look back.
+
+#### 2. Outcome
+
+Retrieve the first ten hiragana from one mixed set and use them to decode `こい` again,
+without adding new material.
+
+This is a strengthening outcome, not a claim that every existing capability has become
+permanently mastered.
+
+#### 3. Prerequisites
+
+The following capabilities for `あいうえお` and `かきくけこ` must already have been
+introduced:
+
+- Sound-to-symbol discrimination.
+- Symbol-to-sound discrimination.
+
+The station may still be useful when some targets are fragile. The session planner uses
+current learner records to decide whether a bounded due review or recovery should happen
+before the authored consolidation. The consolidation sequence itself is not generated
+from the due queue.
+
+#### 4. Introduced capabilities
+
+None. The station creates no new learning items and no new item-capability pairs.
+
+It strengthens the existing twenty review targets by changing the retrieval context:
+vowels and K-row kana now compete in one mixed pool rather than two separate families.
+This distinction is the reason the station exists even when no item is currently due.
+
+#### 5. Learning sequence
+
+1. Prepare: explain that no new characters will be introduced and that a pause supplies
+   useful information.
+2. Complete any bounded generated review selected for this session, if needed.
+3. Recall: work through a shuffled mixed checkpoint containing all ten known kana, with
+   sound-to-symbol and symbol-to-sound prompts balanced across the set.
+4. Recover mistakes: reveal or replay the correct association, then requeue only the
+   missed target after intervening questions.
+5. Use: decode `こい` again from its two known kana.
+6. Close: see the vowel and K rows held together in the gojūon grid.
+
+There is no teach, reveal, guided match, or speaking phase because no new association is
+being established. The runner omits those phases for this station type.
+
+#### 6. Application
+
+The learner decodes `こい` again after recalling from the mixed ten-kana pool. This
+checks that known symbols remain usable in sequence, not only as isolated multiple-choice
+answers. Its meaning remains context rather than a graded vocabulary target.
+
+Future consolidation stations should use more varied words or short sentences as the
+known inventory grows. Repeating one word is appropriate only for this smallest first
+set.
+
+#### 7. Completion contract
+
+- Present every one of the ten kana once in the initial mixed pass.
+- Balance the two directions across that pass rather than requiring all twenty existing
+  item-capability pairs again in one station.
+- Use the full ten-kana option pool where the interface permits; distractors must come
+  only from introduced material.
+- Shuffle item order, direction assignment, and option placement.
+- On a mistake, show or replay the correct answer and requeue only that target after
+  other questions.
+- Preserve correct work and finish after every initial item plus every requeued miss has
+  been answered correctly.
+- Require the `こい` decoding application, but do not grade its meaning as vocabulary.
+
+The scheduled SRS records remain responsible for checking each item-capability pair in
+its appropriate direction over time. This authored checkpoint proves mixed-set use today;
+it does not replace future spaced review.
+
+Truthful completion message:
+
+> You recalled the first ten hiragana together and used them to read `こい` again. No
+> new characters were added at this stop.
+
+Handoff: the S row returns to acquisition, using the same five-vowel pattern to introduce
+`さしすせそ`.
+
+### First consolidation station implementation gaps
+
+1. The current adaptive drill does not guarantee one initial prompt for every kana or a
+   deliberately balanced direction assignment.
+2. It is not preceded by generated due review or recovery based on learner records.
+3. Attempts do not update persistent item-capability review records.
+4. The current completion copy says the learner can recall both rows together, although
+   checkpoint coverage does not yet guarantee that every kana appeared.
+5. The existing `Step` union and station configuration can express the shorter sequence,
+   but the consolidation station still runs through the kana-specific page rather than a
+   future shared `StationRunner`.
+
+### What the three station proofs establish
+
+Orientation, acquisition, and consolidation need different sequences, not different page
+architectures:
+
+- Orientation uses context and examples, then closes without review targets.
+- Acquisition models and connects new items, practises them, checks them, and creates
+  review targets.
+- Consolidation mixes and applies existing targets without teaching or seeding new ones.
+
+The seven-section specification describes all three. A shared runner can render only the
+phases declared by each station, while learner state, due review, and navigation remain
+outside authored station content. No additional station field is required by the first
+consolidation proof.
+
+### Implemented station validation
+
+`src/content/station-spec.ts` now expresses the first four approved stations as ordered,
+typed definitions and validates the course before those definitions are used by the
+future runner. It reports all detected problems in one pass, including:
+
+- a prerequisite target that no earlier station introduced;
+- application or checkpoint material the learner has not met;
+- acquisition completion that omits an introduced target or checks an undeclared one;
+- consolidation completion with no item or capability coverage;
+- missing outcomes, sequences, completion evidence, messages, or mistake recovery; and
+- duplicate station ids, prerequisites, or introduced targets.
+
+Focused tests prove the current four definitions pass and each agreed failure mode is
+caught. This is content validation, not runtime learner-state validation. The existing
+station pages do not consume these definitions yet; connecting them belongs to the
+shared-runner phase so this step does not create a second partial rendering system.
+
+Phase 2 is complete: the station contract has three different proofs and an executable
+guardrail. Phase 3 can now establish persistent learner records and one-item review
+lifecycle before the runner begins relying on them.
+
+### Province decision context
 
 The current implemented hierarchy uses Hiragana, Katakana, First kanji, and Words and
 sentences as provinces. The intended pattern is for a province to begin with a short
 orientation station that introduces its overarching mental model.
 
-This structure is not yet re-approved. Words, sentences, listening, speaking, and
-grammar should appear throughout the course, so they may not belong in a final isolated
-province. We will decide what a province represents and when orientation deserves a
-standalone station before changing `src/app/worldmap.ts`.
+The original hierarchy raised an important problem: words, sentences, listening,
+speaking, and grammar should appear throughout the course rather than waiting inside a
+final isolated bucket. The approved rules and initial province roster below resolve the
+conceptual structure. Changing `src/app/worldmap.ts` remains later implementation work.
 
 ### Approved province rule 1: provinces mark a new mental model
 
@@ -453,15 +789,89 @@ learning domain. We will not design them prematurely.
 Goal: connect previous learning to future sessions instead of relying only on manually
 placed review stations.
 
-- [ ] Store which learning items have been introduced.
-- [ ] Store evidence from learner attempts.
-- [ ] Connect the existing spaced-repetition engine to persistent learner state.
-- [ ] Begin stations with a short, bounded review of relevant due knowledge.
-- [ ] Revisit misses later without creating an endless session.
-- [ ] Keep authored consolidation stations for cumulative use and transfer.
+- [x] Store which learning items have been introduced.
+- [x] Store evidence from learner attempts.
+- [x] Connect the existing spaced-repetition engine to persistent learner state.
+- [x] Begin stations with a short, bounded review of relevant due knowledge.
+- [x] Revisit misses later without creating an endless session.
+- [x] Keep authored consolidation stations for cumulative use and transfer.
 
 Output: knowledge returns according to learner need, while every station remains
 completable.
+
+### Smallest persistent-review proof
+
+The persistent lifecycle began with one review target in `src/lib/learner-state.ts`, such
+as `hira_a:sound-to-symbol`:
+
+```text
+introduce target
+→ create due-now schedule
+→ record checkpoint or review evidence
+→ update the existing SRS engine
+→ save one versioned learner-state document
+→ reload with Date values restored
+→ derive whether the target is due
+```
+
+The record stores the item-capability pair, introduction time, compact evidence totals,
+the latest attempt and its source, and the SRS schedule. Guided practice does not belong
+in this evidence. An honest checkpoint or scheduled review may update the schedule;
+immediate recovery is recorded but cannot advance it. Repeating an introduction is
+idempotent, so revisiting a station cannot erase a mature schedule. Malformed local data
+falls back safely instead of breaking the course.
+
+Focused tests prove success, failure/relearn, reload, idempotency, and the requirement
+that a target be introduced before evidence is accepted.
+
+The vowel station now guarantees its actual completion contract. Its final checkpoint
+creates all ten vowel item-capability records, shuffles one initial question for every
+vowel in both directions, uses the full five-option pool, and requeues only misses. A
+correct initial answer schedules future review. A missed target schedules a short
+relearn; its immediate in-session retry is stored as recovery evidence but cannot cancel
+that scheduled review. Earlier supported practice still writes nothing.
+
+The K-row final block uses the same guaranteed checkpoint mechanism but is not connected
+to persistence yet. The consolidation block remains a separate role with its shorter
+authored behavior.
+
+### Implemented bounded session planning
+
+`src/learning/session-planner.ts` now turns persistent due records and a station's
+declared prerequisites into a bounded opening plan:
+
+```text
+all due review records
+→ keep only this station's prerequisites
+→ prioritize lapsed targets, then oldest due
+→ select at most 5 targets
+→ report overflow and unrelated due work without blocking the station
+```
+
+The default opening limit is five prompts. A separate recovery plan is created only from
+targets actually missed in that opening review. It deduplicates them, selects at most ten
+for one finite pass, and leaves any overflow scheduled for later rather than extending
+the session indefinitely.
+
+This planner does not declare recovery merely because a backlog is large; the learner's
+opening answers supply that evidence. It also cannot move unrelated overdue material
+into a station just because it exists. Focused tests cover relevance, future schedules,
+long-gap overflow, priority, deduplication, and bounded recovery.
+
+The K-row station now consumes this plan. Its authored review steps act only as insertion
+points: when no prerequisite target is due, both are removed; otherwise they render the
+selected exact item-capability prompts. Each initial answer updates its spaced schedule.
+Actual misses receive one recovery pass, whose answers are recorded without advancing the
+SRS clock, and then the station continues even if recovery was unsuccessful.
+
+For compatibility, a learner who reached the K row before review-state existed has the
+declared vowel prerequisites seeded as due rather than silently skipping review. This is
+a course-order migration bridge, not evidence that those targets were remembered.
+
+Phase 3 is complete for the first end-to-end proof: vowel checkpoint evidence now returns
+as bounded, need-based review in the K-row station. Later acquisition stations can reuse
+the same seam while the next phase separates course travel from current capability in the
+learner-facing progress model.
 
 ## Phase 4: make progress honest
 
