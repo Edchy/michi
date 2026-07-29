@@ -1,12 +1,15 @@
 # Michi agent instructions
 
-Read `README.md` and `PLAN.md` before making project decisions.
+Read `README.md` and `PLAN.md` before making project decisions. Use
+`DEV-OVERVIEW.md` to locate current code and understand planned responsibility
+boundaries.
 
 ## Sources of truth
 
 - The working application is the truth about what is implemented.
 - `README.md` is the concise current project description.
 - `PLAN.md` contains the active decisions and sequence of work.
+- `DEV-OVERVIEW.md` maps the current code and planned system boundaries.
 - `REFERENCE.md` is a historical archive. Do not treat an archived proposal as an
   accepted requirement unless the user deliberately restores it.
 

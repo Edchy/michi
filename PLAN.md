@@ -293,7 +293,7 @@ Recovery language remains calm and practical, never punitive.
 
 Goal: represent the existing stations through one understandable content structure.
 
-- [ ] Define a small station specification in ordinary language first.
+- [x] Define a small station specification in ordinary language first.
 - [ ] Translate the vowels station into it without changing the experience.
 - [ ] Translate the K-row station into it.
 - [ ] Translate the consolidation station into it.
@@ -304,6 +304,149 @@ Goal: represent the existing stations through one understandable content structu
 
 Output: the existing stations behave as they do now, but their teaching structure is
 clear and reusable.
+
+### Approved station specification
+
+Every station declares seven sections:
+
+1. **Identity:** id, station type, and title.
+2. **Outcome:** the one capability the station intends to establish or strengthen.
+3. **Prerequisites:** capabilities that must be usable before the station makes sense.
+4. **Introduced capabilities:** the new review targets created by the station.
+5. **Learning sequence:** the ordered authored teaching and practice steps.
+6. **Application:** meaningful use in a word, sentence, listening task, or other context
+   when enough material is available.
+7. **Completion contract:** checkpoint coverage, mistake recovery, completion message,
+   and the handoff to what comes next.
+
+The station does not own React components, map coordinates, learner answers, SRS dates,
+or a manually authored list of due review. Those belong to the shared runner, course
+map, learner-state store, SRS engine, and session planner.
+
+The approved station types are orientation, acquisition, consolidation, application,
+and assessment. The shared runner may omit phases that do not apply to a particular
+type.
+
+The next Phase 2 task is translating the current vowel station into this specification
+without changing its learner experience.
+
+### Open province decision
+
+The current implemented hierarchy uses Hiragana, Katakana, First kanji, and Words and
+sentences as provinces. The intended pattern is for a province to begin with a short
+orientation station that introduces its overarching mental model.
+
+This structure is not yet re-approved. Words, sentences, listening, speaking, and
+grammar should appear throughout the course, so they may not belong in a final isolated
+province. We will decide what a province represents and when orientation deserves a
+standalone station before changing `src/app/worldmap.ts`.
+
+### Approved province rule 1: provinces mark a new mental model
+
+A province represents a major change in the learner's mental model of Japanese or a
+major new learning domain. It is not merely a bucket for accumulating content.
+
+A province begins with a short orientation station when entering it genuinely changes
+how the learner needs to understand or use Japanese. The orientation answers only:
+
+- What is changing?
+- Why are we learning it now?
+- How does it connect to what the learner already knows?
+- What capability will this province build?
+- What is one concrete example?
+
+The orientation must not become a long lecture. Optional history, cultural depth,
+linguistic background, and broader explanation belong in book stops between stations.
+Essential knowledge remains in the station path; book stops expand it without blocking
+progress.
+
+### Approved province 1: Hiragana foundations
+
+Province 1 is a functional Hiragana foundation. Its ending promise is:
+
+> The learner can use hiragana to decode beginner Japanese words and simple sentences.
+
+The province includes the basic 46 hiragana, essential changed and combined sounds,
+small-character behavior such as small `っ`, real words throughout, and simple
+sentences before completion. Speaking and writing rehearsal grow alongside reading
+according to the approved evidence rules.
+
+Completing the basic 46 remains an important milestone inside the province, but it is
+not the province boundary. The province ends when hiragana has become usable rather
+than when the character table has merely been covered.
+
+The opening station combines the whole course's brief three-script orientation with
+the Hiragana province orientation: what the scripts are and why learning begins with
+hiragana. Deeper script history belongs in the following book stop.
+
+### Approved province 2: Katakana in use
+
+Province 2 introduces a second script for mostly familiar sounds and a new reason for
+choosing one script rather than another. Its ending promise is:
+
+> The learner can use katakana to read common borrowed words, names, sound words, and
+> beginner Japanese text where hiragana and katakana appear together.
+
+The province transfers existing sound knowledge instead of reteaching the Japanese
+sound system from zero. It includes the core katakana forms, essential changed and
+combined sounds, the long-vowel mark `ー`, appropriate common foreign-sound
+combinations, real borrowed words from the beginning, and mixed hiragana-katakana
+reading. Hiragana continues to return through review.
+
+The short orientation demonstrates one concrete script contrast and explains the new
+job katakana performs. Katakana's history and broader cultural background belong in
+book stops between stations.
+
+### Approved province 3: Kanji foundations
+
+Province 3 introduces the mental model that kanji contributes meaning and that its
+pronunciation depends on the word in which it appears. Its ending promise is:
+
+> The learner understands how kanji functions inside Japanese and can read useful
+> beginner words and simple mixed-script sentences containing their first kanji.
+
+Kanji is taught inside useful words rather than as isolated English keyword cards. The
+learning system tracks specific capabilities, such as reading a known word or
+recognizing meaning in context, and does not pretend that one kanji has one permanent
+pronunciation. Visual components are introduced when they help distinguish and remember
+forms. Writing remains selective and progressive rather than becoming a copying burden.
+
+The short orientation uses one concrete shift from kana spelling to a meaning-bearing
+form. Detailed reading terminology, classification, and history belong in later
+stations or book stops. Hiragana, katakana, grammar, listening, words, and sentences
+remain active throughout the province.
+
+No arbitrary kanji count is approved. The curriculum will choose the smallest useful
+set that supports the functional outcome. Province 2 remains comparatively compact so
+Kanji foundations is not delayed excessively.
+
+### Approved province 4: Sentence foundations
+
+Province 4 makes understanding and constructing sentences the dominant new learning
+domain. Its ending promise is:
+
+> The learner can understand and build simple Japanese sentences using familiar words
+> and scripts.
+
+Words and sentences do not begin here; they are threaded through all earlier provinces.
+The new mental model is that Japanese sentences organize relationships through
+particles and often present information in a different order from English.
+
+The province expands useful vocabulary, listening comprehension, mixed-script reading,
+speaking rehearsal, concrete grammar patterns, short exchanges, and mini-stories. Its
+orientation uses one familiar sentence to show how the pieces work. Detailed grammar
+terminology and broader explanation remain in later stations or book stops.
+
+### Approved initial province roster
+
+1. Hiragana foundations.
+2. Katakana in use.
+3. Kanji foundations.
+4. Sentence foundations.
+
+This is the complete roster for the current planning horizon. More provinces will be
+added later only when the curriculum reaches another major mental-model change or
+learning domain. We will not design them prematurely.
 
 ## Phase 3: make review real
 

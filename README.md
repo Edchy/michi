@@ -42,10 +42,12 @@ them through the decision-by-decision process in [PLAN.md](./PLAN.md).
 
 ## Documentation
 
-There are only four active or reference documents:
+There are five active or reference documents:
 
 - `README.md`: what the project is and what exists now.
 - [`PLAN.md`](./PLAN.md): the current work, decisions, and checkpoints.
+- [`DEV-OVERVIEW.md`](./DEV-OVERVIEW.md): a founder-facing map of the code, runtime,
+  responsibilities, and planned structure.
 - [`CLAUDE.md`](./CLAUDE.md): concise rules for agents working in the repository.
 - [`REFERENCE.md`](./REFERENCE.md): the frozen pre-reset documentation archive. It is
   historical reference, not current authority.
