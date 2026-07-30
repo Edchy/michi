@@ -25,6 +25,7 @@ export type Step =
   | { kind: "read"; word: ReadableWord } // read a real word, built only from known kana
   | { kind: "rehearse"; pool: Kana[] } // guided speaking, not an assessed drill
   | { kind: "guidedTrace"; kana: Kana } // ungraded motor rehearsal with a faint guide
+  | { kind: "blankRecall"; kana: Kana } // draw from memory, then reveal for comparison
   // The gojūon table, with the row just learned landing into it. Ends the station by
   // placing the five new characters in the map of the whole set.
   | { kind: "grid" }
@@ -37,7 +38,7 @@ export type Step =
   | { kind: "done"; learned: Kana[] };
 
 /** A word the learner can decode unaided, because every kana in it is already taught. */
-export type ReadableWord = { kana: Kana[]; meaning: string; note: string };
+export type ReadableWord = { kana: Kana[]; meaning: string; note: string; audioSrc: string };
 
 /**
  * Recognition drills and a mixed capstone, easiest direction first.
@@ -72,11 +73,12 @@ export function buildTrack1(): Step[] {
   return [intro, ...teach, reveal, match, context, ...drills, traceA, speak, grid, done];
 }
 
-/** こい — a carp, and the first word the learner can read unaided (こ + い). */
-export const KOI: ReadableWord = {
-  kana: [K_ROW[4]!, VOWELS[1]!],
-  meaning: "carp",
-  note: "The ornamental fish in Japanese ponds, often orange and white.",
+/** えき — a station, and the first word the learner can read unaided (え + き). */
+export const EKI: ReadableWord = {
+  kana: [VOWELS[3]!, K_ROW[1]!],
+  audioSrc: "/audio/words/eki-station.mp3",
+  meaning: "station",
+  note: "The place where a train stops.",
 };
 
 /**
@@ -84,7 +86,7 @@ export const KOI: ReadableWord = {
  *
  * Same shape as station 2, with two additions its spec calls for: it opens by
  * reviewing the vowels (the learner has them now, so the station starts from what
- * they know), and it ends on reading こい, the first real word. The drill pool is
+ * they know), and it ends on reading えき, the first real word. The drill pool is
  * the k-row alone; mixing the vowels back in is station 4's consolidation job.
  */
 export function buildTrack2(): Step[] {
@@ -99,11 +101,11 @@ export function buildTrack2(): Step[] {
     kind: "drill", pool: K_ROW, types, role,
   }));
   const speak: Step = { kind: "rehearse", pool: K_ROW };
-  const read: Step = { kind: "read", word: KOI };
+  const read: Step = { kind: "read", word: EKI };
   const grid: Step = { kind: "grid" };
   const done: Step = { kind: "done", learned: K_ROW };
   // `context` sits just before `read`, not back with the teaching: it now promises that
-  // ten kana is enough for a real word, so it should land immediately before こい proves
+  // ten kana is enough for a real word, so it should land immediately before えき proves
   // it, rather than three drill blocks earlier where "where this station ends" is vague.
   return [intro, reviewIntro, review, ...teach, reveal, match, ...drills, speak, context, read, grid, done];
 }
@@ -115,7 +117,7 @@ export const FIRST_TEN = [...VOWELS, ...K_ROW];
  * Station 4 — "A first look back" (なかの).
  *
  * No new teaching and no new SRS seeds. The learner gets one open refresher,
- * one adaptive mixed-recall block across all ten kana, then reads こい again.
+ * one adaptive mixed-recall block across all ten kana, then reads えき again.
  * Keeping this as a short checkpoint makes consolidation feel like part of the
  * path rather than a second exam immediately after station 3.
  */
@@ -127,8 +129,9 @@ export function buildTrack3(): Step[] {
     types: ["hearPickChar", "seePickSound"],
     role: "consolidation",
   };
-  const read: Step = { kind: "read", word: KOI };
+  const read: Step = { kind: "read", word: EKI };
+  const writeA: Step = { kind: "blankRecall", kana: VOWELS[0]! };
   const grid: Step = { kind: "grid" };
   const done: Step = { kind: "done", learned: [] };
-  return [intro, recall, read, grid, done];
+  return [intro, recall, writeA, read, grid, done];
 }

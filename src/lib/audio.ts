@@ -1,8 +1,9 @@
 /**
- * Audio — plays pre-recorded native-speaker kana clips.
+ * Audio — plays local kana clips and complete word/sentence recordings.
  *
- * Files live in public/audio/hiragana/<itemId>.{webm,mp3} — the full 46-sound set,
- * one voice throughout, shipped in both formats (see `ext` below).
+ * Kana files live in public/audio/hiragana/<itemId>.{webm,mp3}. Complete AI-voiced
+ * utterances live in public/audio/words/ and are played as single recordings; words
+ * must never be reconstructed by overlapping isolated kana clips.
  * Offline-first: they ship with the app, no network at play time (P9). A missing
  * clip is a silent no-op, so the app stays usable while the set is completed.
  *
@@ -66,25 +67,29 @@ function context(): AudioContext | null {
   return ctx;
 }
 
-function load(id: string): Promise<AudioBuffer | null> {
-  const existing = pending.get(id);
+function loadSource(key: string, source: string): Promise<AudioBuffer | null> {
+  const existing = pending.get(key);
   if (existing) return existing;
 
   const ac = context();
   if (!ac) return Promise.resolve(null);
 
   // A missing clip resolves to null rather than throwing: the lesson stays usable.
-  const task = fetch(`/audio/hiragana/${id}.${extension()}`)
+  const task = fetch(source)
     .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error("404"))))
     .then((b) => ac.decodeAudioData(b))
     .then((buf) => {
-      buffers.set(id, buf);
+      buffers.set(key, buf);
       return buf;
     })
     .catch(() => null);
 
-  pending.set(id, task);
+  pending.set(key, task);
   return task;
+}
+
+function load(id: string): Promise<AudioBuffer | null> {
+  return loadSource(id, `/audio/hiragana/${id}.${extension()}`);
 }
 
 /** Play a kana's recording. Tapping again restarts it (spammable). No-op if missing. */
@@ -99,6 +104,21 @@ export function play(kana: Playable): void {
   }
   // Not primed yet (or priming still in flight) — play as soon as it lands.
   void load(kana.id).then((b) => b && start(ac, b));
+}
+
+/** Play a complete word or sentence recording shipped with the app. */
+export function playRecording(source: string): void {
+  const ac = context();
+  if (!ac) return;
+
+  const key = `recording:${source}`;
+  const buf = buffers.get(key);
+  if (buf) {
+    start(ac, buf);
+    return;
+  }
+
+  void loadSource(key, source).then((loaded) => loaded && start(ac, loaded));
 }
 
 function start(ac: AudioContext, buf: AudioBuffer): void {

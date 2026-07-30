@@ -1,18 +1,17 @@
 "use client";
 
 import { Button } from "@/components/button";
+import { AudioButton } from "@/components/audio-button";
 
 /**
- * The nav row inside a station: `‹ 家 ›`. Three controls, the same button as
- * everywhere else in the app.
+ * The nav row inside a station: `Back · Path · Next`. Three signs using the same
+ * shared button as everywhere else in the app.
  *
- * The middle slot is deliberately just the way home. The world map puts a label card
- * there because on the map you are choosing *which* line to look at, so naming the
- * current one is the point. Inside a station there is no such choice: you can already
- * see which station you are in, and a card restating it is one more thing to read
- * without being one more thing you can do.
+ * The middle slot anchors station-wide actions: Path is always at the bottom, and the
+ * progress sits above Path when present, and the shared audio control sits above the
+ * progress. Back and Next align with Path, so optional elements never shift the row.
  *
- * Arrows are disabled at the ends of the station rather than hidden — a control that
+ * End controls are disabled rather than hidden — a control that
  * vanishes reads as a bug, and the row must not shift under the cursor.
  */
 export function StationNav({
@@ -20,36 +19,64 @@ export function StationNav({
   onNext,
   canGoBack,
   canGoNext,
+  pathHref = "/",
+  pathIsForward = false,
+  onSound,
+  soundLabel = "Play sound",
+  progress,
 }: {
   onBack: () => void;
   onNext: () => void;
   canGoBack: boolean;
   canGoNext: boolean;
+  pathHref?: string;
+  pathIsForward?: boolean;
+  onSound?: () => void;
+  soundLabel?: string;
+  progress?: React.ReactNode;
 }) {
   return (
-    <nav className="flex items-center gap-2" aria-label="Lesson navigation">
+    <nav className="flex items-end gap-2" aria-label="Lesson navigation">
       <Button
-        icon
         onClick={onBack}
         disabled={!canGoBack}
         aria-label="Back"
         title="Back (Left Arrow)"
       >
-        <span aria-hidden>‹</span>
+        <span aria-hidden>←</span>
+        <span>Back</span>
       </Button>
 
-      <Button href="/" icon aria-label="Return to the path" title="Return to the path">
-        <PathIcon />
-      </Button>
+      <div className="flex flex-col items-stretch gap-2">
+        {onSound && (
+          <AudioButton
+            onClick={onSound}
+            label={soundLabel}
+            className="audio-nav-stripe !w-full"
+          />
+        )}
+        {progress}
+        <Button
+          href={pathHref}
+          variant={pathIsForward ? "primary" : "secondary"}
+          className="w-full"
+          aria-label="Return to the path"
+          title="Return to the path"
+        >
+          <PathIcon />
+          <span>Path</span>
+        </Button>
+      </div>
 
       <Button
-        icon
+        variant={pathIsForward ? "secondary" : "primary"}
         onClick={onNext}
         disabled={!canGoNext}
         aria-label="Next"
         title="Next (Right Arrow)"
       >
-        <span aria-hidden>›</span>
+        <span>Next</span>
+        <span aria-hidden>→</span>
       </Button>
     </nav>
   );

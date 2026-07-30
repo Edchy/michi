@@ -137,10 +137,10 @@ approved learner experience all at once.
 | Kana items | Vowel and K-row content records | `src/content/hiragana.ts` |
 | Questions | Builds choice and rehearsal questions | `src/content/question.ts` |
 | Drill progress | In-session difficulty and coverage | `src/content/drill.ts` |
-| Guided writing | Responsive pointer canvas and brush geometry | `src/components/writing-surface.tsx`, `src/content/writing.ts` |
+| Writing practice | Canonical stroke-order guidance and top-layer blank-recall comparison | `src/components/writing-surface.tsx`, `src/components/kana-stroke-guide.tsx`, `src/content/writing.ts` |
 | Question ordering | Avoids uneven random repetition | `src/content/bag.ts` |
 | Gojūon model/UI | Full kana grid and learned rows | `src/content/gojuon.ts`, `src/components/gojuon-grid.tsx` |
-| Audio | Loads and plays local kana recordings | `src/lib/audio.ts`, `public/audio/hiragana/` |
+| Audio | Plays isolated human-recorded kana and complete AI-recorded words | `src/lib/audio.ts`, `public/audio/hiragana/`, `public/audio/words/` |
 | Codex content | Optional book-stop articles | `src/content/codex.ts`, `src/app/codex/` |
 | Codex state | Remembers visited book stops | `src/lib/codex-progress.ts` |
 | SRS calculation | Calculates intervals, due dates, and confidence | `src/srs/engine.ts` |
@@ -148,8 +148,20 @@ approved learner experience all at once.
 | Session planner | Selects bounded prerequisite review and finite recovery | `src/learning/session-planner.ts` |
 | Capability projection | Derives learning, mastered, and review-due status | `src/learning/capability-progress.ts` |
 | Shared controls | Buttons and station navigation | `src/components/button.tsx`, `src/components/station-nav.tsx` |
+| Audio action | One Path-sized icon-only speaker sign above progress and Path when the slide has audio | `src/components/audio-button.tsx`, `src/components/station-nav.tsx` |
+| Interface icons | Consistent generic control icons | `lucide-react` |
+
+Manual audio playback always goes through `AudioButton` in `StationNav`. Kana, word signs, and answer
+cards may trigger automatic teaching or feedback audio, but they are not alternate
+playback controls.
 
 Most of these areas have focused tests beside them as `*.test.ts` or `*.test.tsx`.
+
+`PRODUCT.md` defines the strategic experience and `DESIGN.md` is the visual/component
+source of truth. The Learning Line hierarchy uses yellow for forward movement and the
+current teaching sign, black for structure, and near-white for secondary actions. New
+controls should extend
+the shared primitives rather than introduce local button styling.
 
 When running `npm run dev`, kana stations show a compact `Dev` control in the top-right.
 Its arrows bypass completion gates and its selector jumps directly to any authored step,
@@ -341,7 +353,10 @@ All five kana correct in both directions; misses are retaught and individually r
 The original translation exposed incomplete checkpoint coverage, overclaimed speaking,
 absent persistence, and absent tracing. Checkpoint coverage and vowel persistence are now
 implemented, and one ungraded guided `あ` trace follows the checkpoint. Canonical stroke
-order and blank writing remain future work. Detailed evidence rules live in `PLAN.md`.
+order is now taught through the three canonical `strokesvg` paths. Station 4 revisits
+`あ` on a blank canvas and overlays the reference above the learner's ink for ungraded
+comparison. Expansion beyond `あ` and automatic judgement remain future work. Detailed
+evidence rules live in `PLAN.md`.
 
 ## Second specification proof: Station 3, K row
 
@@ -350,7 +365,7 @@ Identity
 Acquisition station: k-row / The K row
 
 Outcome
-Connect かきくけこ to their sounds in both directions and decode こい
+Connect かきくけこ to their sounds in both directions and decode えき
 
 Prerequisites
 Vowels usable in sound-to-symbol and symbol-to-sound
@@ -361,13 +376,13 @@ Five K-row kana × sound-to-symbol and symbol-to-sound
 Sequence
 Generated prerequisite review → orient → model → reveal → guided match
 → supported practice both directions → full-set checkpoint
-→ ungraded speaking → context → decode こい → gojūon grid
+→ ungraded speaking → context → decode えき → gojūon grid
 
 Application
-Decode こい; its meaning is not a required vocabulary target here
+Decode えき; its meaning is not a required vocabulary target here
 
 Completion
-All five new kana correct in both directions; こい completed as ungraded application
+All five new kana correct in both directions; えき completed as ungraded application
 ```
 
 The K-row station adds no new structural field. Prerequisites belong in the station
@@ -383,7 +398,7 @@ Identity
 Consolidation station: look-back-1 / A first look back
 
 Outcome
-Retrieve the first ten hiragana from one mixed set and decode こい again
+Retrieve the first ten hiragana from one mixed set and decode えき again
 
 Prerequisites
 Vowels and K row already introduced in both directions
@@ -393,10 +408,10 @@ No new items or review targets
 
 Sequence
 Prepare → optional generated due review → mixed first-ten checkpoint
-→ targeted mistake recovery → decode こい → gojūon grid
+→ targeted mistake recovery → decode えき → gojūon grid
 
 Application
-Decode こい as a sequence; its meaning remains ungraded context
+Decode えき as a sequence; its meaning remains ungraded context
 
 Completion
 Every kana appears once in a direction-balanced initial pass; misses are requeued

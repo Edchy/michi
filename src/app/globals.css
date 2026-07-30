@@ -1,9 +1,7 @@
 @import "tailwindcss";
 
-/* Design tokens — see docs/design/DESIGN.md. 藍 indigo = the ink & primary action;
-   朱 vermilion = focus rings and lesson/codex emphasis. NOTE: vermilion no longer marks
-   "you are here" on the world map — that is form-only now (thick ring + halo), so it can
-   never collide with a track hue.
+/* Design tokens — see DESIGN.md. Signal yellow marks forward movement, Sign Black
+   supplies structure, and Station White holds the lesson surface.
    @theme keys generate Tailwind utilities: --color-ink → text-ink/bg-ink, etc. */
 @theme {
   --font-kana: "Klee One", serif;
@@ -17,23 +15,24 @@
                     screen. This is "white" everywhere in Michi.
      --color-navy   the dark. A deep blue-black, never pure #000 — it's the ink
                     the whole app is drawn in.                                   */
-  --color-paper: #F6EEE2;
-  --color-navy: oklch(0.22 0.042 264);
+  --color-paper: #FAFAF7;
+  --color-navy: #111318;
 
   /* Semantic neutrals — all derived from paper/navy so the two stay in charge. */
   --color-bg: var(--color-paper);
-  --color-surface: oklch(0.938 0.014 78);         /* raised fills, option buttons */
-  --color-surface-2: oklch(0.906 0.018 78);       /* hover on surfaces           */
-  --color-line: oklch(0.872 0.019 78);            /* hairlines, the trace guide  */
+  --color-surface: #F0EFE9;                        /* raised fills, option buttons */
+  --color-surface-2: #E3E1D8;                      /* hover on surfaces           */
+  --color-line: #C9C7BE;                           /* hairlines, the trace guide  */
   --color-ink: var(--color-navy);                 /* primary text, the glyph     */
-  --color-ink-muted: oklch(0.50 0.032 264);       /* secondary text, prompts     */
-  --color-ink-faint: oklch(0.62 0.026 264);       /* hints, labels under glyphs  */
+  --color-ink-muted: #555960;                      /* secondary text, prompts     */
+  --color-ink-faint: #73777E;                      /* hints, labels under glyphs  */
 
   /* 朱 vermilion — focus rings and lesson/codex emphasis. No longer marks
      "you are here" on the map; that is form-only. Kept under 10% of surface. */
-  --color-accent: oklch(0.545 0.19 32);
-  --color-accent-hover: oklch(0.49 0.19 32);
-  --color-accent-weak: oklch(0.94 0.035 40);
+  --color-accent: #FFD43B;
+  --color-accent-hover: #F2C62D;
+  --color-accent-weak: #FFF4B8;
+  --color-error: #C94735;
 
   /* Track hues, mirrored from :root below so Tailwind utilities exist for them
      (text-track-1, bg-track-2, …). The :root copies are what runtime
@@ -46,7 +45,7 @@
 
   /* Elevation — tinted with the navy rather than neutral black, so shadows sit
      in the same family as the ink. */
-  --shadow-card: 0 1px 3px oklch(0.22 0.042 264 / 0.07);
+  --shadow-card: 0 2px 6px rgb(17 19 24 / 0.12);
 
   /* small, quiet radius — no pills */
   --radius-btn: 6px;
@@ -91,11 +90,9 @@ button:disabled,
   cursor: not-allowed;
 }
 
-/* A correct press gets one decisive pop and glyph-only glow. It holds until the
-   question advances—there is no rebound or scale-down. */
+/* A correct press gets one decisive lift and holds until the question advances. */
 .answer-success {
-  transform: scale(1.4);
-  filter: drop-shadow(0 0 10px color-mix(in oklab, var(--color-ink) 40%, transparent));
+  transform: scale(1.08);
 }
 
 /* Step transition: slide in from the direction of travel, always ending visible. */
@@ -141,38 +138,64 @@ button:disabled,
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 7px;
   min-height: 44px; padding: 0 18px;
-  border: 1px solid transparent; border-radius: var(--radius-btn);
-  font-size: 14px; font-weight: 600; line-height: 1;
+  border: 2px solid var(--color-ink); border-radius: var(--radius-btn);
+  font-size: 14px; font-weight: 700; line-height: 1;
   cursor: pointer; text-align: center;
-  transition: background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out;
+  transition: background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out, transform 150ms ease-out;
 }
-.btn:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.btn:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+.btn:active:not(:disabled) { transform: translateY(1px); }
 /* Disabled controls stay visibly present: a control that vanishes at the edge of a
    range reads as a bug, which is why the map's arrows behave this way too. */
 .btn:disabled { cursor: not-allowed; box-shadow: none; }
 
-.btn-primary { background: var(--color-ink); color: var(--color-paper); }
+.btn-primary { background: var(--color-accent); color: var(--color-ink); }
 .btn-primary:hover:not(:disabled) {
-  background: color-mix(in oklab, var(--color-ink) 88%, var(--color-paper));
+  background: var(--color-accent-hover);
 }
-.btn-primary:disabled { background: var(--color-surface-2); color: var(--color-ink-faint); }
+.btn-primary:disabled {
+  border-color: var(--color-line); background: var(--color-surface); color: var(--color-ink-faint);
+}
 
 .btn-secondary {
-  border-color: var(--color-line); background: var(--color-bg); color: var(--color-ink);
-  box-shadow: var(--shadow-card);
+  background: var(--color-bg); color: var(--color-ink);
 }
 .btn-secondary:hover:not(:disabled) {
-  background: var(--color-surface); border-color: var(--color-ink-faint);
+  background: var(--color-surface);
 }
 .btn-secondary:disabled {
-  background: var(--color-surface); color: var(--color-ink-faint);
+  border-color: var(--color-line); background: var(--color-surface); color: var(--color-ink-faint);
 }
 
-.btn-ghost { background: transparent; color: var(--color-ink-muted); }
-.btn-ghost:hover:not(:disabled) { background: var(--color-surface); color: var(--color-ink); }
+.btn-ghost { border-color: var(--color-line); background: var(--color-surface); color: var(--color-ink); }
+.btn-ghost:hover:not(:disabled) { border-color: var(--color-ink); background: var(--color-surface-2); }
 
 /* A lone glyph: square, no text padding. The 44px min stays — it is the touch target. */
 .btn-icon { width: 44px; min-width: 44px; padding: 0; font-size: 20px; gap: 0; }
+
+/* Borderless drawing tools sit quietly beside the paper. Their hover, focus, press,
+   disabled states and touch targets still come from the shared button system. */
+.btn.writing-tool {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+.btn.writing-tool:hover:not(:disabled) { border-color: transparent; }
+.btn.writing-tool:disabled { color: var(--color-ink-faint); }
+
+/* A quiet platform-stripe fill distinguishes optional audio from route movement. */
+.btn.audio-nav-stripe {
+  background-color: var(--color-bg);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0 6px,
+    rgb(255 212 59 / 0.42) 6px 8px
+  );
+}
+.btn.audio-nav-stripe:hover:not(:disabled) {
+  background-color: var(--color-surface);
+}
+
 /* The primary action on a slide is wider than a default button, so it reads as the
    end of the step rather than as one more control in a row. */
 .btn-wide { padding: 0 36px; min-height: 48px; font-size: 15px; }
@@ -510,6 +533,20 @@ button:disabled,
 
   .wm-avatar-bob { animation: none; }
   .wm-path-done, .wm-avatar { transition: none; }
+
+  .kana-stroke-animation path { animation: none; stroke-dashoffset: 0; }
+}
+
+@keyframes kana-stroke-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+.kana-stroke-animation path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: kana-stroke-draw 700ms ease-out forwards;
+  animation-delay: calc(var(--stroke-index) * 850ms + 250ms);
 }
 
 /* Book-stop drop cap: the initial spans exactly two body lines. The float's box must

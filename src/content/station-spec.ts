@@ -117,7 +117,7 @@ export const FIRST_STATIONS: readonly StationDefinition[] = [
   },
   {
     identity: { id: "k-row", type: "acquisition", title: "The K row" },
-    outcome: "Connect かきくけこ to their sounds in both directions and decode こい.",
+    outcome: "Connect かきくけこ to their sounds in both directions and decode えき.",
     prerequisites: vowelTargets,
     introducedCapabilities: kRowTargets,
     learningSequence: [
@@ -132,32 +132,32 @@ export const FIRST_STATIONS: readonly StationDefinition[] = [
       "close",
     ],
     application: {
-      description: "Decode こい; its meaning is ungraded context.",
-      itemIds: ["hira_ko", "hira_i"],
+      description: "Decode えき; its meaning is ungraded context.",
+      itemIds: ["hira_e", "hira_ki"],
     },
     completion: {
       kind: "introduced-targets",
       targetKeys: kRowTargets.map(reviewTargetKey),
       mistakeRecovery: "Reteach and requeue only the missed target after other questions.",
-      message: "You connected the K-row sounds in both directions and decoded こい.",
+      message: "You connected the K-row sounds in both directions and decoded えき.",
     },
   },
   {
     identity: { id: "look-back-1", type: "consolidation", title: "A first look back" },
-    outcome: "Retrieve the first ten hiragana from one mixed set and decode こい again.",
+    outcome: "Retrieve the first ten hiragana from one mixed set and decode えき again.",
     prerequisites: [...vowelTargets, ...kRowTargets],
     introducedCapabilities: [],
     learningSequence: ["prepare", "review", "recall", "use", "close"],
     application: {
-      description: "Decode こい again from the mixed first-ten set.",
-      itemIds: ["hira_ko", "hira_i"],
+      description: "Decode えき again from the mixed first-ten set.",
+      itemIds: ["hira_e", "hira_ki"],
     },
     completion: {
       kind: "mixed-items",
       itemIds: firstTenIds,
       capabilities: ["sound-to-symbol", "symbol-to-sound"],
       mistakeRecovery: "Reveal the association and requeue only the missed target.",
-      message: "You recalled the first ten hiragana together and read こい again.",
+      message: "You recalled the first ten hiragana together and read えき again.",
     },
   },
 ];

@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/button";
+import { AStrokeGuide } from "@/components/kana-stroke-guide";
 import { brushWidth } from "@/content/writing";
+import { Eye, RotateCcw, Trash2, Undo2 } from "lucide-react";
 
 type InkPoint = {
   x: number;
@@ -50,11 +52,21 @@ function drawStroke(
   }
 }
 
-export function WritingSurface({ glyph, onComplete }: { glyph: string; onComplete: () => void }) {
+export function WritingSurface({
+  glyph,
+  mode = "trace",
+  onReadyChange,
+}: {
+  glyph: string;
+  mode?: "trace" | "recall";
+  onReadyChange: (ready: boolean) => void;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const strokes = useRef<InkStroke[]>([]);
   const activeStroke = useRef<InkStroke | null>(null);
   const [strokeCount, setStrokeCount] = useState(0);
+  const [showGuide, setShowGuide] = useState(mode === "trace");
+  const [guideReplay, setGuideReplay] = useState(0);
 
   const redraw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -129,12 +141,14 @@ export function WritingSurface({ glyph, onComplete }: { glyph: string; onComplet
     strokes.current = [...strokes.current, stroke];
     activeStroke.current = null;
     setStrokeCount(strokes.current.length);
+    onReadyChange(true);
     redraw();
   }
 
   function undo() {
     strokes.current = strokes.current.slice(0, -1);
     setStrokeCount(strokes.current.length);
+    onReadyChange(strokes.current.length > 0);
     redraw();
   }
 
@@ -142,41 +156,126 @@ export function WritingSurface({ glyph, onComplete }: { glyph: string; onComplet
     strokes.current = [];
     activeStroke.current = null;
     setStrokeCount(0);
+    onReadyChange(false);
     redraw();
   }
 
+  function retryRecall() {
+    clear();
+    setShowGuide(false);
+  }
+
   return (
-    <div className="flex w-full flex-col items-center gap-5">
-      <div className="relative aspect-square w-[min(78vw,320px)] overflow-hidden rounded-[var(--radius-lg)] bg-surface shadow-[inset_0_0_0_1px_var(--color-line)]">
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-0 flex select-none items-center justify-center font-kana text-[clamp(10rem,56vw,14rem)] leading-none text-ink opacity-20"
-        >
-          {glyph}
-        </span>
+    <div className="flex w-full flex-col items-center justify-center gap-2">
+      <div className="relative aspect-square w-[min(calc(100vw-40px),420px)] overflow-hidden">
+        {showGuide && mode === "trace" && glyph === "あ" ? (
+          <span key={guideReplay} className="pointer-events-none absolute inset-0 select-none">
+            <AStrokeGuide animated />
+          </span>
+        ) : showGuide && mode === "trace" ? (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 flex select-none items-center justify-center font-kana text-[clamp(10rem,56vw,14rem)] leading-none text-ink opacity-20"
+          >
+            {glyph}
+          </span>
+        ) : null}
         <canvas
           ref={canvasRef}
-          aria-label={`Drawing area for tracing ${glyph}`}
+          aria-label={
+            mode === "trace"
+              ? `Drawing area for tracing ${glyph}`
+              : "Blank drawing area for the sound prompt"
+          }
           className="absolute inset-0 h-full w-full touch-none select-none"
           onPointerDown={beginStroke}
           onPointerMove={extendStroke}
           onPointerUp={finishStroke}
           onPointerCancel={finishStroke}
         />
+        {showGuide && mode === "recall" && glyph === "あ" ? (
+          <span className="pointer-events-none absolute inset-0 z-10 select-none">
+            <AStrokeGuide comparison />
+          </span>
+        ) : showGuide && mode === "recall" ? (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-10 flex select-none items-center justify-center font-kana text-[clamp(10rem,56vw,14rem)] leading-none text-accent opacity-55"
+          >
+            {glyph}
+          </span>
+        ) : null}
       </div>
 
-      <div className="flex min-h-11 items-center justify-center gap-2">
-        <Button variant="ghost" onClick={undo} disabled={strokeCount === 0}>
-          Undo
+      <div className="flex items-center gap-2" aria-label="Drawing tools">
+        <Button
+          icon
+          className="writing-tool"
+          variant="ghost"
+          onClick={undo}
+          disabled={strokeCount === 0}
+          aria-label="Undo last stroke"
+          title="Undo last stroke"
+        >
+          <Undo2 size={18} strokeWidth={1.8} aria-hidden />
+          <span className="sr-only">Undo</span>
         </Button>
-        <Button variant="ghost" onClick={clear} disabled={strokeCount === 0}>
-          Clear
+        <Button
+          icon
+          className="writing-tool"
+          variant="ghost"
+          onClick={clear}
+          disabled={strokeCount === 0}
+          aria-label="Clear drawing"
+          title="Clear drawing"
+        >
+          <Trash2 size={18} strokeWidth={1.8} aria-hidden />
+          <span className="sr-only">Clear</span>
         </Button>
+        {mode === "trace" && glyph === "あ" && (
+          <Button
+            icon
+            className="writing-tool"
+            variant="ghost"
+            onClick={() => {
+              clear();
+              setGuideReplay((value) => value + 1);
+            }}
+            aria-label="Replay stroke order"
+            title="Replay stroke order"
+          >
+            <RotateCcw size={18} strokeWidth={1.8} aria-hidden />
+            <span className="sr-only">Replay stroke order</span>
+          </Button>
+        )}
+        {mode === "recall" &&
+          (showGuide ? (
+            <Button
+              icon
+              className="writing-tool"
+              variant="ghost"
+              onClick={retryRecall}
+              aria-label="Try again"
+              title="Try again"
+            >
+              <RotateCcw size={18} strokeWidth={1.8} aria-hidden />
+              <span className="sr-only">Try again</span>
+            </Button>
+          ) : (
+            <Button
+              icon
+              className="writing-tool"
+              variant="ghost"
+              onClick={() => setShowGuide(true)}
+              disabled={strokeCount === 0}
+              aria-label="Reveal shape"
+              title="Reveal shape"
+            >
+              <Eye size={18} strokeWidth={1.8} aria-hidden />
+              <span className="sr-only">Reveal shape</span>
+            </Button>
+          ))}
       </div>
-
-      <Button variant="primary" wide onClick={onComplete}>
-        Continue
-      </Button>
     </div>
   );
 }

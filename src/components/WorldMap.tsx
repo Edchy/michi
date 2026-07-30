@@ -464,7 +464,7 @@ export default function WorldMap({
             type="button"
             style={{ ["--track" as string]: trackHue(focusedTrack) }}
             onClick={() => setChain(focusedProvince)}
-            aria-label={`${TRACKS[focusedTrack]!.line} Line, line ${TRACKS[focusedTrack]!.n} of ${PROVINCES[focusedProvince]!.tracks.length} — browse all lines in ${PROVINCES[focusedProvince]!.title}`}
+            aria-label={`${TRACKS[focusedTrack]!.line} Line, line ${TRACKS[focusedTrack]!.n} of ${PROVINCES[focusedProvince]!.tracks.length}. Browse all lines in ${PROVINCES[focusedProvince]!.title}`}
           >
             <span className="wm-nav-roundel" aria-hidden>{TRACKS[focusedTrack]!.code}</span>
             {/* Title first: "The Ginza Line" says what this is. A bare "Ginza 銀座線"

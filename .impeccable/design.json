@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-30T00:00:00.000Z",
+  "title": "Design System: Michi",
+  "extensions": {
+    "colorMeta": {
+      "signal-yellow": { "role": "primary", "displayName": "Signal Yellow", "canonical": "#FFD43B", "tonalRamp": ["#FFF4B8", "#FFD43B", "#F2C62D"] },
+      "sign-black": { "role": "neutral", "displayName": "Sign Black", "canonical": "#111318", "tonalRamp": ["#555960", "#111318"] },
+      "station-white": { "role": "neutral", "displayName": "Station White", "canonical": "#FAFAF7", "tonalRamp": ["#FAFAF7", "#F0EFE9", "#C9C7BE"] }
+    },
+    "typographyMeta": {
+      "title": { "displayName": "Lesson title", "purpose": "One clear teaching idea or state." },
+      "body": { "displayName": "Passenger copy", "purpose": "Short, direct teaching and orientation." },
+      "label": { "displayName": "Sign label", "purpose": "Destination-led control text." }
+    },
+    "shadows": [
+      { "name": "floating-control", "value": "0 2px 6px rgb(17 19 24 / 0.12)", "purpose": "Fixed station navigation only." }
+    ],
+    "motion": [
+      { "name": "control-state", "value": "150ms ease-out", "purpose": "Hover, focus, and press feedback." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Forward Sign",
+      "kind": "button",
+      "refersTo": "button-forward",
+      "description": "The one action that moves the learner onward.",
+      "html": "<button class=\"ds-forward\">Continue</button>",
+      "css": ".ds-forward{min-height:44px;padding:0 18px;border:2px solid #111318;border-radius:6px;background:#FFD43B;color:#111318;font:700 14px/1 system-ui;transition:background 150ms ease-out,transform 150ms ease-out}.ds-forward:hover{background:#F2C62D}.ds-forward:active{transform:translateY(1px)}.ds-forward:focus-visible{outline:3px solid #111318;outline-offset:3px}"
+    },
+    {
+      "name": "Secondary Sign",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "A visible but non-forward station control.",
+      "html": "<button class=\"ds-secondary\">Back</button>",
+      "css": ".ds-secondary{min-height:44px;padding:0 18px;border:2px solid #111318;border-radius:6px;background:#FAFAF7;color:#111318;font:700 14px/1 system-ui;transition:background 150ms ease-out,transform 150ms ease-out}.ds-secondary:hover{background:#F0EFE9}.ds-secondary:active{transform:translateY(1px)}.ds-secondary:focus-visible{outline:3px solid #FFD43B;outline-offset:2px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Learning Line",
+    "overview": "Michi uses the disciplined clarity of Japanese transit wayfinding to guide a calm learning journey.",
+    "keyCharacteristics": ["High contrast", "Destination-led labels", "One forward action", "Rectangular signage controls"],
+    "rules": [
+      { "name": "Yellow Means Movement", "body": "Signal Yellow marks the next meaningful movement and is never decorative.", "section": "colors" },
+      { "name": "Physical Sign", "body": "Borders and press states create tactility; diffuse shadows do not.", "section": "elevation" }
+    ],
+    "dos": ["Use one coherent signage silhouette.", "Label actions by destination or result."],
+    "donts": ["Do not mix circular and rectangular button families.", "Do not duplicate destinations on one screen."]
+  }
+}

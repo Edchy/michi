@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildTrack1, buildTrack2, buildTrack3, FIRST_TEN, KOI } from "./track1";
+import { buildTrack1, buildTrack2, buildTrack3, EKI, FIRST_TEN } from "./track1";
 import { K_ROW, VOWELS } from "./hiragana";
 
 describe("buildTrack1", () => {
@@ -90,18 +90,18 @@ describe("buildTrack2 — the k-row station", () => {
   });
 
   // The context slide promises ten kana is enough for a real word, so it must sit
-  // immediately before こい makes good on that rather than back with the teaching.
-  it("sets up こい immediately before reading it", () => {
+  // immediately before えき makes good on that rather than back with the teaching.
+  it("sets up えき immediately before reading it", () => {
     const context = steps.findIndex((s) => s.kind === "context");
     const read = steps.findIndex((s) => s.kind === "read");
     expect(context).toBeGreaterThan(-1);
     expect(read).toBe(context + 1);
   });
 
-  it("ends on reading こい, then the gojūon grid, then the done step", () => {
+  it("ends on reading えき, then the gojūon grid, then the done step", () => {
     const read = steps.at(-3)!;
     expect(read.kind).toBe("read");
-    if (read.kind === "read") expect(read.word).toBe(KOI);
+    if (read.kind === "read") expect(read.word).toBe(EKI);
     expect(steps.at(-2)!.kind).toBe("grid");
     expect(steps.at(-1)!.kind).toBe("done");
   });
@@ -129,10 +129,10 @@ describe("buildTrack2 — the k-row station", () => {
   });
 
   // The "I can read this" moment only works if nothing in the word is unseen.
-  it("こい uses only kana taught by the end of this station", () => {
+  it("えき uses only kana taught by the end of this station", () => {
     const known = new Set([...VOWELS, ...K_ROW].map((k) => k.id));
-    for (const k of KOI.kana) expect(known).toContain(k.id);
-    expect(KOI.kana.map((k) => k.glyph).join("")).toBe("こい");
+    for (const k of EKI.kana) expect(known).toContain(k.id);
+    expect(EKI.kana.map((k) => k.glyph).join("")).toBe("えき");
   });
 });
 
@@ -152,16 +152,19 @@ describe("buildTrack3 — the first look back", () => {
     }
   });
 
-  it("re-reads こい before the progress grid and completion", () => {
+  it("re-reads えき before the progress grid and completion", () => {
     expect(steps.map((step) => step.kind)).toEqual([
       "intro",
       "drill",
+      "blankRecall",
       "read",
       "grid",
       "done",
     ]);
-    const read = steps[2]!;
-    if (read.kind === "read") expect(read.word).toBe(KOI);
+    const writing = steps[2]!;
+    if (writing.kind === "blankRecall") expect(writing.kana).toBe(VOWELS[0]);
+    const read = steps[3]!;
+    if (read.kind === "read") expect(read.word).toBe(EKI);
     const done = steps.at(-1)!;
     if (done.kind === "done") expect(done.learned).toEqual([]);
   });

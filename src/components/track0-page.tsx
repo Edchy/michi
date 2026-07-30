@@ -2,22 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { buildTrack0, type ScriptStep } from "@/content/track0";
-import { ROMAJI_WORDS, type Script, type Syllable, type Word } from "@/content/scripts";
-import { play } from "@/lib/audio";
-import { ARROW_KEY_CLASS, SPACE_KEY_CLASS } from "@/components/track1-page";
-import { GojuonGrid } from "@/components/gojuon-grid";
-import { Button } from "@/components/button";
+import { MICHI, type Script, type Word } from "@/content/scripts";
+import { VOWELS } from "@/content/hiragana";
+import { playRecording } from "@/lib/audio";
+import { ARROW_KEY_CLASS, SPACE_KEY_CLASS } from "@/components/keyboard-key";
 import { StationNav } from "@/components/station-nav";
-
-/** Clips are keyed by kana id; the Word syllables carry those ids directly. */
-function playSyllable(s: Syllable) {
-  play(s);
-}
-
-/** Play a word one syllable at a time, ~420ms apart. */
-function playWord(syllables: Syllable[]) {
-  syllables.forEach((s, i) => setTimeout(() => playSyllable(s), i * 420));
-}
+import { SignTitle } from "@/components/sign-title";
 
 export default function Track0Page() {
   const steps = useMemo(() => buildTrack0(), []);
@@ -28,6 +18,12 @@ export default function Track0Page() {
   const step = steps[index]!;
   const atStart = index === 0;
   const atEnd = index === steps.length - 1;
+  const playSlideSound =
+    step.kind === "script"
+      ? () => playRecording(step.script.words[0]!.audioSrc)
+      : step.kind === "michi" || step.kind === "welcome"
+        ? () => playRecording(MICHI.audioSrc)
+        : undefined;
 
   function go(delta: number) {
     setDirection(delta);
@@ -43,7 +39,7 @@ export default function Track0Page() {
 
       if (event.code === "Space") {
         // Space plays sound wherever focus sits, so it behaves the same as on the later
-        // stations. A focused word card plays itself; otherwise cycle the slide's cards.
+        // stations. A focused speaker plays itself; otherwise cycle the slide's speakers.
         const cards = Array.from(
           document.querySelectorAll<HTMLButtonElement>("[data-audio-control]"),
         );
@@ -75,14 +71,7 @@ export default function Track0Page() {
   return (
     // pb clears the floating nav (~112px incl. its own pb-6) plus breathing room, so a
     // tall script slide scrolls to a readable end instead of stopping under the buttons.
-    <main
-      className={`relative mx-auto flex min-h-screen flex-col px-5 pt-8 ${
-        // The closing gojūon slide is two columns, so it needs more than the reading
-        // measure the script slides are held to. It also carries its own button rather
-        // than a Next arrow, so it needs less bottom clearance than the script slides.
-        step.kind === "handoff" ? "max-w-[900px] pb-28" : "max-w-[600px] pb-44"
-      }`}
-    >
+    <main className="relative mx-auto flex min-h-screen max-w-[600px] flex-col px-5 pb-44 pt-8">
       <div className="flex flex-1 items-center justify-center">
         <div key={index} className="w-full step-enter py-6" data-dir={direction}>
           <StepView step={step} />
@@ -93,25 +82,16 @@ export default function Track0Page() {
           than colliding with the buttons. */}
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-10 flex justify-center bg-gradient-to-t from-paper via-paper/95 to-transparent pb-6 pt-10">
         <div data-floating-nav className="pointer-events-auto flex flex-col items-center gap-2">
-          {step.kind === "open" && (
-            <div className="mb-2 hidden flex-col items-center gap-2 text-xs text-ink-faint sm:flex">
-              <p className="flex items-center gap-1.5">
-                <kbd className={ARROW_KEY_CLASS}>←</kbd>
-                <kbd className={ARROW_KEY_CLASS}>→</kbd>
-                <span>keys to navigate</span>
-              </p>
-              <p className="flex items-center gap-1.5">
-                <kbd className={SPACE_KEY_CLASS}>Space</kbd>
-                <span>key to play sounds</span>
-              </p>
-            </div>
-          )}
-          <Dots count={steps.length} at={index} />
           <StationNav
             onBack={() => go(-1)}
             onNext={() => go(1)}
             canGoBack={!atStart}
             canGoNext={!atEnd}
+            pathHref={atEnd ? "/?completed=three-scripts" : "/"}
+            pathIsForward={atEnd}
+            onSound={playSlideSound}
+            soundLabel="Play sound"
+            progress={<Dots count={steps.length} at={index} />}
           />
         </div>
       </div>
@@ -144,19 +124,37 @@ function Dots({ count, at }: { count: number; at: number }) {
 
 function StepView({ step }: { step: ScriptStep }) {
   if (step.kind === "open") return <OpenStep />;
+  if (step.kind === "welcome") return <WelcomeStep />;
+  if (step.kind === "controls") return <ControlsStep />;
   if (step.kind === "script") return <ScriptStepView script={step.script} />;
   if (step.kind === "romaji") return <RomajiStep />;
+  if (step.kind === "michi") return <MichiStep />;
   return <HandoffStep />;
 }
 
 /* ---------- steps ---------- */
 
+function WelcomeStep() {
+  return (
+    <div className="mx-auto flex w-full max-w-md flex-col items-center gap-8 text-center">
+      <SignTitle title="Welcome to Michi." />
+
+      <div className="flex w-full flex-col items-center justify-center gap-3 rounded-[var(--radius-lg)] border-2 border-ink bg-accent px-6 py-8 text-ink">
+        <span className="font-kana text-[9rem] leading-none">{MICHI.kanji}</span>
+        <span className="text-sm font-bold uppercase tracking-[0.22em]">michi</span>
+      </div>
+
+      <p className="max-w-sm text-base leading-relaxed text-ink-muted text-pretty">
+        Michi means way, road, or path. This is where yours begins.
+      </p>
+    </div>
+  );
+}
+
 function OpenStep() {
   return (
     <div className="mx-auto flex w-full max-w-md flex-col items-center gap-8 text-center">
-      <p className="text-2xl font-medium text-ink text-balance">
-        Japanese is written with three scripts.
-      </p>
+      <SignTitle title="Japanese uses three scripts." />
       <div className="grid w-full max-w-sm grid-cols-3 gap-3">
         {[
           ["ひ", "hiragana"],
@@ -165,16 +163,61 @@ function OpenStep() {
         ].map(([glyph, name]) => (
           <span
             key={name}
-            className="flex flex-col items-center gap-2 rounded-[var(--radius-lg)] bg-ink px-2 py-4"
+            className="flex flex-col items-center gap-2 rounded-[var(--radius-lg)] border-2 border-ink bg-accent px-2 py-4"
           >
-            <span className="font-kana text-6xl leading-none text-paper">{glyph}</span>
-            <span className="text-xs uppercase tracking-[0.18em] text-paper/60">{name}</span>
+            <span className="font-kana text-6xl leading-none text-ink">{glyph}</span>
+            <span className="text-xs font-bold uppercase tracking-[0.18em] text-ink/65">{name}</span>
           </span>
         ))}
       </div>
-      <p className="leading-relaxed text-ink-muted text-pretty">
-        Often all three in a single sentence. Each one does a different job, and you are
-        about to meet them one at a time.
+      <div className="flex w-full max-w-sm flex-col text-left">
+        <p className="mb-3 text-center text-base font-semibold text-ink">
+          One Japanese sentence can mix all three.
+        </p>
+        {[
+          ["Kanji", "carries much of the meaning"],
+          ["Hiragana", "connects words and shows grammar"],
+          ["Katakana", "marks many borrowed words"],
+        ].map(([name, role], index) => (
+          <p
+            key={name}
+            className={`flex items-baseline gap-3 py-2.5 text-sm ${
+              index > 0 ? "border-t border-line" : ""
+            }`}
+          >
+            <strong className="min-w-20 text-ink underline decoration-[5px] decoration-accent/80 underline-offset-[-2px] decoration-skip-ink-none">
+              {name}
+            </strong>
+            <span className="text-ink-muted">{role}</span>
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ControlsStep() {
+  return (
+    <div className="mx-auto flex w-full max-w-md flex-col items-center gap-8 text-center">
+      <p className="text-2xl font-medium text-ink text-balance">A quick way to move.</p>
+
+      <div className="flex w-full flex-col overflow-hidden rounded-[var(--radius-lg)] border-2 border-ink bg-accent text-left">
+        <div className="flex min-h-24 items-center gap-5 border-b-2 border-ink px-5 py-4">
+          <span className="flex shrink-0 gap-1.5">
+            <kbd className={`${ARROW_KEY_CLASS} !bg-ink !text-paper !shadow-none`}>←</kbd>
+            <kbd className={`${ARROW_KEY_CLASS} !bg-ink !text-paper !shadow-none`}>→</kbd>
+          </span>
+          <span className="font-semibold text-ink">Move between slides</span>
+        </div>
+        <div className="flex min-h-24 items-center gap-5 px-5 py-4">
+          <kbd className={`${SPACE_KEY_CLASS} shrink-0 !bg-ink !text-paper !shadow-none`}>Space</kbd>
+          <span className="font-semibold text-ink">Play sound when one is available</span>
+        </div>
+      </div>
+
+      <p className="text-sm leading-relaxed text-ink-muted text-pretty">
+        On a keyboard, these shortcuts work throughout Michi. You can always use the
+        controls below instead.
       </p>
     </div>
   );
@@ -183,12 +226,14 @@ function OpenStep() {
 function ScriptStepView({ script }: { script: Script }) {
   return (
     <div className="mx-auto flex w-full max-w-md flex-col items-center gap-5 text-center">
-      <div className="flex flex-col items-center gap-2">
-        <span className="font-kana text-4xl leading-none text-ink">{script.glyph}</span>
-        <span className="text-sm uppercase tracking-[0.18em] text-ink-faint">{script.name}</span>
-      </div>
+      <SignTitle title={script.glyph} label={script.name} kana />
 
-      <p className="text-sm leading-relaxed text-ink-muted text-pretty">{script.blurb}</p>
+      <div className="flex max-w-sm flex-col gap-2 text-pretty">
+        <p className="text-base font-semibold leading-relaxed text-ink">
+          {script.blurb.lead}
+        </p>
+        <p className="text-sm leading-relaxed text-ink-muted">{script.blurb.detail}</p>
+      </div>
 
       <div className="flex w-full flex-col gap-4">
         {script.words.map((w) => (
@@ -199,65 +244,34 @@ function ScriptStepView({ script }: { script: Script }) {
   );
 }
 
-/** A word, broken into tappable syllables with its meaning underneath. */
+/** A compact example sign. Playback lives in the station nav, never inside content. */
 function WordCard({ word }: { word: Word }) {
-  // A dark slab, like the world-map brand: paper text on ink. ink-muted/faint are
-  // tuned for the light bg and would vanish here, so secondary text is paper at
-  // reduced opacity instead (globals.css notes the same for .world-brand).
   return (
-    <button
-      onClick={() => playWord(word.syllables)}
-      data-audio-control
-      aria-label={`Hear ${word.word}. Press Space.`}
-      title={`Hear ${word.word} (Space)`}
-      className="relative flex flex-col items-center gap-2 rounded-[var(--radius-lg)] bg-ink px-4 py-4 transition-colors hover:bg-ink/90"
-    >
-      <SpeakerIcon className="pointer-events-none absolute right-3 top-3 text-paper/50" />
+    <div className="mx-auto flex w-full max-w-xs flex-col items-center gap-2 rounded-[var(--radius-lg)] border-2 border-ink bg-accent px-4 py-4">
       {/* Kanji is written in characters its sounds don't spell, so the word leads and
           the reading follows underneath. Kana words already ARE their syllables. */}
       {word.readingDiffers && (
-        <span className="font-kana text-6xl leading-none text-paper">{word.word}</span>
+        <span className="font-kana text-6xl leading-none text-ink">{word.word}</span>
       )}
       <span className="flex items-end gap-2">
         {word.syllables.map((s, i) => (
           <span key={i} className="flex flex-col items-center gap-1">
             <span
               className={`font-kana leading-none ${
-                word.readingDiffers ? "text-3xl text-paper/70" : "text-5xl text-paper"
+                word.readingDiffers ? "text-3xl text-ink-muted" : "text-5xl text-ink"
               }`}
             >
               {s.glyph}
             </span>
-            <span className="text-xs font-light tracking-wide text-paper/60">{s.say}</span>
+            <span className="text-xs font-medium tracking-wide text-ink-muted">{s.say}</span>
           </span>
         ))}
       </span>
-      <span className="text-lg font-medium text-paper">{word.meaning}</span>
+      <span className="text-lg font-semibold text-ink">{word.meaning}</span>
       {word.note && (
-        <span className="text-sm leading-relaxed text-paper/70 text-pretty">{word.note}</span>
+        <span className="text-sm leading-relaxed text-ink-muted text-pretty">{word.note}</span>
       )}
-    </button>
-  );
-}
-
-/** A small "this plays sound" affordance for the tappable word cards. */
-function SpeakerIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      aria-hidden
-      viewBox="0 0 24 24"
-      width="16"
-      height="16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" stroke="none" />
-      <path d="M15.5 8.5a5 5 0 0 1 0 7" />
-    </svg>
+    </div>
   );
 }
 
@@ -265,35 +279,63 @@ function SpeakerIcon({ className }: { className?: string }) {
     it is not a fourth script, and the layout should not suggest it is. */
 function RomajiStep() {
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col items-center gap-5 text-center">
-      <p className="text-2xl font-medium text-ink text-balance">
-        One more thing: romaji.
-      </p>
-      <p className="text-sm leading-relaxed text-ink-muted text-pretty">
-        You have probably seen Japanese words written in English letters: sushi, Tokyo,
-        tsunami, karaoke. That is romaji, Japanese spelled with the Latin alphabet. It is
-        not one of the three scripts, and Japanese is not written this way. It exists for
-        keyboards, street signs, and people who cannot read the scripts.
-      </p>
-      <div className="flex items-center gap-4 rounded-[var(--radius-lg)] bg-surface px-6 py-5">
-        <span className="text-xl tracking-wide text-ink-faint line-through decoration-accent decoration-2">
+    <div className="mx-auto flex w-full max-w-md flex-col items-center gap-7 text-center">
+      <SignTitle title="Romaji." label="Latin letters" />
+
+      <div className="flex max-w-sm flex-col gap-2 text-pretty">
+        <p className="text-base font-semibold leading-relaxed text-ink">
+          Romaji writes Japanese sounds with the Latin alphabet.
+        </p>
+        <p className="text-sm leading-relaxed text-ink-muted">
+          You already know examples like <em className="font-medium text-ink">sushi</em>,{" "}
+          <em className="font-medium text-ink">Tokyo</em>, and{" "}
+          <em className="font-medium text-ink">karaoke</em>.
+        </p>
+        <p className="text-sm leading-relaxed text-ink-muted">
+          It helps with keyboards and signs, but it is <strong className="text-ink">not</strong>{" "}
+          one of Japanese&rsquo;s three scripts.
+        </p>
+      </div>
+
+      <div className="flex w-full items-center justify-center gap-5 rounded-[var(--radius-lg)] border-2 border-ink bg-accent px-6 py-6">
+        <span className="text-xl tracking-wide text-ink/65 line-through decoration-ink decoration-2">
           sushi
         </span>
-        <span aria-hidden className="text-ink-faint">→</span>
-        <span className="font-kana text-3xl leading-none text-ink">すし</span>
+        <span aria-hidden className="text-xl font-bold text-ink">→</span>
+        <span className="font-kana text-4xl leading-none text-ink">すし</span>
       </div>
-      <p className="text-sm leading-relaxed text-ink-muted text-pretty">
-        Michi never teaches through romaji, because reading Japanese through English
-        spelling is a habit that is hard to undo. Here, sushi is written すし: two
-        symbols, two sounds, su-shi.
+
+      <p className="text-sm font-semibold leading-relaxed text-ink text-pretty">
+        Michi teaches the Japanese scripts directly, so romaji stops here.
       </p>
+    </div>
+  );
+}
+
+function MichiStep() {
+  return (
+    <div className="mx-auto flex w-full max-w-md flex-col items-center gap-7 text-center">
+      <SignTitle title="One name, three scripts." />
+
       <p className="text-sm leading-relaxed text-ink-muted text-pretty">
-        That is the pattern for every Japanese word. It splits into small, even sounds,
-        and each sound gets one symbol. Tap to hear them.
+        Here is the name Michi written in each script.
       </p>
-      <div className="flex w-full flex-col gap-3">
-        {ROMAJI_WORDS.map((w) => (
-          <WordCard key={w.word} word={w} />
+
+      <div className="grid w-full grid-cols-3 overflow-hidden rounded-[var(--radius-lg)] border-2 border-ink bg-accent text-ink">
+        {[
+          ["Hiragana", MICHI.hiragana],
+          ["Katakana", MICHI.katakana],
+          ["Kanji", MICHI.kanji],
+        ].map(([label, form], index) => (
+          <span
+            key={label}
+            className={`flex min-h-32 flex-col items-center justify-center gap-3 px-2 ${
+              index > 0 ? "border-l-2 border-ink" : ""
+            }`}
+          >
+            <span className="text-xs font-bold uppercase tracking-wide text-ink/65">{label}</span>
+            <span className="font-kana text-5xl leading-none">{form}</span>
+          </span>
         ))}
       </div>
     </div>
@@ -302,29 +344,32 @@ function RomajiStep() {
 
 function HandoffStep() {
   return (
-    // Two columns: the table on the left, copy and the return button on the right, so
-    // all 46 fit on screen without scrolling. Stacked on narrow screens.
-    // The text column is centered against the table rather than top-aligned: the two
-    // are very different heights, and hanging a short block off the top leaves the
-    // slide looking unbalanced. The pair itself is anchored left, not centered, so it
-    // does not float as an island on a wide screen.
-    <div className="mx-auto flex w-full flex-col items-center gap-8 text-center sm:flex-row sm:items-center sm:justify-start sm:gap-12 sm:text-left">
-      {/* Nothing is filled in: the learner has not learned a single kana yet. The vowel
-          row is only outlined, marking where they start rather than claiming it. */}
-      <div className="sm:shrink-0">
-        <GojuonGrid next="vowels" caption={false} />
-      </div>
-      <div className="flex max-w-sm flex-col items-center gap-5 sm:items-start">
-        <p className="text-2xl font-medium text-ink text-balance">We start with hiragana.</p>
-        <p className="text-sm leading-relaxed text-ink-muted text-pretty">
-          Its 46 symbols can write anything in Japanese, and each one stands for a single
-          sound. Here they all are, in rows of five. You begin at the top row, the five
-          vowels, because nearly every symbol below it is a consonant joined to one of
-          those five sounds.
+    <div className="mx-auto flex w-full max-w-md flex-col items-center gap-7 text-center">
+      <SignTitle title="Hiragana first." />
+
+      <div className="flex max-w-sm flex-col gap-2 text-pretty">
+        <p className="text-base font-semibold leading-relaxed text-ink">
+          Hiragana begins with five vowels.
         </p>
-        <Button href="/?completed=three-scripts" variant="primary" wide>
-          Return to the path
-        </Button>
+        <p className="text-sm leading-relaxed text-ink-muted">
+          These five sounds become the foundation for nearly everything that follows.
+        </p>
+      </div>
+
+      <div
+        className="grid w-full grid-cols-5 overflow-hidden rounded-[var(--radius-lg)] border-2 border-ink bg-accent"
+        aria-label="The five hiragana vowels"
+      >
+        {VOWELS.map((kana, index) => (
+          <span
+            key={kana.id}
+            className={`flex min-h-28 items-center justify-center font-kana text-5xl leading-none text-ink ${
+              index > 0 ? "border-l-2 border-ink" : ""
+            }`}
+          >
+            {kana.glyph}
+          </span>
+        ))}
       </div>
     </div>
   );

@@ -17,12 +17,13 @@ import {
 } from "@/content/drill";
 import { makeQuestion, pickType, type Question, type QuestionType } from "@/content/question";
 import { ShuffleBag } from "@/content/bag";
-import { play, primeAudio } from "@/lib/audio";
+import { play, playRecording, primeAudio } from "@/lib/audio";
 import { K_ROW, VOWELS, type Kana } from "@/content/hiragana";
 import { GojuonGrid } from "@/components/gojuon-grid";
 import { Button } from "@/components/button";
 import { StationNav } from "@/components/station-nav";
 import { WritingSurface } from "@/components/writing-surface";
+import { SignTitle } from "@/components/sign-title";
 import {
   loadLearnerState,
   persistIntroducedReviewTarget,
@@ -49,6 +50,7 @@ import {
  * serializable, so `<Track1Page station="k-row" />` works from any route.
  */
 type StationConfig = {
+  title: string;
   /** The step queue for this station. */
   build: () => Step[];
   /** The kana taught here, for audio priming and the intro grid. */
@@ -64,6 +66,7 @@ type StationConfig = {
 };
 
 const VOWEL_STATION: StationConfig = {
+  title: "First sounds.",
   build: buildTrack1,
   kana: VOWELS,
   introCopy: (
@@ -73,13 +76,11 @@ const VOWEL_STATION: StationConfig = {
     </>
   ),
   context: {
-    headline: "This is the order they always come in.",
+    headline: "This order stays the same.",
     body: (
       <>
-        あいうえお is not alphabetical order. It is the order Japanese itself uses, for
-        dictionaries, forms and lists, the way A-B-C works in English. The remaining 41
-        kana are built as rows on top of these five: か き く け こ, さ し す せ そ, and so
-        on. Learn this sequence and you have learned the shape of the whole set.
+        Japanese lists these sounds as あ い う え お, much like A-B-C in English. Every
+        new row follows this same vowel order.
       </>
     ),
   },
@@ -102,15 +103,10 @@ const VOWEL_STATION: StationConfig = {
   },
 };
 
-/** Shared with track0-page so both stations render the same keyboard hint. */
-export const SPACE_KEY_CLASS =
-  "inline-flex min-h-[24px] min-w-[64px] items-center justify-center rounded-[var(--radius-btn)] bg-surface px-3 font-sans text-[11px] leading-none text-ink-muted shadow-[inset_0_-2px_0_var(--color-line)]";
-export const ARROW_KEY_CLASS =
-  "inline-flex min-h-[24px] min-w-[28px] items-center justify-center rounded-[var(--radius-btn)] bg-surface px-2 font-sans text-xs leading-none text-ink-muted shadow-[inset_0_-2px_0_var(--color-line)]";
-
 type DrillMeterData = { value: number; max: number };
 
 const K_ROW_STATION: StationConfig = {
+  title: "The K row.",
   build: buildTrack2,
   kana: K_ROW,
   introCopy: (
@@ -123,7 +119,7 @@ const K_ROW_STATION: StationConfig = {
     headline: "Ten sounds, and a word you can read.",
     // One idea, and it must be one the intro did not already state. "Five vowels with a k
     // in front" is the intro's line, so repeating it here wastes the slide. The new fact
-    // is the capability: ten kana is enough for real words, which sets up the こい beat.
+    // is the capability: ten kana is enough for real words, which sets up the えき beat.
     // No forward references: the gojūon table and the other rows are the book stop's job.
     body: (
       <>
@@ -152,6 +148,7 @@ const K_ROW_STATION: StationConfig = {
 };
 
 const FIRST_LOOK_BACK_STATION: StationConfig = {
+  title: "A first look back.",
   build: buildTrack3,
   kana: FIRST_TEN,
   introCopy: (
@@ -171,13 +168,13 @@ const FIRST_LOOK_BACK_STATION: StationConfig = {
     body: (
       <>
         Nothing new was added at this stop. The vowels and k row are still the same ten
-        you arrived with—only easier to call back. That is what a look back is for.
+        you arrived with, only easier to call back. That is what a look back is for.
       </>
     ),
     known: ["vowels", "k-row"],
   },
   done: {
-    capability: "You can recall the vowels and K row together, and read こい again. 10 of 46.",
+    capability: "You can recall the vowels and K row together, and read えき again. 10 of 46.",
     next: "Next comes the S row: さ し す せ そ. Five new characters, built on the vowels you already know.",
     completedId: "look-back-1",
   },
@@ -211,7 +208,7 @@ export default function Track1Page({ station: id = "vowels" }: { station?: Stati
   const [drillNext, setDrillNext] = useState<(() => void) | null>(null);
   const [drillSound, setDrillSound] = useState<(() => void) | null>(null);
   const [drillMeter, setDrillMeter] = useState<DrillMeterData | null>(null);
-  const soundCycleIndex = useRef(0);
+  const rowSoundIndex = useRef(0);
 
   useEffect(() => {
     if (id !== "k-row") {
@@ -240,26 +237,27 @@ export default function Track1Page({ station: id = "vowels" }: { station?: Stati
   const isPracticeStep =
     step.kind === "drill" ||
     step.kind === "guidedTrace" ||
+    step.kind === "blankRecall" ||
     step.kind === "rehearse" ||
     step.kind === "review" ||
     step.kind === "match";
 
   function go(delta: number) {
+    rowSoundIndex.current = 0;
     setDrillBack(null);
     setDrillNext(null);
     setDrillSound(null);
     setDrillMeter(null);
-    soundCycleIndex.current = 0;
     setDirection(delta);
     setIndex((i) => Math.min(steps.length - 1, Math.max(0, i + delta)));
   }
 
   function jumpTo(nextIndex: number) {
+    rowSoundIndex.current = 0;
     setDrillBack(null);
     setDrillNext(null);
     setDrillSound(null);
     setDrillMeter(null);
-    soundCycleIndex.current = 0;
     setDirection(nextIndex < index ? -1 : 1);
     setIndex(Math.min(steps.length - 1, Math.max(0, nextIndex)));
   }
@@ -302,12 +300,25 @@ export default function Track1Page({ station: id = "vowels" }: { station?: Stati
     go(1);
   }
 
-  const canPlaySound =
-    step.kind === "intro" ||
-    step.kind === "teach" ||
-    step.kind === "reveal" ||
-    step.kind === "match" ||
-    drillSound !== null;
+  const slideSound =
+    step.kind === "intro"
+      ? () => {
+          play(station.kana[rowSoundIndex.current % station.kana.length]!);
+          rowSoundIndex.current = (rowSoundIndex.current + 1) % station.kana.length;
+        }
+      : step.kind === "reveal"
+        ? () => {
+            play(step.kana[rowSoundIndex.current % step.kana.length]!);
+            rowSoundIndex.current = (rowSoundIndex.current + 1) % step.kana.length;
+          }
+        : step.kind === "context"
+          ? () => {
+              play(step.kana[rowSoundIndex.current % step.kana.length]!);
+              rowSoundIndex.current = (rowSoundIndex.current + 1) % step.kana.length;
+            }
+        : step.kind === "teach" || step.kind === "blankRecall"
+      ? () => play(step.kana)
+      : drillSound;
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -321,25 +332,10 @@ export default function Track1Page({ station: id = "vowels" }: { station?: Stati
       }
 
       if (event.code === "Space") {
-        if (canPlaySound) {
+        if (slideSound) {
           event.preventDefault();
           target?.closest<HTMLButtonElement>("[data-floating-nav] button")?.blur();
-          const focusedAudioControl = target?.closest<HTMLButtonElement>("[data-audio-control]");
-          if ((step.kind === "intro" || step.kind === "reveal") && focusedAudioControl) {
-            focusedAudioControl.click();
-          } else if (step.kind === "intro" || step.kind === "reveal") {
-            const sounds = step.kind === "intro" ? station.kana : step.kana;
-            play(sounds[soundCycleIndex.current]!);
-            soundCycleIndex.current = (soundCycleIndex.current + 1) % sounds.length;
-          } else if (step.kind === "teach") {
-            if (focusedAudioControl) focusedAudioControl.click();
-            else play(step.kana);
-          } else if (step.kind === "match") {
-            // The step owns which sound is current, so replay via its own control.
-            document.querySelector<HTMLButtonElement>("[data-audio-control]")?.click();
-          } else {
-            drillSound?.();
-          }
+          slideSound();
         } else if (target?.closest("[data-floating-nav]")) {
           event.preventDefault();
         }
@@ -360,7 +356,8 @@ export default function Track1Page({ station: id = "vowels" }: { station?: Stati
   });
 
   return (
-    // pb leaves room for the floating nav so it never covers content
+    // pb leaves room for the two-tier floating nav (speaker above Path) so it never
+    // covers lesson content.
     <main
       className={`relative mx-auto flex min-h-screen flex-col px-5 pt-8 ${
         // The gojūon slide is two columns, so it needs more than the reading measure
@@ -371,7 +368,7 @@ export default function Track1Page({ station: id = "vowels" }: { station?: Stati
           ? "pb-40"
           : step.kind === "grid"
             ? "pb-20" // the tall two-column slide; its caption already clears the nav
-            : "pb-28"
+            : "pb-40"
       }`}
     >
       {process.env.NODE_ENV === "development" && (
@@ -400,7 +397,9 @@ export default function Track1Page({ station: id = "vowels" }: { station?: Stati
         showNext={showNext}
         onNext={next}
         drillMeter={isPracticeStep ? drillMeter : null}
-        showShortcutGuide={step.kind === "intro"}
+        onSound={slideSound}
+        pathHref={step.kind === "done" ? `/?completed=${station.done.completedId}` : "/"}
+        pathIsForward={step.kind === "done"}
       />
     </main>
   );
@@ -432,6 +431,8 @@ function devStepLabel(step: Step, index: number): string {
           : `Practice ${index}`;
     case "guidedTrace":
       return `Trace ${step.kana.glyph}`;
+    case "blankRecall":
+      return "Writing recall";
     case "rehearse":
       return "Speaking rehearsal";
     case "read":
@@ -505,39 +506,33 @@ function FloatingNav({
   showNext,
   onNext,
   drillMeter,
-  showShortcutGuide,
+  onSound,
+  pathHref,
+  pathIsForward,
 }: {
   onBack: () => void;
   showBack: boolean;
   showNext: boolean;
   onNext: () => void;
   drillMeter: DrillMeterData | null;
-  showShortcutGuide: boolean;
+  onSound: (() => void) | null;
+  pathHref: string;
+  pathIsForward: boolean;
 }) {
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-10 flex justify-center pb-6">
       <div data-floating-nav className="pointer-events-auto flex flex-col items-center gap-2">
-        {showShortcutGuide && (
-          <div className="mb-2 hidden flex-col items-center gap-2 text-xs text-ink-faint sm:flex">
-            <p className="flex items-center gap-1.5">
-              <kbd className={ARROW_KEY_CLASS}>←</kbd>
-              <kbd className={ARROW_KEY_CLASS}>→</kbd>
-              <span>keys to navigate</span>
-            </p>
-            <p className="flex items-center gap-1.5">
-              <kbd className={SPACE_KEY_CLASS}>
-                Space
-              </kbd>
-              <span>key to play sounds</span>
-            </p>
-          </div>
-        )}
-        {drillMeter && <DrillPath value={drillMeter.value} max={drillMeter.max} />}
         <StationNav
           onBack={onBack}
           onNext={onNext}
           canGoBack={showBack}
           canGoNext={showNext}
+          pathHref={pathHref}
+          pathIsForward={pathIsForward}
+          onSound={onSound ?? undefined}
+          progress={
+            drillMeter ? <DrillPath value={drillMeter.value} max={drillMeter.max} /> : undefined
+          }
         />
       </div>
     </div>
@@ -610,7 +605,7 @@ function StepView({
   const plannedReviewKana = VOWELS.filter((kana) => plannedReviewIds.has(kana.id));
 
   return (
-    <div className="py-10">
+    <div className={step.kind === "guidedTrace" || step.kind === "blankRecall" ? "py-3" : "py-10"}>
       {step.kind === "intro" ? (
         <IntroStep station={station} />
       ) : step.kind === "teach" ? (
@@ -620,13 +615,23 @@ function StepView({
       ) : step.kind === "context" ? (
         <HiraganaContextStep kana={step.kana} context={station.context} />
       ) : step.kind === "read" ? (
-        <ReadWordStep word={step.word} />
+        <ReadWordStep word={step.word} onSoundChange={onDrillSoundChange} />
       ) : step.kind === "grid" ? (
         <GridStep grid={station.grid} />
       ) : step.kind === "match" ? (
-        <MatchStep pool={step.pool} onDone={onAdvance} />
+        <MatchStep pool={step.pool} onDone={onAdvance} onSoundChange={onDrillSoundChange} />
       ) : step.kind === "guidedTrace" ? (
-        <GuidedTraceStep kana={step.kana} onDone={onAdvance} />
+        <GuidedTraceStep
+          kana={step.kana}
+          onDone={onAdvance}
+          onNavNextChange={onDrillNextChange}
+        />
+      ) : step.kind === "blankRecall" ? (
+        <BlankRecallStep
+          kana={step.kana}
+          onDone={onAdvance}
+          onNavNextChange={onDrillNextChange}
+        />
       ) : step.kind === "reviewIntro" ? (
         <ReviewIntroStep
           kana={plannedReviewKana.length > 0 ? plannedReviewKana : step.pool}
@@ -678,33 +683,26 @@ function StepView({
 
 /* ---------- steps ---------- */
 
-function ListenButton({ kana, label = "Listen" }: { kana: Kana; label?: string }) {
-  return (
-    <Button variant="primary" onClick={() => play(kana)} className="mx-auto">
-      <span aria-hidden>▶</span>
-      <span>{label}</span>
-    </Button>
-  );
-}
-
 function IntroStep({ station }: { station: StationConfig }) {
   return (
-    <div className="flex flex-col items-center gap-8 text-center">
-      <p className="max-w-sm text-base font-medium leading-relaxed text-ink-muted text-balance">
+    <div className="mx-auto flex max-w-md flex-col items-center gap-7 text-center">
+      <SignTitle title={station.title} />
+      <p className="max-w-sm text-sm leading-relaxed text-ink-muted text-pretty">
         {station.introCopy}
       </p>
-      <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4">
-        {station.kana.map((k) => (
-          <button
+      <div className="grid w-full grid-cols-5 overflow-hidden rounded-[var(--radius-lg)] border-2 border-ink bg-accent">
+        {station.kana.map((k, index) => (
+          <span
             key={k.id}
-            data-audio-control
-            onClick={() => play(k)}
-            aria-label={`Hear the sound ${k.say}`}
-            className="group flex min-h-[72px] min-w-[56px] flex-col items-center justify-center gap-1 rounded-[var(--radius-btn)] transition-transform hover:scale-110 active:scale-95"
+            className={`flex min-h-28 flex-col items-center justify-center gap-1 ${
+              index % 5 > 0 ? "border-l-2 border-ink" : ""
+            } ${
+              index >= 5 ? "border-t-2 border-ink" : ""
+            }`}
           >
             <span className="font-kana text-5xl leading-none text-ink">{k.glyph}</span>
             <span className="text-sm font-light tracking-wide text-ink-faint">{k.say}</span>
-          </button>
+          </span>
         ))}
       </div>
     </div>
@@ -728,7 +726,7 @@ function KanaInText({ text }: { text: string }) {
         i % 2 === 1 ? (
           <span
             key={i}
-            className="mx-px inline-flex items-baseline gap-1 rounded-[var(--radius-btn)] border border-line bg-surface px-1.5 py-0.5 align-baseline text-ink"
+            className="mx-px inline-flex items-baseline gap-1 rounded-[var(--radius-btn)] border-2 border-ink bg-accent px-1.5 py-0.5 align-baseline text-ink"
           >
             <span className="font-kana text-base leading-none">{part}</span>
             {SAY_BY_GLYPH.get(part) && (
@@ -746,11 +744,6 @@ function KanaInText({ text }: { text: string }) {
 }
 
 function TeachStep({ kana }: { kana: Kana }) {
-  const [tapped, setTapped] = useState(false);
-
-  // reset the hint pulse for each new character
-  useEffect(() => setTapped(false), [kana]);
-
   // auto-play the sound when the step first appears. Just enough delay to let the
   // slide paint first, so the glyph is on screen when its sound arrives. The old
   // 250 ms was tuned when playback itself was slow; now that it is ~1 ms, that
@@ -761,29 +754,13 @@ function TeachStep({ kana }: { kana: Kana }) {
   }, [kana]);
 
   return (
-    <div className="flex flex-col items-center gap-8 text-center">
-      {/* the character IS the sound — tap it (spam it) to hear "a" */}
-      <button
-        data-audio-control
-        onClick={() => {
-          setTapped(true);
-          play(kana);
-        }}
-        className="group flex cursor-pointer flex-col items-center gap-3 rounded-[var(--radius-lg)] px-8 py-4 transition-transform active:scale-95"
-        aria-label={`Hear the sound ${kana.say}`}
-      >
-        <span className="select-none font-kana text-[13rem] leading-none text-ink transition-transform group-hover:scale-105">
+    <div className="mx-auto flex max-w-md flex-col items-center gap-7 text-center">
+      <div className="flex w-full flex-col items-center gap-3 rounded-[var(--radius-lg)] border-2 border-ink bg-accent px-8 py-6">
+        <span className="select-none font-kana text-[11rem] leading-none text-ink sm:text-[13rem]">
           {kana.glyph}
         </span>
         <span className="text-lg font-light tracking-wide text-ink-faint">{kana.say}</span>
-        <span
-          className={`text-xs text-ink-faint/50 transition-opacity sm:hidden ${
-            tapped ? "opacity-0" : "opacity-100"
-          }`}
-        >
-          (tap to replay)
-        </span>
-      </button>
+      </div>
       <p className="max-w-xs text-sm leading-relaxed text-ink-muted text-pretty">
         <KanaInText text={kana.hints[0]!} />
       </p>
@@ -793,19 +770,18 @@ function TeachStep({ kana }: { kana: Kana }) {
 
 function RevealStep({ kana }: { kana: Kana[] }) {
   return (
-    <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4 text-center">
+    <div className="mx-auto grid w-full max-w-md grid-cols-5 overflow-hidden rounded-[var(--radius-lg)] border-2 border-ink bg-accent text-center">
       {kana.map((k, i) => (
-        <button
+        <span
           key={k.id}
-          data-audio-control
-          onClick={() => play(k)}
-          aria-label={`Hear the sound ${k.say}`}
-          className="kana-rise flex flex-col items-center gap-1.5 transition-transform hover:scale-110 active:scale-95"
+          className={`kana-rise flex min-h-32 flex-col items-center justify-center gap-1.5 ${
+            i > 0 ? "border-l-2 border-ink" : ""
+          }`}
           style={{ animationDelay: `${0.1 + i * 0.09}s` }}
         >
           <span className="font-kana text-7xl leading-none text-ink">{k.glyph}</span>
           <span className="text-sm font-light tracking-wide text-ink-faint">{k.say}</span>
-        </button>
+        </span>
       ))}
     </div>
   );
@@ -819,14 +795,14 @@ function HiraganaContextStep({
   context: StationConfig["context"];
 }) {
   return (
-    <div className="mx-auto flex max-w-md flex-col items-center gap-6 text-center">
-      <p className="flex gap-4 font-kana text-6xl leading-none text-ink">
+    <div className="mx-auto flex max-w-md flex-col items-center gap-7 text-center">
+      <SignTitle title={context.headline} />
+      <p className="flex w-full justify-center gap-4 rounded-[var(--radius-lg)] border-2 border-ink bg-accent px-5 py-6 font-kana text-6xl leading-none text-ink">
         {kana.map((k) => (
           <span key={k.id}>{k.glyph}</span>
         ))}
       </p>
-      <p className="text-lg font-medium text-ink text-balance">{context.headline}</p>
-      <p className="leading-relaxed text-ink-muted text-pretty">{context.body}</p>
+      <p className="text-sm leading-relaxed text-ink-muted text-pretty">{context.body}</p>
     </div>
   );
 }
@@ -840,7 +816,15 @@ function HiraganaContextStep({
  * sound-to-shape link while both are in front of the learner, so that the graded drill
  * that follows is retrieval rather than a coin flip.
  */
-function MatchStep({ pool, onDone }: { pool: Kana[]; onDone: () => void }) {
+function MatchStep({
+  pool,
+  onDone,
+  onSoundChange,
+}: {
+  pool: Kana[];
+  onDone: () => void;
+  onSoundChange: (handler: (() => void) | null, kind: "button" | "glyph" | null) => void;
+}) {
   // Each sound is asked once, in a random order fixed for the life of the step.
   const order = useRef<Kana[]>([]);
   if (order.current.length === 0) {
@@ -855,11 +839,8 @@ function MatchStep({ pool, onDone }: { pool: Kana[]; onDone: () => void }) {
   const [at, setAt] = useState(0);
   const [wrong, setWrong] = useState<string | null>(null);
   const [found, setFound] = useState<string[]>([]);
-  const [misses, setMisses] = useState(0);
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const target = order.current[at];
-  // After two misses, name the sound. Open-book means never stuck guessing blind.
-  const showHint = misses >= 2;
 
   useEffect(() => () => {
     if (advanceTimer.current) clearTimeout(advanceTimer.current);
@@ -872,12 +853,20 @@ function MatchStep({ pool, onDone }: { pool: Kana[]; onDone: () => void }) {
     return () => clearTimeout(t);
   }, [target]);
 
+  useEffect(() => {
+    if (!target) {
+      onSoundChange(null, null);
+      return;
+    }
+    onSoundChange(() => play(target), "button");
+    return () => onSoundChange(null, null);
+  }, [target, onSoundChange]);
+
   function tap(k: Kana) {
     if (!target || advanceTimer.current) return;
     if (k.id !== target.id) {
       // A miss is not a failure here: replay the target so the pairing is reinforced.
       setWrong(k.id);
-      setMisses((m) => m + 1);
       play(target);
       setTimeout(() => setWrong(null), 600);
       return;
@@ -885,7 +874,6 @@ function MatchStep({ pool, onDone }: { pool: Kana[]; onDone: () => void }) {
     setFound((f) => [...f, k.id]);
     advanceTimer.current = setTimeout(() => {
       advanceTimer.current = null;
-      setMisses(0);
       if (at + 1 >= order.current.length) onDone();
       else setAt((i) => i + 1);
     }, 650);
@@ -893,52 +881,40 @@ function MatchStep({ pool, onDone }: { pool: Kana[]; onDone: () => void }) {
 
   return (
     <div className="mx-auto flex max-w-md flex-col items-center gap-8 text-center">
-      <div className="flex flex-col items-center gap-2">
-        <p className={DRILL_PROMPT}>Which one is this? Tap it.</p>
-        <Button
-          icon
-          data-audio-control
-          onClick={() => target && play(target)}
-          aria-label="Play the sound again"
-          title="Play the sound again (Space)"
-        >
-          <span aria-hidden>▶</span>
-        </Button>
-      </div>
+      <p className={DRILL_PROMPT}>Which one is this? Tap it.</p>
 
-      <div className="flex flex-wrap items-center justify-center gap-3">
+      <div className="flex w-full flex-wrap items-center justify-center gap-3">
         {pool.map((k) => {
           const isFound = found.includes(k.id);
           const isWrong = wrong === k.id;
           return (
-            <button
+            <Button
               key={k.id}
               onClick={() => tap(k)}
               aria-label={`Choose ${k.glyph}`}
-              className={`flex min-h-[92px] min-w-[76px] flex-col items-center justify-center gap-1 rounded-[var(--radius-lg)] border transition-all duration-200 motion-reduce:transition-none ${
+              className={`${CHOICE_BUTTON} flex-col gap-1 ${
                 isFound
-                  ? "border-transparent bg-ink text-paper"
+                  ? "border-ink !bg-accent text-ink"
                   : isWrong
                     // A miss must be unmistakable without relying on hearing the replay.
-                    ? "-translate-y-0.5 border-accent bg-surface-2 text-ink-faint motion-reduce:translate-y-0"
-                    : "border-line bg-surface text-ink hover:bg-surface-2"
+                    ? "!border-error !bg-surface-2 text-ink-faint"
+                    : "text-ink"
               }`}
             >
               <span className="font-kana text-5xl leading-none">{k.glyph}</span>
               {/* The sound appears only once found, and is not in the DOM before that:
                   hiding it with a transparent colour would still let a screen reader
                   announce every answer. The empty span holds the row height. */}
-              <span className="min-h-[16px] text-xs font-light tracking-wide text-paper/70">
+              <span className="min-h-[16px] text-xs font-medium tracking-wide text-ink/65">
                 {isFound ? k.say : ""}
               </span>
-            </button>
+            </Button>
           );
         })}
       </div>
 
-      {/* Reserve the line so revealing the hint does not shift the grid. */}
       <p className="min-h-[20px] text-sm text-ink-muted">
-        {showHint && target ? `It is the one that sounds like "${target.say}".` : `${found.length} of ${pool.length}`}
+        {found.length} of {pool.length}
       </p>
     </div>
   );
@@ -950,16 +926,14 @@ function MatchStep({ pool, onDone }: { pool: Kana[]; onDone: () => void }) {
  */
 function ReviewIntroStep({ kana, targetCount }: { kana: Kana[]; targetCount: number }) {
   return (
-    <div className="mx-auto flex max-w-md flex-col items-center gap-6 text-center">
-      <p className="text-2xl font-medium text-ink text-balance">
-        A quick look back.
-      </p>
-      <p className="flex gap-4 font-kana text-5xl leading-none text-ink">
+    <div className="mx-auto flex max-w-md flex-col items-center gap-7 text-center">
+      <SignTitle title="A quick look back." />
+      <p className="flex w-full justify-center gap-4 rounded-[var(--radius-lg)] border-2 border-ink bg-accent px-5 py-6 font-kana text-5xl leading-none text-ink">
         {kana.map((k) => (
           <span key={k.id}>{k.glyph}</span>
         ))}
       </p>
-      <p className="leading-relaxed text-ink-muted text-pretty">
+      <p className="text-sm leading-relaxed text-ink-muted text-pretty">
         {targetCount} earlier {targetCount === 1 ? "connection is" : "connections are"}
         {" "}ready for another pass. A pause is useful information, not a failure.
       </p>
@@ -978,11 +952,10 @@ function ReviewTransition({
 }) {
   if (kind === "recovery") {
     return (
-      <div className="mx-auto flex max-w-sm flex-col items-center gap-4 text-center">
-        <p className="text-2xl font-medium text-ink text-balance">
-          Let&rsquo;s see {recoveryCount === 1 ? "that one" : `${recoveryCount} of those`} once
-          more.
-        </p>
+      <div className="mx-auto flex max-w-sm flex-col items-center gap-6 text-center">
+        <SignTitle
+          title={`Let’s see ${recoveryCount === 1 ? "that one" : `${recoveryCount} of those`} once more.`}
+        />
         <p className="leading-relaxed text-ink-muted text-pretty">
           No need to restart. Only the connections that paused are coming back.
         </p>
@@ -991,10 +964,10 @@ function ReviewTransition({
   }
 
   return (
-    <div className="mx-auto flex max-w-sm flex-col items-center gap-4 text-center">
-      <p className="text-2xl font-medium text-ink text-balance">
-        {recoveryHadMiss ? "That’s enough for today." : "Good. Let’s continue."}
-      </p>
+    <div className="mx-auto flex max-w-sm flex-col items-center gap-6 text-center">
+      <SignTitle
+        title={recoveryHadMiss ? "That’s enough for today." : "Good. Let’s continue."}
+      />
       <p className="leading-relaxed text-ink-muted text-pretty">
         {recoveryHadMiss
           ? "We’ll bring those connections back again later. Your place on the path has not changed."
@@ -1005,25 +978,32 @@ function ReviewTransition({
 }
 
 /**
- * The first-word beat: the learner decodes こい themselves, kana by kana, before the
- * meaning is shown. Tapping plays the syllables, then the whole word.
+ * The first-word beat: the learner decodes えき themselves, kana by kana, before the
+ * meaning is shown. The shared speaker button reveals and plays the whole word.
  */
-function ReadWordStep({ word }: { word: ReadableWord }) {
+function ReadWordStep({
+  word,
+  onSoundChange,
+}: {
+  word: ReadableWord;
+  onSoundChange: (handler: (() => void) | null, kind: "button" | "glyph" | null) => void;
+}) {
   const [revealed, setRevealed] = useState(false);
+  const playAndReveal = useCallback(() => {
+    setRevealed(true);
+    playRecording(word.audioSrc);
+  }, [word.audioSrc]);
+
+  useEffect(() => {
+    onSoundChange(playAndReveal, "button");
+    return () => onSoundChange(null, null);
+  }, [onSoundChange, playAndReveal]);
 
   return (
     <div className="mx-auto flex max-w-md flex-col items-center gap-6 text-center">
       <p className={DRILL_PROMPT}>You know every sound in this word. Read it.</p>
 
-      <button
-        data-audio-control
-        onClick={() => {
-          setRevealed(true);
-          word.kana.forEach((k, i) => setTimeout(() => play(k), i * 480));
-        }}
-        aria-label={`Hear ${word.kana.map((k) => k.say).join(" ")}`}
-        className="flex touch-manipulation items-end gap-3 rounded-[var(--radius-lg)] px-6 py-2 transition-transform hover:scale-105 active:scale-95"
-      >
+      <div className="flex w-full items-end justify-center gap-3 rounded-[var(--radius-lg)] border-2 border-ink bg-accent px-6 py-6">
         {/* No `say` labels here, unlike the teaching slides: this is the one beat that
             asks the learner to decode unaided, and Latin letters under the kana would
             be exactly the crutch they could read instead (P2). */}
@@ -1032,7 +1012,7 @@ function ReadWordStep({ word }: { word: ReadableWord }) {
             {k.glyph}
           </span>
         ))}
-      </button>
+      </div>
 
       {/* The meaning stays hidden until they have tried, so the decoding is theirs. */}
       <div className={`flex flex-col gap-2 transition-opacity duration-300 ${revealed ? "opacity-100" : "opacity-0"}`}>
@@ -1041,7 +1021,7 @@ function ReadWordStep({ word }: { word: ReadableWord }) {
       </div>
 
       {!revealed && (
-        <p className="text-sm text-ink-muted">Say it out loud, then tap to check.</p>
+        <p className="text-sm text-ink-muted">Say it out loud, then use the speaker below to check.</p>
       )}
     </div>
   );
@@ -1361,11 +1341,7 @@ function DrillBlock({
           recoveryHadMiss={boundedReview.current.recoveryHadMiss}
         />
       ) : q.type === "sayAloud" ? (
-        <SayAloudQuestion
-          key={qNum}
-          q={q}
-          onReveal={revealSpokenAnswer}
-        />
+        <SayAloudQuestion key={qNum} q={q} />
       ) : (
         <PickQuestion
           key={qNum}
@@ -1380,8 +1356,9 @@ function DrillBlock({
 /** A recognition question: pick the character (hear) or the sound (see). */
 const DRILL_SHELL = "flex w-full flex-col items-center gap-8 text-center";
 const PICK_DRILL_SHELL = "flex w-full flex-col items-center gap-6 text-center";
-const DRILL_PROMPT = "text-sm text-ink-muted";
+const DRILL_PROMPT = "relative pb-3 text-xl font-semibold text-ink after:absolute after:bottom-0 after:left-1/2 after:h-1 after:w-12 after:-translate-x-1/2 after:rounded-sm after:bg-accent";
 const DRILL_GLYPH = "select-none font-kana text-[9rem] font-semibold leading-none";
+const CHOICE_BUTTON = "h-24 w-24 shrink-0 !p-0";
 
 function PickQuestion({
   q,
@@ -1413,40 +1390,20 @@ function PickQuestion({
     answered.current = true;
     const correct = k.id === q.answer.id;
     setPicked(k.id);
-    // Always end on the right sound. On seePickSound the answer is a sound, so it plays
-    // either way. On hearPickChar a miss used to play nothing at all, which threw away
-    // the one moment the learner most needs to hear the sound again next to its shape.
+    // On seePickSound the selected answer is itself a sound, so feedback plays it. On
+    // hearPickChar (Practice 11), a wrong shape stays silent rather than revealing the
+    // correct sound. The learner can deliberately replay the prompt from the nav.
     if (q.type === "seePickSound") play(correct ? k : q.answer);
-    else if (!correct) play(q.answer);
-    advanceTimer.current = setTimeout(() => onAnswered(correct), correct ? 1000 : 1600);
+    advanceTimer.current = setTimeout(
+      () => onAnswered(correct),
+      q.type === "hearPickChar" ? (correct ? 600 : 850) : correct ? 1000 : 1600,
+    );
   }
-
-  const cols =
-    q.options.length <= 2
-      ? "grid-cols-2"
-      : q.options.length === 3
-        ? "grid-cols-3"
-        : q.options.length === 4
-          ? "grid-cols-2 sm:grid-cols-4"
-          : "grid-cols-3 sm:grid-cols-5";
-  const width = q.options.length === 2 ? "max-w-[260px]" : "max-w-none";
 
   return (
     <div className={PICK_DRILL_SHELL}>
       {q.type === "hearPickChar" ? (
-        <div className="flex flex-col items-center gap-2">
-          <p className={DRILL_PROMPT}>Which one did you hear?</p>
-          <Button
-            icon
-            data-audio-control
-            onClick={() => play(q.answer)}
-            aria-label="Play sound again. Press Space."
-            title="Play sound again (Space)"
-            className="touch-manipulation sm:hidden"
-          >
-            <span aria-hidden>▶</span>
-          </Button>
-        </div>
+        <p className={DRILL_PROMPT}>Which one did you hear?</p>
       ) : (
         <div className="flex flex-col items-center gap-6">
           <p className={DRILL_PROMPT}>Which sound is this?</p>
@@ -1454,34 +1411,45 @@ function PickQuestion({
         </div>
       )}
 
-      <div className={`grid w-full gap-3 ${width} ${cols}`}>
+      <div className="flex w-full flex-wrap items-center justify-center gap-3">
         {q.options.map((k) => {
           const isCorrect = picked !== null && k.id === q.answer.id;
+          const isPicked = picked === k.id;
           const isAlternative = picked !== null && k.id !== q.answer.id;
           const answeredCorrectly = picked === q.answer.id;
+          const feedbackClass =
+            q.type === "hearPickChar"
+              ? picked === null
+                ? ""
+                : answeredCorrectly
+                  ? isCorrect
+                    ? "!bg-accent text-ink"
+                    : "opacity-25"
+                  : isPicked
+                    ? "!border-error !bg-surface-2 text-ink"
+                    : "opacity-55"
+              : isCorrect
+                ? answeredCorrectly
+                  ? "answer-success !bg-accent text-ink"
+                  : "scale-125 !bg-accent text-ink motion-reduce:scale-100"
+                : isAlternative
+                  ? answeredCorrectly
+                    ? "opacity-0"
+                    : "opacity-10"
+                  : "text-ink";
 
           return (
-            <button
+            <Button
               key={k.id}
               onClick={() => choose(k)}
-              className={`flex min-h-[112px] items-center justify-center rounded-[var(--radius-btn)] transition-[color,filter,opacity,transform] duration-200 ease-out motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
-                isCorrect
-                  ? answeredCorrectly
-                    ? "answer-success text-ink"
-                    : "scale-125 text-ink motion-reduce:scale-100"
-                  : isAlternative
-                    ? answeredCorrectly
-                      ? "opacity-0"
-                      : "opacity-10"
-                    : "text-ink"
-              }`}
+              className={`${CHOICE_BUTTON} ${feedbackClass}`}
             >
               {q.type === "seePickSound" ? (
                 <span className="text-2xl font-semibold">{k.say}</span>
               ) : (
-                <span className="font-kana text-7xl font-semibold sm:text-8xl">{k.glyph}</span>
+                <span className="font-kana text-6xl font-semibold">{k.glyph}</span>
               )}
-            </button>
+            </Button>
           );
         })}
       </div>
@@ -1501,42 +1469,56 @@ function PickQuestion({
  * sound. It then advances automatically. No speech recognition or self-grading:
  * the act of vocalizing and comparing is the practice.
  */
-function SayAloudQuestion({
-  q,
-  onReveal,
-}: {
-  q: Question;
-  onReveal: () => void;
-}) {
+function SayAloudQuestion({ q }: { q: Question }) {
   return (
     <div className={DRILL_SHELL}>
       <p className={DRILL_PROMPT}>Say this sound.</p>
 
-      {/* Speak first; tapping reveals the native sound and continues. */}
-      <button
-        data-audio-control
-        onClick={onReveal}
-        className="flex touch-manipulation flex-col items-center rounded-[var(--radius-lg)] px-8 py-2 transition-transform hover:scale-105 active:scale-95"
-        aria-label="Hear the answer"
-      >
+      <div className="flex flex-col items-center px-8 py-2">
         <span className={`${DRILL_GLYPH} text-ink`}>{q.answer.glyph}</span>
-      </button>
-      <p className="text-sm text-ink-muted">Try it, then tap the glyph.</p>
+      </div>
+      <p className="text-sm text-ink-muted">Try it, then use the speaker below to check.</p>
     </div>
   );
 }
 
-function GuidedTraceStep({ kana, onDone }: { kana: Kana; onDone: () => void }) {
+function GuidedTraceStep({
+  kana,
+  onDone,
+  onNavNextChange,
+}: {
+  kana: Kana;
+  onDone: () => void;
+  onNavNextChange: (handler: (() => void) | null) => void;
+}) {
   return (
-    <div className="mx-auto flex max-w-md flex-col items-center gap-5 text-center">
-      <div className="flex max-w-sm flex-col gap-2">
-        <p className="text-2xl font-medium text-ink text-balance">Let your hand meet あ.</p>
-        <p className="text-sm leading-relaxed text-ink-muted text-pretty">
-          Trace over the faint shape. This is practice, not a test—continue whenever you
-          are ready.
-        </p>
-      </div>
-      <WritingSurface glyph={kana.glyph} onComplete={onDone} />
+    <div className="mx-auto flex max-w-xl flex-col items-center gap-3 text-center">
+      <SignTitle title="Write あ." />
+      <WritingSurface
+        glyph={kana.glyph}
+        onReadyChange={(ready) => onNavNextChange(ready ? onDone : null)}
+      />
+    </div>
+  );
+}
+
+function BlankRecallStep({
+  kana,
+  onDone,
+  onNavNextChange,
+}: {
+  kana: Kana;
+  onDone: () => void;
+  onNavNextChange: (handler: (() => void) | null) => void;
+}) {
+  return (
+    <div className="mx-auto flex max-w-xl flex-col items-center gap-3 text-center">
+      <SignTitle title="Write the sound you hear." />
+      <WritingSurface
+        glyph={kana.glyph}
+        mode="recall"
+        onReadyChange={(ready) => onNavNextChange(ready ? onDone : null)}
+      />
     </div>
   );
 }
@@ -1551,8 +1533,8 @@ function GridStep({ grid }: { grid: StationConfig["grid"] }) {
       <div className="sm:shrink-0">
         <GojuonGrid known={grid.known} arriving={grid.arriving} />
       </div>
-      <div className="flex max-w-sm flex-col gap-4">
-        <p className="text-xl font-medium text-ink text-balance">{grid.headline}</p>
+      <div className="flex max-w-sm flex-col items-center gap-5 sm:items-start">
+        <SignTitle title={grid.headline} />
         <p className="text-sm leading-relaxed text-ink-muted text-pretty">{grid.body}</p>
       </div>
     </div>
@@ -1561,13 +1543,12 @@ function GridStep({ grid }: { grid: StationConfig["grid"] }) {
 
 function DoneStep({ done }: { done: StationConfig["done"] }) {
   return (
-    <div className="flex flex-col items-center gap-6 text-center">
-      <p className="text-2xl font-medium text-ink">Station complete.</p>
-      <p className="max-w-sm text-ink-muted text-balance">{done.capability}</p>
+    <div className="mx-auto flex max-w-md flex-col items-center gap-7 text-center">
+      <SignTitle title="Station complete." />
+      <p className="w-full rounded-[var(--radius-lg)] border-2 border-ink bg-accent px-6 py-5 font-medium leading-relaxed text-ink text-pretty">
+        {done.capability}
+      </p>
       <p className="max-w-sm text-sm text-ink-muted text-balance">{done.next}</p>
-      <Button href={`/?completed=${done.completedId}`} variant="primary" wide className="mt-3">
-        Return to the path
-      </Button>
     </div>
   );
 }

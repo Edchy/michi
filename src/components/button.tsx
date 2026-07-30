@@ -10,7 +10,7 @@ type Variant = "primary" | "secondary" | "ghost";
 
 type CommonProps = {
   variant?: Variant;
-  /** Square it off for a single glyph: the nav arrows, the 家 home button. */
+  /** Square sign for one universally understood glyph, such as audio playback. */
   icon?: boolean;
   /** Wider and taller, for the one action that ends a slide. */
   wide?: boolean;

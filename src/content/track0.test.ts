@@ -1,13 +1,16 @@
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { describe, it, expect } from "vitest";
 import { buildTrack0 } from "./track0";
-import { ROMAJI_WORDS, SCRIPTS } from "./scripts";
+import { MICHI, ROMAJI_WORDS, SCRIPTS } from "./scripts";
 
 describe("buildTrack0 — the three-scripts orientation station", () => {
   const steps = buildTrack0();
 
-  it("opens, covers the three scripts in order, sets romaji aside, then hands off", () => {
-    expect(steps[0]!.kind).toBe("open");
+  it("welcomes, explains controls, teaches the scripts, then uses the name as synthesis", () => {
+    expect(steps[0]!.kind).toBe("welcome");
+    expect(steps[1]!.kind).toBe("controls");
+    expect(steps[2]!.kind).toBe("open");
+    expect(steps.at(-3)!.kind).toBe("michi");
     expect(steps.at(-2)!.kind).toBe("romaji");
     expect(steps.at(-1)!.kind).toBe("handoff");
 
@@ -28,7 +31,22 @@ describe("buildTrack0 — the three-scripts orientation station", () => {
 });
 
 describe("script example words", () => {
-  const words = [...SCRIPTS.flatMap((s) => s.words), ...ROMAJI_WORDS];
+  const words = [
+    ...SCRIPTS.flatMap((s) => s.words),
+    ...ROMAJI_WORDS,
+    {
+      word: MICHI.hiragana,
+      audioSrc: MICHI.audioSrc,
+      syllables: [...MICHI.syllables],
+      meaning: MICHI.meaning,
+    },
+  ];
+
+  it("shows Michi in all three scripts with its two-sound reading", () => {
+    expect([MICHI.hiragana, MICHI.katakana, MICHI.kanji]).toEqual(["みち", "ミチ", "道"]);
+    expect(MICHI.syllables.map((syllable) => syllable.say)).toEqual(["mi", "chi"]);
+    expect(MICHI.meaning).toBe("path");
+  });
 
   it("every syllable carries a kana id an audio clip can be keyed by", () => {
     for (const word of words) {
@@ -37,6 +55,13 @@ describe("script example words", () => {
         expect(s.id).toMatch(/^hira_[a-z]+$/);
         expect(s.glyph).not.toBe("");
       }
+    }
+  });
+
+  it("every example has a complete-word recording", () => {
+    for (const word of words) {
+      expect(word.audioSrc).toMatch(/^\/audio\/words\/.+\.mp3$/);
+      expect(existsSync(`public${word.audioSrc}`), word.audioSrc).toBe(true);
     }
   });
 

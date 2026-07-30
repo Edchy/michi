@@ -14,9 +14,10 @@ The working application currently includes:
 - A map organized into provinces, tracks, and stations.
 - Four playable stations: an introduction to Japanese scripts, the five hiragana
   vowels, the K row, and a first consolidation station.
-- Audio-led kana teaching using licensed human recordings.
+- Audio-led kana teaching using licensed human recordings, with complete AI-generated
+  recordings for words.
 - Guided sound-and-symbol pairing followed by recognition drills.
-- The first readable Japanese word, こい.
+- The first readable Japanese word, えき.
 - A gojūon grid that shows the learner's growing place in the hiragana system.
 - Optional book stops collected in a Codex.
 - A tested SM-2 spaced-repetition calculation engine that is not yet connected to
@@ -42,12 +43,15 @@ them through the decision-by-decision process in [PLAN.md](./PLAN.md).
 
 ## Documentation
 
-There are five active or reference documents:
+There are seven active or reference documents:
 
 - `README.md`: what the project is and what exists now.
 - [`PLAN.md`](./PLAN.md): the current work, decisions, and checkpoints.
 - [`DEV-OVERVIEW.md`](./DEV-OVERVIEW.md): a founder-facing map of the code, runtime,
   responsibilities, and planned structure.
+- [`PRODUCT.md`](./PRODUCT.md): the strategic product and experience contract.
+- [`DESIGN.md`](./DESIGN.md): the visual tokens and component rules for the Learning
+  Line interface.
 - [`CLAUDE.md`](./CLAUDE.md): concise rules for agents working in the repository.
 - [`REFERENCE.md`](./REFERENCE.md): the frozen pre-reset documentation archive. It is
   historical reference, not current authority.

@@ -15,6 +15,8 @@ export type Syllable = { glyph: string; id: string; say: string };
 
 export type Word = {
   word: string;
+  /** A complete-word recording. Never synthesize words by overlapping kana clips. */
+  audioSrc: string;
   /** The word's sounds. For kanji these are its *reading*, not its characters. */
   syllables: Syllable[];
   meaning: string;
@@ -28,9 +30,8 @@ export type Script = {
   id: "hiragana" | "katakana" | "kanji";
   name: string;
   glyph: string; // the script's own name, written in itself where it can be
-  /** One or two sentences carrying the script's essential fact — the station must
-   *  say this itself, because the book stop that expands on it is skippable. */
-  blurb: string;
+  /** A compact lead and supporting thought. Depth lives in the optional book stop. */
+  blurb: { lead: string; detail: string };
   words: Word[];
 };
 
@@ -48,11 +49,13 @@ const syl = (glyph: string, id: string, say: string): Syllable => ({ glyph, id, 
 export const ROMAJI_WORDS: Word[] = [
   {
     word: "つなみ",
+    audioSrc: "/audio/words/tsunami.mp3",
     syllables: [syl("つ", "hira_tsu", "tsu"), syl("な", "hira_na", "na"), syl("み", "hira_mi", "mi")],
     meaning: "tsunami",
   },
   {
     word: "からおけ",
+    audioSrc: "/audio/words/karaoke.mp3",
     syllables: [
       syl("か", "hira_ka", "ka"),
       syl("ら", "hira_ra", "ra"),
@@ -63,16 +66,30 @@ export const ROMAJI_WORDS: Word[] = [
   },
 ];
 
+/** The app's name shown through the three writing systems, without introducing it as
+ * curriculum to memorize. The hiragana reading owns the two reusable audio clips. */
+export const MICHI = {
+  hiragana: "みち",
+  katakana: "ミチ",
+  kanji: "道",
+  audioSrc: "/audio/words/michi.mp3",
+  syllables: [syl("み", "hira_mi", "mi"), syl("ち", "hira_chi", "chi")],
+  meaning: "path",
+} as const;
+
 export const SCRIPTS: Script[] = [
   {
     id: "hiragana",
     name: "Hiragana",
     glyph: "ひらがな",
-    blurb:
-      "The foundation. 46 symbols, each one a sound that never changes. Anything Japanese can be written in hiragana, so it is the first script you will learn.",
+    blurb: {
+      lead: "The foundation: 46 symbols, each with one stable sound.",
+      detail: "Anything Japanese can be written in hiragana, so it is the first script you will learn.",
+    },
     words: [
       {
         word: "わたし",
+        audioSrc: "/audio/words/watashi.mp3",
         syllables: [syl("わ", "hira_wa", "wa"), syl("た", "hira_ta", "ta"), syl("し", "hira_shi", "shi")],
         meaning: "I / me",
       },
@@ -82,11 +99,14 @@ export const SCRIPTS: Script[] = [
     id: "katakana",
     name: "Katakana",
     glyph: "カタカナ",
-    blurb:
-      "The same 46 sounds, drawn with sharper shapes and used for words borrowed from other languages. When a word is written in katakana, you know it came from outside Japanese.",
+    blurb: {
+      lead: "The same sounds, sharper shapes.",
+      detail: "Katakana often marks words borrowed from other languages.",
+    },
     words: [
       {
         word: "カメラ",
+        audioSrc: "/audio/words/camera.mp3",
         syllables: [syl("カ", "hira_ka", "ka"), syl("メ", "hira_me", "me"), syl("ラ", "hira_ra", "ra")],
         meaning: "camera",
       },
@@ -96,14 +116,16 @@ export const SCRIPTS: Script[] = [
     id: "kanji",
     name: "Kanji",
     glyph: "漢字",
-    blurb:
-      "Characters adopted from Chinese, each showing a meaning rather than a sound. There are thousands, but you will start learning them much later, a few at a time.",
+    blurb: {
+      lead: "Characters that carry meaning rather than a single sound.",
+      detail: "There are thousands, but you will learn them gradually, a few at a time.",
+    },
     words: [
       {
         word: "山",
+        audioSrc: "/audio/words/yama.mp3",
         syllables: [syl("や", "hira_ya", "ya"), syl("ま", "hira_ma", "ma")],
         meaning: "mountain",
-        note: "Look at it: three peaks.",
         readingDiffers: true,
       },
     ],

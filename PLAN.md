@@ -26,7 +26,7 @@ For every phase:
 ## Shared terminology
 
 - **Learning item:** one piece of Japanese content, such as the kana `あ`, the word
-  `こい`, a kanji, or a grammar pattern.
+  `えき`, a kanji, or a grammar pattern.
 - **Capability:** one thing the learner can do with an item. For `あ`, this might be
   hearing its sound and identifying the symbol, seeing the symbol and recalling its
   sound, speaking it, writing it, or reading it in context.
@@ -437,7 +437,7 @@ K-row-specific field to the station contract.
 #### 2. Outcome
 
 Connect `かきくけこ` to their five sounds in both directions and use known kana to
-decode the first real Japanese word, `こい`.
+decode the first real Japanese word, `えき`.
 
 #### 3. Prerequisites
 
@@ -459,7 +459,7 @@ For each item, the station introduces:
 - Sound-to-symbol discrimination.
 - Symbol-to-sound discrimination.
 
-Speaking remains unverified rehearsal. `こい` is application of kana decoding in this
+Speaking remains unverified rehearsal. `えき` is application of kana decoding in this
 station, not automatically a vocabulary target whose meaning must be memorized. A
 future station may deliberately introduce it as a word item with its own capabilities.
 
@@ -476,7 +476,7 @@ future station may deliberately introduce it as a word item with its own capabil
 9. Rehearse speaking: see each symbol, attempt its sound, then play the native recording
    for comparison. This remains ungraded.
 10. Context: ten known kana are enough to decode a real Japanese word.
-11. Use: decode `こい` before hearing it and revealing its meaning.
+11. Use: decode `えき` before hearing it and revealing its meaning.
 12. Place the K row beneath the vowels in the gojūon grid.
 
 Guided tracing is an approved future addition after the sound-symbol connection is
@@ -484,9 +484,9 @@ stable, but it is not part of the current implemented learner experience.
 
 #### 6. Application
 
-The learner decodes `こい` using only `こ` and `い`, both already introduced. The word
+The learner decodes `えき` using only `え` and `き`, both already introduced. The word
 proves that the kana system is becoming usable. Its meaning is revealed after the
-decoding attempt, but memorizing “carp” is not required for station completion.
+decoding attempt, but memorizing “station” is not required for station completion.
 
 #### 7. Completion contract
 
@@ -498,13 +498,13 @@ decoding attempt, but memorizing “carp” is not required for station completi
 - Preserve correct work on other targets.
 - Complete when all ten new item-capability targets have been answered correctly in the
   final checkpoint.
-- `こい` remains required application in the station sequence but is not a graded
+- `えき` remains required application in the station sequence but is not a graded
   vocabulary checkpoint.
 
 Truthful completion message:
 
 > You connected the five K-row sounds to `かきくけこ` in both directions and decoded
-> your first Japanese word, `こい`. The first 10 of 46 basic hiragana are now
+> your first Japanese word, `えき`. The first 10 of 46 basic hiragana are now
 > introduced.
 
 Handoff: the next station consolidates the vowels and K row together without adding new
@@ -539,7 +539,7 @@ vowels and K row together so the learner must distinguish across the complete kn
 
 #### 2. Outcome
 
-Retrieve the first ten hiragana from one mixed set and use them to decode `こい` again,
+Retrieve the first ten hiragana from one mixed set and use them to decode `えき` again,
 without adding new material.
 
 This is a strengthening outcome, not a claim that every existing capability has become
@@ -575,7 +575,7 @@ This distinction is the reason the station exists even when no item is currently
    sound-to-symbol and symbol-to-sound prompts balanced across the set.
 4. Recover mistakes: reveal or replay the correct association, then requeue only the
    missed target after intervening questions.
-5. Use: decode `こい` again from its two known kana.
+5. Use: decode `えき` again from its two known kana.
 6. Close: see the vowel and K rows held together in the gojūon grid.
 
 There is no teach, reveal, guided match, or speaking phase because no new association is
@@ -583,7 +583,7 @@ being established. The runner omits those phases for this station type.
 
 #### 6. Application
 
-The learner decodes `こい` again after recalling from the mixed ten-kana pool. This
+The learner decodes `えき` again after recalling from the mixed ten-kana pool. This
 checks that known symbols remain usable in sequence, not only as isolated multiple-choice
 answers. Its meaning remains context rather than a graded vocabulary target.
 
@@ -603,7 +603,7 @@ set.
   other questions.
 - Preserve correct work and finish after every initial item plus every requeued miss has
   been answered correctly.
-- Require the `こい` decoding application, but do not grade its meaning as vocabulary.
+- Require the `えき` decoding application, but do not grade its meaning as vocabulary.
 
 The scheduled SRS records remain responsible for checking each item-capability pair in
 its appropriate direction over time. This authored checkpoint proves mixed-set use today;
@@ -611,7 +611,7 @@ it does not replace future spaced review.
 
 Truthful completion message:
 
-> You recalled the first ten hiragana together and used them to read `こい` again. No
+> You recalled the first ten hiragana together and used them to read `えき` again. No
 > new characters were added at this stop.
 
 Handoff: the S row returns to acquisition, using the same five-vowel pattern to introduce
@@ -935,8 +935,8 @@ Goal: move beyond answer selection without pretending unreliable measurements ar
 precise.
 
 - [x] Decide where ungraded speaking rehearsal helps.
-- [ ] Decide which knowledge should require unaided spoken or written recall.
-- [ ] Implement correct stroke-guided writing for a small first set.
+- [x] Decide which knowledge should require unaided spoken or written recall.
+- [x] Implement correct stroke-guided writing for a small first set.
 - [ ] Test writing on touch hardware.
 - [x] Record only evidence the interaction can honestly support.
 
@@ -952,21 +952,41 @@ use pointer input; Continue is always available.
 
 `src/components/writing-surface.tsx` provides the reusable surface:
 
-- a responsive square canvas with the target glyph beneath it at 20% opacity;
+- a responsive square canvas with canonical `あ` stroke shapes beneath it;
+- a three-stroke animation in the correct order, with an immediate replay control;
 - mouse, touch, pen, pointer capture, and high-density display support;
 - normalized stroke coordinates so ink survives responsive resizing;
 - thick rounded ink with restrained pressure variation and a mouse fallback;
 - Undo and Clear using the existing Michi button system; and
 - a clean continuation path with no score, warning, or false correctness claim.
 
-This is shape tracing, not canonical stroke instruction. The faint guide comes from the
-current kana font; it does not yet show stroke count, order, or direction. Automated
-evaluation, blank recall, persistence, and expansion beyond `あ` remain deliberately
-unimplemented until the interaction has been judged on real touch hardware.
+The `あ` reference now uses ordered vector paths from the accepted `strokesvg` source,
+whose shapes derive from Klee One under the SIL Open Font License. The learner watches
+all three strokes draw in sequence before tracing and can replay the order at any time.
+Attribution lives in `THIRD-PARTY-NOTICES.md`. Automated evaluation, persistence, and
+expansion beyond `あ` remain deliberately unimplemented until the interaction has been
+judged on real touch hardware.
 
 The tracing flow has been exercised successfully with desktop pointer input. Phone,
 tablet, and stylus feel remain an explicit validation task before the surface expands to
 more kana.
+
+### First blank-recall proof: `あ`
+
+Production practice now follows a deliberately narrow rule. A kana that receives guided
+writing may return later in an authored consolidation station as blank writing recall.
+The learner draws before seeing the reference, reveals the shape to compare it directly
+with their ink, and can clear the surface for a clean retry. The revealed reference is
+rendered above the learner's ink in a contrasting translucent color, rather than hidden
+beneath it. For the first proof, only
+`あ` follows this loop: guided tracing in the vowel station, then blank recall in the
+first-ten consolidation station.
+
+Unaided speaking is requested when a taught kana or readable word returns, followed by
+native audio for comparison. Unaided writing is requested only for the small set whose
+motion has already been taught. Neither capability blocks station completion or creates
+mastery evidence until Michi can evaluate it reliably. The authored revisit is required
+as a learning opportunity; correctness is not falsely claimed.
 
 ## Phase 6: prove the blueprint before expanding
 
