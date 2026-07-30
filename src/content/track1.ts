@@ -24,6 +24,7 @@ export type Step =
   | { kind: "context"; kana: Kana[] } // name hiragana after the learner has used it
   | { kind: "read"; word: ReadableWord } // read a real word, built only from known kana
   | { kind: "rehearse"; pool: Kana[] } // guided speaking, not an assessed drill
+  | { kind: "guidedTrace"; kana: Kana } // ungraded motor rehearsal with a faint guide
   // The gojūon table, with the row just learned landing into it. Ends the station by
   // placing the five new characters in the map of the whole set.
   | { kind: "grid" }
@@ -61,13 +62,14 @@ export function buildTrack1(): Step[] {
   const reveal: Step = { kind: "reveal", kana: VOWELS };
   const match: Step = { kind: "match", pool: VOWELS };
   const speak: Step = { kind: "rehearse", pool: VOWELS };
+  const traceA: Step = { kind: "guidedTrace", kana: VOWELS[0]! };
   const context: Step = { kind: "context", kana: VOWELS };
   const drills: Step[] = ASSESSED_DRILL_BLOCKS.map(({ types, role }) => ({
     kind: "drill", pool: VOWELS, types, role,
   }));
   const grid: Step = { kind: "grid" };
   const done: Step = { kind: "done", learned: VOWELS };
-  return [intro, ...teach, reveal, match, context, ...drills, speak, grid, done];
+  return [intro, ...teach, reveal, match, context, ...drills, traceA, speak, grid, done];
 }
 
 /** こい — a carp, and the first word the learner can read unaided (こ + い). */

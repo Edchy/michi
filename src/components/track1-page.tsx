@@ -9,7 +9,12 @@ import {
   type ReadableWord,
   type Step,
 } from "@/content/track1";
-import { CheckpointProgress, ChoiceProgress, DrillProgress } from "@/content/drill";
+import {
+  CheckpointProgress,
+  ChoiceProgress,
+  ConsolidationProgress,
+  DrillProgress,
+} from "@/content/drill";
 import { makeQuestion, pickType, type Question, type QuestionType } from "@/content/question";
 import { ShuffleBag } from "@/content/bag";
 import { play, primeAudio } from "@/lib/audio";
@@ -17,6 +22,7 @@ import { K_ROW, VOWELS, type Kana } from "@/content/hiragana";
 import { GojuonGrid } from "@/components/gojuon-grid";
 import { Button } from "@/components/button";
 import { StationNav } from "@/components/station-nav";
+import { WritingSurface } from "@/components/writing-surface";
 import {
   loadLearnerState,
   persistIntroducedReviewTarget,
@@ -233,6 +239,7 @@ export default function Track1Page({ station: id = "vowels" }: { station?: Stati
   // Steps that drive their own completion, so the nav must not offer Next past them.
   const isPracticeStep =
     step.kind === "drill" ||
+    step.kind === "guidedTrace" ||
     step.kind === "rehearse" ||
     step.kind === "review" ||
     step.kind === "match";
@@ -245,6 +252,16 @@ export default function Track1Page({ station: id = "vowels" }: { station?: Stati
     soundCycleIndex.current = 0;
     setDirection(delta);
     setIndex((i) => Math.min(steps.length - 1, Math.max(0, i + delta)));
+  }
+
+  function jumpTo(nextIndex: number) {
+    setDrillBack(null);
+    setDrillNext(null);
+    setDrillSound(null);
+    setDrillMeter(null);
+    soundCycleIndex.current = 0;
+    setDirection(nextIndex < index ? -1 : 1);
+    setIndex(Math.min(steps.length - 1, Math.max(0, nextIndex)));
   }
 
   const registerDrillNext = useCallback((handler: (() => void) | null) => {
@@ -357,6 +374,10 @@ export default function Track1Page({ station: id = "vowels" }: { station?: Stati
             : "pb-28"
       }`}
     >
+      {process.env.NODE_ENV === "development" && (
+        <DevStepControls steps={steps} index={index} onJump={jumpTo} />
+      )}
+
       {/* the moving surface — CSS slide-in keyed per step (always settles visible) */}
       <div className="flex flex-1 items-center justify-center">
         <div key={index} className="w-full step-enter" data-dir={direction}>
@@ -386,6 +407,96 @@ export default function Track1Page({ station: id = "vowels" }: { station?: Stati
 }
 
 /* ---------- chrome ---------- */
+
+function devStepLabel(step: Step, index: number): string {
+  switch (step.kind) {
+    case "intro":
+      return "Introduction";
+    case "reviewIntro":
+      return "Review introduction";
+    case "review":
+      return "Opening review";
+    case "teach":
+      return `Teach ${step.kana.glyph}`;
+    case "reveal":
+      return "Reveal the row";
+    case "match":
+      return "Guided matching";
+    case "context":
+      return "Context";
+    case "drill":
+      return step.role === "checkpoint"
+        ? "Final checkpoint"
+        : step.role === "consolidation"
+          ? "Consolidation drill"
+          : `Practice ${index}`;
+    case "guidedTrace":
+      return `Trace ${step.kana.glyph}`;
+    case "rehearse":
+      return "Speaking rehearsal";
+    case "read":
+      return `Read ${step.word.kana.map((kana) => kana.glyph).join("")}`;
+    case "grid":
+      return "Gojūon grid";
+    case "done":
+      return "Station complete";
+  }
+}
+
+function DevStepControls({
+  steps,
+  index,
+  onJump,
+}: {
+  steps: Step[];
+  index: number;
+  onJump: (index: number) => void;
+}) {
+  return (
+    <aside
+      data-dev-step-controls
+      className="fixed right-3 top-3 z-20 flex items-center gap-2 rounded-[var(--radius-btn)] bg-surface p-2 shadow-[var(--shadow-card)]"
+      aria-label="Development step controls"
+    >
+      <span className="px-1 text-xs font-semibold text-ink-muted">Dev</span>
+      <Button
+        icon
+        variant="ghost"
+        onClick={() => onJump(index - 1)}
+        disabled={index === 0}
+        aria-label="Previous step, bypassing completion"
+        title="Previous step"
+      >
+        <span aria-hidden>‹</span>
+      </Button>
+      <label className="sr-only" htmlFor="dev-step-picker">
+        Jump to station step
+      </label>
+      <select
+        id="dev-step-picker"
+        value={index}
+        onChange={(event) => onJump(Number(event.target.value))}
+        className="h-11 max-w-[min(46vw,240px)] rounded-[var(--radius-btn)] border border-line bg-bg px-3 text-sm font-medium text-ink outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
+      >
+        {steps.map((step, stepIndex) => (
+          <option key={`${step.kind}-${stepIndex}`} value={stepIndex}>
+            {stepIndex + 1}/{steps.length} · {devStepLabel(step, stepIndex + 1)}
+          </option>
+        ))}
+      </select>
+      <Button
+        icon
+        variant="ghost"
+        onClick={() => onJump(index + 1)}
+        disabled={index === steps.length - 1}
+        aria-label="Next step, bypassing completion"
+        title="Next step"
+      >
+        <span aria-hidden>›</span>
+      </Button>
+    </aside>
+  );
+}
 
 /** Floating control cluster — pinned to the bottom, out of the content's way. */
 function FloatingNav({
@@ -514,6 +625,8 @@ function StepView({
         <GridStep grid={station.grid} />
       ) : step.kind === "match" ? (
         <MatchStep pool={step.pool} onDone={onAdvance} />
+      ) : step.kind === "guidedTrace" ? (
+        <GuidedTraceStep kana={step.kana} onDone={onAdvance} />
       ) : step.kind === "reviewIntro" ? (
         <ReviewIntroStep
           kana={plannedReviewKana.length > 0 ? plannedReviewKana : step.pool}
@@ -978,6 +1091,9 @@ function DrillBlock({
       ),
     ),
   );
+  const consolidation = useRef(
+    new ConsolidationProgress(pool.map((kana) => kana.id)),
+  );
   const boundedReview = useRef(new BoundedReviewProgress(reviewTargets));
   const history = useRef<Question[]>([]);
   const future = useRef<Question[]>([]);
@@ -988,6 +1104,7 @@ function DrillBlock({
     (type) => type === "hearPickChar" || type === "seePickSound",
   );
   const isCoverageCheckpoint = role === "checkpoint";
+  const isConsolidation = role === "consolidation";
   const isBoundedReview = role === "opening-review" && reviewTargets.length > 0;
   const isSpeakBlock = types.length === 1 && types[0] === "sayAloud";
   const speakTarget = pool.length * 2;
@@ -1010,9 +1127,18 @@ function DrillBlock({
     return makeQuestion(pool, answer, type, pool.length);
   }
 
+  function makeConsolidationQuestion(): Question {
+    const target = consolidation.current.current;
+    const answer = pool.find((kana) => kana.id === target.itemId);
+    if (!answer) throw new Error(`Consolidation item ${target.itemId} is not in its pool.`);
+    return makeQuestion(pool, answer, target.type, pool.length);
+  }
+
   const [q, setQ] = useState<Question>(() =>
     isBoundedReview
       ? makeReviewQuestion()
+      : isConsolidation
+        ? makeConsolidationQuestion()
       : isCoverageCheckpoint
       ? makeCheckpointQuestion()
       : makeQuestion(
@@ -1024,6 +1150,8 @@ function DrillBlock({
   );
   const progressValue = isBoundedReview
     ? boundedReview.current.completedCount
+    : isConsolidation
+      ? consolidation.current.completedCount
     : isCoverageCheckpoint
       ? checkpoint.current.completedCount
     : isChoiceBlock
@@ -1033,6 +1161,8 @@ function DrillBlock({
         : progress.current.completedCount;
   const progressMax = isBoundedReview
     ? boundedReview.current.promptCount
+    : isConsolidation
+      ? consolidation.current.targetCount
     : isCoverageCheckpoint
       ? checkpoint.current.targetCount
     : isChoiceBlock
@@ -1094,6 +1224,7 @@ function DrillBlock({
     }
 
     if (isBoundedReview) boundedReview.current.mark(correct);
+    else if (isConsolidation) consolidation.current.mark(correct);
     else if (isCoverageCheckpoint) checkpoint.current.mark(correct);
     else if (isChoiceBlock) choices.current.mark(correct);
     else if (isSpeakBlock) spokenAttempts.current += 1;
@@ -1101,6 +1232,8 @@ function DrillBlock({
 
     const done = isBoundedReview
       ? boundedReview.current.done
+      : isConsolidation
+        ? consolidation.current.done
       : isCoverageCheckpoint
         ? checkpoint.current.done
       : isChoiceBlock
@@ -1131,6 +1264,8 @@ function DrillBlock({
     setQ(
       isBoundedReview
         ? makeReviewQuestion()
+        : isConsolidation
+          ? makeConsolidationQuestion()
         : isCoverageCheckpoint
           ? makeCheckpointQuestion()
         : makeQuestion(
@@ -1148,17 +1283,6 @@ function DrillBlock({
     if (!previous) return;
     future.current.push(q);
     setQ(previous);
-    setQNum((n) => n + 1);
-  }
-
-  function moveForward() {
-    const upcoming = future.current.pop();
-    if (!upcoming) {
-      advance(true);
-      return;
-    }
-    history.current.push(q);
-    setQ(upcoming);
     setQNum((n) => n + 1);
   }
 
@@ -1191,7 +1315,7 @@ function DrillBlock({
       };
     }
 
-    const usesQuestionHistory = q.type === "sayAloud" || q.type === "trace";
+    const usesQuestionHistory = q.type === "sayAloud";
     if (usesQuestionHistory && history.current.length > 0) {
       let used = false;
       onNavBackChange(() => {
@@ -1203,16 +1327,7 @@ function DrillBlock({
       onNavBackChange(null);
     }
 
-    if (q.type !== "trace") {
-      onNavNextChange(null);
-    } else {
-      let used = false;
-      onNavNextChange(() => {
-        if (used) return;
-        used = true;
-        moveForward();
-      });
-    }
+    onNavNextChange(null);
 
     if (q.type === "hearPickChar" || q.type === "sayAloud") {
       onSoundChange(
@@ -1245,8 +1360,6 @@ function DrillBlock({
           recoveryCount={boundedReview.current.recoveryCount}
           recoveryHadMiss={boundedReview.current.recoveryHadMiss}
         />
-      ) : q.type === "trace" ? (
-        <TraceQuestion key={qNum} q={q} />
       ) : q.type === "sayAloud" ? (
         <SayAloudQuestion
           key={qNum}
@@ -1413,24 +1526,17 @@ function SayAloudQuestion({
   );
 }
 
-/**
- * PLACEHOLDER — the trace/write drill (motor memory, the signature handwriting
- * mechanic). Not built yet: this only marks where it belongs in the flow so we
- * can see it interleaved. A real version needs a drawing canvas + stroke-order
- * guidance + stroke checking (docs/design/typography.md, ADR-0004 stroke data).
- */
-function TraceQuestion({ q }: { q: Question }) {
+function GuidedTraceStep({ kana, onDone }: { kana: Kana; onDone: () => void }) {
   return (
-    <div className={DRILL_SHELL}>
-      <p className={DRILL_PROMPT}>Trace the character.</p>
-
-      {/* stubbed canvas: shows the target glyph faintly, as a guide would */}
-      <div className="relative flex h-56 w-56 items-center justify-center rounded-[var(--radius-lg)] border-2 border-dashed border-line">
-        <span className={`${DRILL_GLYPH} text-line`}>{q.answer.glyph}</span>
-        <span className="absolute bottom-3 rounded-full bg-surface px-3 py-1 text-xs font-medium text-ink-faint">
-          drawing, coming soon
-        </span>
+    <div className="mx-auto flex max-w-md flex-col items-center gap-5 text-center">
+      <div className="flex max-w-sm flex-col gap-2">
+        <p className="text-2xl font-medium text-ink text-balance">Let your hand meet あ.</p>
+        <p className="text-sm leading-relaxed text-ink-muted text-pretty">
+          Trace over the faint shape. This is practice, not a test—continue whenever you
+          are ready.
+        </p>
       </div>
+      <WritingSurface glyph={kana.glyph} onComplete={onDone} />
     </div>
   );
 }

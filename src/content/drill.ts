@@ -139,3 +139,62 @@ export class CheckpointProgress {
     return this.total;
   }
 }
+
+/**
+ * One shuffled prompt per item with directions balanced across the set. This is shorter
+ * than an acquisition checkpoint because both directions were already established.
+ */
+export class ConsolidationProgress {
+  private readonly total: number;
+  private completed = 0;
+  private pending: CheckpointTarget[];
+
+  constructor(itemIds: readonly string[], random: () => number = Math.random) {
+    const shuffledItems = shuffleWith(itemIds, random);
+    const directions = shuffledItems.map((_, index) =>
+      index % 2 === 0 ? "hearPickChar" as const : "seePickSound" as const,
+    );
+    this.pending = shuffleWith(
+      shuffledItems.map((itemId, index) => ({ itemId, type: directions[index]! })),
+      random,
+    );
+    this.total = this.pending.length;
+  }
+
+  get current(): CheckpointTarget {
+    const target = this.pending[0];
+    if (!target) throw new Error("Consolidation is already complete.");
+    return target;
+  }
+
+  mark(wasCorrect: boolean): void {
+    const target = this.pending.shift();
+    if (!target) return;
+    if (wasCorrect) {
+      this.completed += 1;
+      return;
+    }
+    this.pending.splice(Math.min(2, this.pending.length), 0, { ...target, recovery: true });
+  }
+
+  get done(): boolean {
+    return this.pending.length === 0;
+  }
+
+  get completedCount(): number {
+    return this.completed;
+  }
+
+  get targetCount(): number {
+    return this.total;
+  }
+}
+
+function shuffleWith<T>(values: readonly T[], random: () => number): T[] {
+  const shuffled = [...values];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swap = Math.floor(random() * (index + 1));
+    [shuffled[index], shuffled[swap]] = [shuffled[swap]!, shuffled[index]!];
+  }
+  return shuffled;
+}

@@ -28,6 +28,16 @@ describe("buildTrack1", () => {
     expect(steps.at(-1)!.kind).toBe("done");
   });
 
+  it("offers one ungraded guided trace only after the final checkpoint", () => {
+    const checkpoint = steps.findIndex(
+      (step) => step.kind === "drill" && step.role === "checkpoint",
+    );
+    const trace = steps.findIndex((step) => step.kind === "guidedTrace");
+    expect(trace).toBeGreaterThan(checkpoint);
+    const step = steps[trace]!;
+    if (step.kind === "guidedTrace") expect(step.kana).toBe(VOWELS[0]);
+  });
+
   it("drill blocks go single-type first, then the mixed capstone last", () => {
     const drills = steps.filter((s) => s.kind === "drill");
     // Easiest direction first: seePickSound keeps the glyph on screen while you choose,

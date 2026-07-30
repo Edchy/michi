@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { CheckpointProgress, ChoiceProgress, DrillProgress } from "./drill";
+import {
+  CheckpointProgress,
+  ChoiceProgress,
+  ConsolidationProgress,
+  DrillProgress,
+} from "./drill";
 
 const IDS = ["a", "i", "u", "e", "o"];
 
@@ -130,5 +135,34 @@ describe("CheckpointProgress", () => {
     expect(checkpoint.current).toMatchObject({ itemId: "a", recovery: true });
     checkpoint.mark(true);
     expect(checkpoint.done).toBe(true);
+  });
+});
+
+describe("ConsolidationProgress", () => {
+  it("covers every item once and balances both directions", () => {
+    const itemIds = Array.from({ length: 10 }, (_, index) => `item_${index}`);
+    const progress = new ConsolidationProgress(itemIds, () => 0.999);
+    const seen: Array<{ itemId: string; type: string }> = [];
+    while (!progress.done) {
+      seen.push(progress.current);
+      progress.mark(true);
+    }
+
+    expect(new Set(seen.map((target) => target.itemId))).toEqual(new Set(itemIds));
+    expect(seen.filter((target) => target.type === "hearPickChar")).toHaveLength(5);
+    expect(seen.filter((target) => target.type === "seePickSound")).toHaveLength(5);
+    expect(progress.targetCount).toBe(10);
+    expect(progress.completedCount).toBe(10);
+  });
+
+  it("requeues only a missed item-direction target", () => {
+    const progress = new ConsolidationProgress(["a", "i", "u"], () => 0.999);
+    const missed = progress.current;
+    progress.mark(false);
+    progress.mark(true);
+    progress.mark(true);
+    expect(progress.current).toMatchObject({ ...missed, recovery: true });
+    progress.mark(true);
+    expect(progress.done).toBe(true);
   });
 });

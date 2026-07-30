@@ -378,8 +378,8 @@ so they do not create scheduled speaking targets yet.
    for comparison. This remains ungraded.
 10. Place the vowel row into the gojūon grid.
 
-Guided tracing is an approved future addition after the sound-symbol connection is
-stable, but it is not part of the current implemented learner experience.
+One guided `あ` trace now follows the final checkpoint, after the sound-symbol connection
+has been demonstrated. It is ungraded and remains outside completion evidence.
 
 #### 6. Application
 
@@ -409,16 +409,16 @@ learner's first decoded Japanese word.
 
 ### Vowel station implementation gaps
 
-These are documented gaps, not changes made during the specification step:
+These began as specification gaps; resolved items remain visible here so the progression
+is clear:
 
-1. The current mixed capstone randomly chooses direction and completes through a
-   general difficulty ladder. It does not guarantee that every vowel is checked in
-   both directions.
+1. Resolved: the final checkpoint now covers every vowel in both directions and requeues
+   only missed targets.
 2. The current completion message says the learner can “hear, say, and recognize” all
    five sounds. Speaking is rehearsed but unverified, so this overstates the evidence.
-3. Completion currently unlocks the next map position but does not create persistent
-   item-capability review records.
-4. Guided tracing is not implemented and remains outside completion evidence.
+3. Resolved: final-checkpoint answers create persistent item-capability review records.
+4. Guided tracing is implemented only for `あ`; canonical stroke-order guidance, later
+   blank recall, and any evaluation remain unimplemented and outside completion evidence.
 
 The K-row translation below applies the same seven sections and checks whether the
 second acquisition station introduces any new structural requirement.
@@ -619,12 +619,12 @@ Handoff: the S row returns to acquisition, using the same five-vowel pattern to 
 
 ### First consolidation station implementation gaps
 
-1. The current adaptive drill does not guarantee one initial prompt for every kana or a
-   deliberately balanced direction assignment.
+1. Resolved: the initial pass contains every kana exactly once with five prompts in each
+   direction; only a missed item-direction pair is requeued.
 2. It is not preceded by generated due review or recovery based on learner records.
 3. Attempts do not update persistent item-capability review records.
-4. The current completion copy says the learner can recall both rows together, although
-   checkpoint coverage does not yet guarantee that every kana appeared.
+4. Resolved: checkpoint coverage now supports the completion claim that both rows were
+   recalled together in this session.
 5. The existing `Step` union and station configuration can express the shorter sequence,
    but the consolidation station still runs through the kana-specific page rather than a
    future shared `StationRunner`.
@@ -934,20 +934,46 @@ honestly, and the only visible memory language appears when it helps the learner
 Goal: move beyond answer selection without pretending unreliable measurements are
 precise.
 
-- [ ] Decide where ungraded speaking rehearsal helps.
+- [x] Decide where ungraded speaking rehearsal helps.
 - [ ] Decide which knowledge should require unaided spoken or written recall.
 - [ ] Implement correct stroke-guided writing for a small first set.
 - [ ] Test writing on touch hardware.
-- [ ] Record only evidence the interaction can honestly support.
+- [x] Record only evidence the interaction can honestly support.
 
 Output: at least one station teaches and revisits production correctly.
+
+### First guided-writing proof: `あ`
+
+The vowel station now places one `guidedTrace` step after its complete recognition
+checkpoint and before speaking/grid closure. This ordering ensures the learner first
+connects the sound and symbol, then lets the hand meet the known shape. The step does not
+create a review target, update mastery, grade the drawing, or block learners who cannot
+use pointer input; Continue is always available.
+
+`src/components/writing-surface.tsx` provides the reusable surface:
+
+- a responsive square canvas with the target glyph beneath it at 20% opacity;
+- mouse, touch, pen, pointer capture, and high-density display support;
+- normalized stroke coordinates so ink survives responsive resizing;
+- thick rounded ink with restrained pressure variation and a mouse fallback;
+- Undo and Clear using the existing Michi button system; and
+- a clean continuation path with no score, warning, or false correctness claim.
+
+This is shape tracing, not canonical stroke instruction. The faint guide comes from the
+current kana font; it does not yet show stroke count, order, or direction. Automated
+evaluation, blank recall, persistence, and expansion beyond `あ` remain deliberately
+unimplemented until the interaction has been judged on real touch hardware.
+
+The tracing flow has been exercised successfully with desktop pointer input. Phone,
+tablet, and stylus feel remain an explicit validation task before the surface expands to
+more kana.
 
 ## Phase 6: prove the blueprint before expanding
 
 Goal: show that adding content is mostly authoring rather than rebuilding the app.
 
 - [ ] Prove one new acquisition station.
-- [ ] Prove one consolidation station.
+- [x] Prove one consolidation station.
 - [ ] Prove one vocabulary or grammar application station.
 - [ ] Observe a real learner using the sequence.
 - [ ] Revise the blueprint based on confusion, fatigue, recall, and pacing.

@@ -133,9 +133,11 @@ approved learner experience all at once.
 | Kana stations | Vowel, K-row, and consolidation content | `src/content/track1.ts` |
 | Station specifications | Typed seven-section definitions and course-order validation | `src/content/station-spec.ts` |
 | Kana station runner | Renders and controls Stations 2–4 | `src/components/track1-page.tsx` |
+| Development step controls | Bypass or select any station step in development only | `src/components/track1-page.tsx` |
 | Kana items | Vowel and K-row content records | `src/content/hiragana.ts` |
 | Questions | Builds choice and rehearsal questions | `src/content/question.ts` |
 | Drill progress | In-session difficulty and coverage | `src/content/drill.ts` |
+| Guided writing | Responsive pointer canvas and brush geometry | `src/components/writing-surface.tsx`, `src/content/writing.ts` |
 | Question ordering | Avoids uneven random repetition | `src/content/bag.ts` |
 | Gojūon model/UI | Full kana grid and learned rows | `src/content/gojuon.ts`, `src/components/gojuon-grid.tsx` |
 | Audio | Loads and plays local kana recordings | `src/lib/audio.ts`, `public/audio/hiragana/` |
@@ -148,6 +150,12 @@ approved learner experience all at once.
 | Shared controls | Buttons and station navigation | `src/components/button.tsx`, `src/components/station-nav.tsx` |
 
 Most of these areas have focused tests beside them as `*.test.ts` or `*.test.tsx`.
+
+When running `npm run dev`, kana stations show a compact `Dev` control in the top-right.
+Its arrows bypass completion gates and its selector jumps directly to any authored step,
+including checkpoints, tracing, speaking, the grid, and completion. Jumping remounts the
+step so its local drill or canvas state starts clean. The control is guarded by
+`NODE_ENV === "development"` and must not appear in a production build.
 
 ## Current versus planned learning state
 
@@ -330,11 +338,10 @@ Completion
 All five kana correct in both directions; misses are retaught and individually requeued
 ```
 
-The translation exposes current implementation gaps without changing code: the current
-mixed capstone does not guarantee all five items in both directions, its completion
-copy overclaims unverified speaking, learner review targets are not persisted, and
-guided tracing is not implemented yet. The detailed specification and exact truthful
-completion copy live in `PLAN.md`.
+The original translation exposed incomplete checkpoint coverage, overclaimed speaking,
+absent persistence, and absent tracing. Checkpoint coverage and vowel persistence are now
+implemented, and one ungraded guided `あ` trace follows the checkpoint. Canonical stroke
+order and blank writing remain future work. Detailed evidence rules live in `PLAN.md`.
 
 ## Second specification proof: Station 3, K row
 
@@ -402,9 +409,10 @@ each exact item-capability pair over time.
 
 The proof shows that sequence phases may be omitted without creating another page model:
 acquisition teaches and seeds targets, while consolidation mixes and applies existing
-targets. Current implementation gaps are incomplete guaranteed coverage, no generated
-review or recovery, no persistent attempt records, and use of the existing kana-specific
-page instead of the future shared runner.
+targets. Guaranteed coverage is now implemented as ten unique kana prompts balanced 5/5
+across directions, with targeted retries. Remaining gaps are generated due review before
+this station, persistent consolidation evidence, and use of the kana-specific page rather
+than the future shared runner.
 
 ## Station-definition validator
 
