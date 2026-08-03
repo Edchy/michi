@@ -101,9 +101,33 @@ above 200 ms, so dead air cannot ship again. That check is per file rather than 
 type: a vowel with 400 ms of hiss in front is just as late as an affricate with the same.
 
 It also measures the friction ahead of the vowel in ち and つ, and fails under 60 ms. That
-check exists because time-to-sound alone passed the broken repair above: sound did start
-promptly, it was simply the wrong sound. Both checks were verified by running them against
-the defective files rather than assumed to work.
+check exists because time-to-sound alone passed a broken repair: sound did start promptly,
+it was simply the wrong sound.
+
+### Correction: re-encoding at half the set's bitrate destroyed the friction
+
+Found by ear, 3 August 2026: ち sounded like "gee" and つ like "du" even after the trim was
+correct. The trims were fine. The re-encodes were not.
+
+Every clip replaced that day was written at **48 kbps Opus**, against the set's ~100 kbps,
+and mp3 `-q:a 4` against roughly `-q:a 2`. Opus spends its bits where they are
+perceptually dominant, which is the vowel, so the high-frequency noise that distinguishes
+an affricate from a plain stop was smeared away. Envelope measurements could not see this:
+loudness was unchanged, and the defect is entirely spectral.
+
+- **Repaired (3 August 2026):** た て ち つ re-encoded from the WAV masters at
+  `libopus -b:a 96k -vbr on -compression_level 10` and `libmp3lame -q:a 2`, putting all
+  four in the set's normal 100–128 kbps range. Decoded friction now matches the untouched
+  originals frame for frame (つ peak +4.0 dB vs +4.2; ち +13.4 vs +13.5).
+
+**When replacing any clip, check the output bitrate against a neighbour.** The trim recipe
+above is only half the job; an encode at half the set's rate will pass every loudness check
+and still teach the wrong consonant.
+
+`kana-audio.test.ts` now measures the decoded spectrum for ち and つ, requiring 60 ms where
+energy above 3 kHz exceeds energy below 1 kHz. Verified by re-encoding at 48 kbps, which
+fails it. Every check in that file was confirmed against a defective file rather than
+assumed to work.
 
 ### Measured state of the full set, 3 August 2026
 

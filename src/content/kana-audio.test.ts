@@ -74,6 +74,36 @@ function envelope(file: string): number[] {
  * whole 46 ship today while only the taught rows exist as `Kana`, and a recording is
  * wrong the moment it lands, not when a station finally uses it.
  */
+/**
+ * Per-frame energy in two bands, from the decoded file: above 3 kHz (friction) and below
+ * 1 kHz (voicing). Uses ffmpeg's own bandpass filters rather than a hand-rolled DFT, so
+ * the measurement is fast and the filter behaviour is not something this file has to own.
+ */
+function bandFrames(file: string): Array<{ high: number; low: number }> {
+  const energies = (filter: string): number[] => {
+    const raw = execFileSync(
+      "ffmpeg",
+      ["-v", "error", "-i", file, "-af", filter, "-ac", "1", "-ar", String(SAMPLE_RATE), "-f", "f32le", "-"],
+      { maxBuffer: 64 * 1024 * 1024, encoding: "buffer" },
+    );
+    const samples = new Float32Array(
+      raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength),
+    );
+    const frame = Math.round(SAMPLE_RATE * FRAME_SECONDS);
+    const out: number[] = [];
+    for (let i = 0; i + frame <= samples.length; i += frame) {
+      let sum = 0;
+      for (let j = i; j < i + frame; j += 1) sum += samples[j]! * samples[j]!;
+      out.push(sum > 1e-12 ? 10 * Math.log10(sum / frame) : -99);
+    }
+    return out;
+  };
+
+  const high = energies("highpass=f=3000,highpass=f=3000");
+  const low = energies("lowpass=f=1000,lowpass=f=1000");
+  return high.map((value, i) => ({ high: value, low: low[i] ?? -99 }));
+}
+
 /** Every shipped clip id, for checks that apply regardless of the sound being taught. */
 function allIds(): string[] {
   return readdirSync(AUDIO_DIR)
@@ -152,6 +182,31 @@ describe.skipIf(!hasFfmpeg())("kana recordings contain their consonant", () => {
       expect(
         friction.length * FRAME_SECONDS * 1000,
         `${id} has only ${(friction.length * FRAME_SECONDS * 1000).toFixed(0)} ms of friction before its vowel, so its consonant was trimmed off`,
+      ).toBeGreaterThanOrEqual(60);
+    },
+  );
+
+  /**
+   * The friction has to survive ENCODING, not just trimming.
+   *
+   * An earlier repair kept the friction in the source but re-encoded the clips at 48 kbps
+   * Opus, half the set's ~100 kbps. Opus spends its bits on the perceptually dominant
+   * vowel, so the high-frequency noise that distinguishes ち from "gee" and つ from "du"
+   * was smeared away. The waveform envelope still showed friction present, because
+   * envelope measures loudness and this defect is spectral.
+   *
+   * So this measures the decoded spectrum: energy above 3 kHz must exceed energy below
+   * 1 kHz somewhere before the vowel. That is what an affricate IS, and it is the only
+   * check here that would have caught a lossy-encode regression.
+   */
+  it.each(allIds().filter((id) => AFFRICATE.test(id.replace(/^hira_/, ""))))(
+    "%s keeps its high-frequency friction after encoding",
+    (id) => {
+      const frames = bandFrames(join(AUDIO_DIR, `${id}.webm`));
+      const frictionFrames = frames.filter(({ high, low }) => high > low);
+      expect(
+        frictionFrames.length * FRAME_SECONDS * 1000,
+        `${id} has ${(frictionFrames.length * FRAME_SECONDS * 1000).toFixed(0)} ms where high frequencies dominate; its friction was lost, most likely to a low encoder bitrate`,
       ).toBeGreaterThanOrEqual(60);
     },
   );
