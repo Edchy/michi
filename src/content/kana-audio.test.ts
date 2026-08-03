@@ -128,6 +128,34 @@ describe.skipIf(!hasFfmpeg())("kana recordings contain their consonant", () => {
    * not the phoneme: a vowel with 400 ms of hiss in front is just as late as an affricate
    * with the same. The rest of the set lands at or under 110 ms.
    */
+  /**
+   * ち and つ are affricates: a friction burst (the "ch", the "ts") that ramps up over
+   * roughly 100 ms before the vowel arrives. That ramp is the consonant, and it is quiet
+   * relative to the vowel, so any head trim aimed at the loud part will eat it.
+   *
+   * This check exists because that is exactly what happened. A first repair used a -30 dBFS
+   * head threshold to strip room tone, which sat ABOVE the friction, so つ lost ~60 ms of
+   * its onset and played as "tu". The time-to-sound check below passed it, because sound
+   * did start promptly; it was just the wrong sound. Measuring quiet-but-present energy
+   * ahead of the peak is what distinguishes the two.
+   */
+  it.each(allIds().filter((id) => AFFRICATE.test(id.replace(/^hira_/, ""))))(
+    "%s keeps the friction that ramps in before its vowel",
+    (id) => {
+      const frames = envelope(join(AUDIO_DIR, `${id}.webm`));
+      const peak = Math.max(...frames);
+      const vowelAt = frames.findIndex((value) => value > peak - 10);
+      // Frames before the vowel that carry real energy: the affricate's friction.
+      const friction = frames
+        .slice(0, vowelAt)
+        .filter((value) => value > peak - 35 && value > -60);
+      expect(
+        friction.length * FRAME_SECONDS * 1000,
+        `${id} has only ${(friction.length * FRAME_SECONDS * 1000).toFixed(0)} ms of friction before its vowel, so its consonant was trimmed off`,
+      ).toBeGreaterThanOrEqual(60);
+    },
+  );
+
   it.each(allIds())("%s starts promptly, with no dead air in front", (id) => {
     const frames = envelope(join(AUDIO_DIR, `${id}.webm`));
     const peak = Math.max(...frames);

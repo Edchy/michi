@@ -85,14 +85,25 @@ The rest of the set reaches its sound within 110 ms. These two took 410 ms, whic
 as the app being slow rather than as a bad recording, and that is why listening to a
 single clip never caught it.
 
-- **Repaired (3 August 2026):** trimmed with a −30 dBFS head threshold, above the room
-  tone but below the affricate friction, keeping 40 ms of pre-roll and a −55 dBFS tail
-  threshold so the natural decay survives. Voiced span is unchanged (ち 310→290 ms,
-  つ 330→290 ms; the difference is decay below the measurement floor, not speech).
+- **First attempt (3 August 2026), wrong:** trimmed with a −30 dBFS head threshold. That
+  threshold is above the affricate friction, not below it, so it removed ~60 ms of the
+  consonant and つ played as "tu". The claim that it sat "below the affricate friction"
+  was simply false, and the voiced-span check used to justify it measured energy above
+  −30 dBFS, which is the vowel. It could not see the friction it was destroying.
+- **Repaired (3 August 2026):** cut at a fixed offset just before the measured speech
+  start instead (つ at 310 ms, ち at 360 ms), found by locating where energy first rises
+  8 dB above the room-tone floor and stays there. A fixed cut is auditable; a threshold
+  has to guess where friction begins, and guessed wrong. Tail trimmed at −55 dBFS.
+  Energy above −30 dBFS now matches the originals exactly (つ 340 ms, ち 320 ms).
 
 `src/content/kana-audio.test.ts` now measures time-to-sound on all 46 clips and fails
 above 200 ms, so dead air cannot ship again. That check is per file rather than per sound
 type: a vowel with 400 ms of hiss in front is just as late as an affricate with the same.
+
+It also measures the friction ahead of the vowel in ち and つ, and fails under 60 ms. That
+check exists because time-to-sound alone passed the broken repair above: sound did start
+promptly, it was simply the wrong sound. Both checks were verified by running them against
+the defective files rather than assumed to work.
 
 ### Measured state of the full set, 3 August 2026
 
