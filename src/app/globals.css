@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Keyboard-shortcut hints must not promise a key a touch device does not have.
+   `keyboard:` shows an element only where a real pointer and hover exist, so phones
+   and tablets see the on-screen instruction instead. CSS rather than JS on purpose:
+   the server cannot know the device, and a JS check would flash the wrong copy. */
+@custom-variant keyboard (@media (hover: hover) and (pointer: fine));
+
 /* Design tokens — see DESIGN.md. Signal yellow marks forward movement, Sign Black
    supplies structure, and Station White holds the lesson surface.
    @theme keys generate Tailwind utilities: --color-ink → text-ink/bg-ink, etc. */

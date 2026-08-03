@@ -15,8 +15,54 @@ function replaceStation(
 }
 
 describe("validateStationCourse", () => {
-  it("accepts the first four approved station definitions", () => {
+  it("accepts the approved station definitions", () => {
     expect(validateStationCourse(FIRST_STATIONS)).toEqual([]);
+  });
+
+  // A narrative station exists so reading is not scored. These two checks are what stop
+  // it drifting back into a test once someone wants "just a quick comprehension check."
+  it("catches a narrative station that introduces review targets", () => {
+    const stations = replaceStation("reading-on", (station) => ({
+      ...station,
+      introducedCapabilities: [{ itemId: "hira_no", capability: "symbol-to-sound" }],
+    }));
+
+    expect(validateStationCourse(stations)).toContain(
+      "Station reading-on is narrative but introduces review targets.",
+    );
+  });
+
+  it("catches a narrative station given a graded completion contract", () => {
+    const stations = replaceStation("reading-on", (station) => ({
+      ...station,
+      completion: {
+        kind: "mixed-items",
+        itemIds: ["hira_no"],
+        capabilities: ["symbol-to-sound"],
+        mistakeRecovery: "Requeue the missed line.",
+        message: "You read the passage correctly.",
+      },
+    }));
+
+    expect(validateStationCourse(stations)).toContain(
+      "Station reading-on is narrative but has a graded completion contract.",
+    );
+  });
+
+  // Rule 11 applied to connected text: one untaught character turns reading for meaning
+  // back into guessing, and natural Japanese makes it easy to introduce one by accident.
+  it("catches a passage line containing an untaught character", () => {
+    const stations = replaceStation("reading-on", (station) => ({
+      ...station,
+      application: {
+        description: "A line with an H-row character in it.",
+        itemIds: [...(station.application?.itemIds ?? []), "hira_ha"],
+      },
+    }));
+
+    expect(validateStationCourse(stations)).toContain(
+      "Station reading-on uses unintroduced item hira_ha in its application.",
+    );
   });
 
   it("catches a prerequisite that no earlier station introduces", () => {

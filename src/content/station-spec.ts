@@ -1,11 +1,22 @@
-import { K_ROW, VOWELS } from "./hiragana";
+import { K_ROW, N_ROW, S_ROW, T_ROW, VOWELS } from "./hiragana";
+import { EKI, FIRST_PASSAGE, type Passage } from "./track1";
 
 export type StationType =
   | "orientation"
   | "acquisition"
   | "consolidation"
   | "application"
-  | "assessment";
+  | "assessment"
+  /**
+   * Connected reading. The learner reads several lines of real Japanese for meaning,
+   * using only characters already introduced.
+   *
+   * It is its own type rather than a phase inside an acquisition station because its job
+   * is understanding rather than establishing a review target. Rule 7 puts real use
+   * outside graded evidence, so a narrative station introduces nothing, checks nothing,
+   * and cannot be failed. `validateStationCourse` enforces that below.
+   */
+  | "narrative";
 
 export type Capability = "sound-to-symbol" | "symbol-to-sound";
 
@@ -82,9 +93,38 @@ function targetsFor(itemIds: readonly string[]): ReviewTarget[] {
 
 const vowelIds = VOWELS.map((kana) => kana.id);
 const kRowIds = K_ROW.map((kana) => kana.id);
+const sRowIds = S_ROW.map((kana) => kana.id);
+const tRowIds = T_ROW.map((kana) => kana.id);
+const nRowIds = N_ROW.map((kana) => kana.id);
 const firstTenIds = [...vowelIds, ...kRowIds];
 const vowelTargets = targetsFor(vowelIds);
 const kRowTargets = targetsFor(kRowIds);
+const sRowTargets = targetsFor(sRowIds);
+const tRowTargets = targetsFor(tRowIds);
+const nRowTargets = targetsFor(nRowIds);
+
+/** Every kana the course defines, indexed by the glyph a learner actually sees. */
+const KANA_BY_GLYPH = new Map(
+  [...VOWELS, ...K_ROW, ...S_ROW, ...T_ROW, ...N_ROW].map((kana) => [kana.glyph, kana.id]),
+);
+
+/**
+ * The learning items a passage requires, derived from its own text.
+ *
+ * This is what makes rule 11 enforceable for connected reading: the validator receives
+ * the real characters of every line, so a passage containing a character no earlier
+ * station introduced fails the course check instead of reaching a learner. An unknown
+ * glyph maps to a deliberately unmatchable id so it is reported rather than skipped.
+ */
+export function passageItemIds(passage: Passage): string[] {
+  const ids = new Set<string>();
+  for (const line of passage.lines) {
+    for (const glyph of line.glyphs) {
+      ids.add(KANA_BY_GLYPH.get(glyph) ?? `unknown-kana:${glyph}`);
+    }
+  }
+  return [...ids];
+}
 
 /** The first four stations expressed as data, in course order. */
 export const FIRST_STATIONS: readonly StationDefinition[] = [
@@ -133,7 +173,10 @@ export const FIRST_STATIONS: readonly StationDefinition[] = [
     ],
     application: {
       description: "Decode えき; its meaning is ungraded context.",
-      itemIds: ["hira_e", "hira_ki"],
+      // Taken from the word itself rather than retyped, so the validator checks the kana
+      // the learner actually sees. A hand-written list can drift from the word and then
+      // silently approves a station whose word contains an untaught character.
+      itemIds: EKI.kana.map((kana) => kana.id),
     },
     completion: {
       kind: "introduced-targets",
@@ -150,7 +193,7 @@ export const FIRST_STATIONS: readonly StationDefinition[] = [
     learningSequence: ["prepare", "review", "recall", "use", "close"],
     application: {
       description: "Decode えき again from the mixed first-ten set.",
-      itemIds: ["hira_e", "hira_ki"],
+      itemIds: EKI.kana.map((kana) => kana.id),
     },
     completion: {
       kind: "mixed-items",
@@ -158,6 +201,100 @@ export const FIRST_STATIONS: readonly StationDefinition[] = [
       capabilities: ["sound-to-symbol", "symbol-to-sound"],
       mistakeRecovery: "Reveal the association and requeue only the missed target.",
       message: "You recalled the first ten hiragana together and read えき again.",
+    },
+  },
+  {
+    identity: { id: "s-row", type: "acquisition", title: "The S row" },
+    outcome: "Connect さしすせそ to their sounds in both directions, including irregular し.",
+    // The k-row only. The vowels are older and return through scheduled review; opening
+    // every future station with every earlier row would grow without bound and blow the
+    // five-prompt budget in rule 10 before the station begins.
+    prerequisites: kRowTargets,
+    introducedCapabilities: sRowTargets,
+    learningSequence: [
+      "prepare",
+      "review",
+      "orient",
+      "teach",
+      "connect",
+      "recall",
+      "checkpoint",
+      "close",
+    ],
+    // No application step: さかな is readable now, but no recording exists for it. See
+    // buildTrack4 in track1.ts.
+    application: null,
+    completion: {
+      kind: "introduced-targets",
+      targetKeys: sRowTargets.map(reviewTargetKey),
+      mistakeRecovery: "Reteach and requeue only the missed target after other questions.",
+      message: "You connected the five S-row sounds to さしすせそ in both directions.",
+    },
+  },
+  {
+    identity: { id: "t-row", type: "acquisition", title: "The T row" },
+    outcome: "Connect たちつてと to their sounds in both directions, including ち and つ.",
+    prerequisites: sRowTargets,
+    introducedCapabilities: tRowTargets,
+    learningSequence: [
+      "prepare",
+      "review",
+      "orient",
+      "teach",
+      "connect",
+      "recall",
+      "checkpoint",
+      "close",
+    ],
+    application: null,
+    completion: {
+      kind: "introduced-targets",
+      targetKeys: tRowTargets.map(reviewTargetKey),
+      mistakeRecovery: "Reteach and requeue only the missed target after other questions.",
+      message: "You connected the five T-row sounds to たちつてと in both directions.",
+    },
+  },
+  {
+    identity: { id: "n-row", type: "acquisition", title: "The N row" },
+    outcome: "Connect なにぬねの to their sounds in both directions.",
+    prerequisites: tRowTargets,
+    introducedCapabilities: nRowTargets,
+    learningSequence: [
+      "prepare",
+      "review",
+      "orient",
+      "teach",
+      "connect",
+      "recall",
+      "checkpoint",
+      "close",
+    ],
+    application: null,
+    completion: {
+      kind: "introduced-targets",
+      targetKeys: nRowTargets.map(reviewTargetKey),
+      mistakeRecovery: "Reteach and requeue only the missed target after other questions.",
+      message: "You connected the five N-row sounds to なにぬねの in both directions.",
+    },
+  },
+  {
+    identity: { id: "reading-on", type: "narrative", title: "Reading on" },
+    outcome: "Read connected Japanese for meaning, using only characters already known.",
+    // No prerequisites declared. Opening review exists to prepare the learner for new
+    // material, and this station introduces none; the reading itself is the exposure.
+    prerequisites: [],
+    introducedCapabilities: [],
+    learningSequence: ["orient", "use", "close"],
+    application: {
+      description: "Read four lines of connected Japanese; meanings are revealed, never tested.",
+      // Derived from the passage, so the validator checks the characters the learner
+      // actually sees rather than a hand-kept list that can drift from the content.
+      itemIds: passageItemIds(FIRST_PASSAGE),
+    },
+    completion: {
+      kind: "acknowledgement",
+      evidence: "The learner reads each line and reveals its meaning.",
+      message: "You read connected Japanese, not single characters.",
     },
   },
 ];
@@ -170,6 +307,19 @@ function duplicates(values: readonly string[]): string[] {
     seen.add(value);
   }
   return [...repeated];
+}
+
+/**
+ * The declared prerequisites for a station, by id.
+ *
+ * The runner uses this to plan opening review, so a new station gets prerequisite review
+ * by declaring prerequisites here rather than by adding a branch to the page component.
+ * An unknown id yields none, which is correct for a station that opens the curriculum.
+ */
+export function prerequisitesFor(stationId: string): readonly ReviewTarget[] {
+  return (
+    FIRST_STATIONS.find((station) => station.identity.id === stationId)?.prerequisites ?? []
+  );
 }
 
 /**
@@ -211,6 +361,18 @@ export function validateStationCourse(stations: readonly StationDefinition[]): s
     for (const itemId of station.application?.itemIds ?? []) {
       if (!availableItems.has(itemId)) {
         errors.push(`${label} uses unintroduced item ${itemId} in its application.`);
+      }
+    }
+
+    // A narrative station's whole value is that reading is not being scored. If one ever
+    // acquires a review target or a graded checkpoint, it has quietly become a test, and
+    // the learner's reading becomes another thing to get wrong.
+    if (station.identity.type === "narrative") {
+      if (station.introducedCapabilities.length > 0) {
+        errors.push(`${label} is narrative but introduces review targets.`);
+      }
+      if (station.completion.kind !== "acknowledgement") {
+        errors.push(`${label} is narrative but has a graded completion contract.`);
       }
     }
 

@@ -20,8 +20,13 @@ For every phase:
 
 - Branch: `learning-system-foundation`
 - Safe pre-reset baseline: `936f287`
-- Current focus: rebuild the project definition from the working product outward.
-- Not in scope yet: adding more kana rows, tracks, or provinces.
+- Phases 1 to 5 are complete. Phase 6 is in progress: the blueprint holds for eight
+  stations. The S row proved a new acquisition station is content, not code, and the T
+  and N rows confirmed it twice more.
+- Approved rule 12 added connected reading as its own ungraded station type (station 8).
+- Current focus: audio. た and て carry a known onset defect and now teach the wrong sound
+  in station 6; word audio blocks the reading payoff and spoken narrative lines.
+- Not in scope yet: katakana, kanji, tracked vocabulary, or any province beyond the first.
 
 ## Shared terminology
 
@@ -414,8 +419,9 @@ is clear:
 
 1. Resolved: the final checkpoint now covers every vowel in both directions and requeues
    only missed targets.
-2. The current completion message says the learner can “hear, say, and recognize” all
-   five sounds. Speaking is rehearsed but unverified, so this overstates the evidence.
+2. Resolved: the completion message no longer claims speaking. It now states only the two
+   recognition directions the checkpoint actually verified, and the station count moved
+   out of the capability sentence into its own line.
 3. Resolved: final-checkpoint answers create persistent item-capability review records.
 4. Guided tracing is implemented only for `あ`; canonical stroke-order guidance, later
    blank recall, and any evaluation remain unimplemented and outside completion evidence.
@@ -512,12 +518,14 @@ kana.
 
 ### K-row station implementation gaps
 
-1. The authored step queue still contains a vowel-review placeholder, but the live page
-   now fills or removes it from the bounded session plan.
+1. Resolved: the authored step queue contains review placeholders, and the live page
+   fills or removes them from the bounded session plan. Driven by declared prerequisites,
+   so this now holds for any station rather than the K row specifically.
 2. The K-row checkpoint now guarantees all five kana in both directions.
 3. Due prerequisite review and one finite recovery pass are tracked; broader readiness
    language and recovery UI remain future work.
-4. Completion does not yet create persistent K-row review targets.
+4. Resolved: the K-row final checkpoint now introduces its five kana in both directions
+   and records their evidence, using the same persistence seam as the vowel station.
 5. Guided tracing is not implemented and remains outside completion evidence.
 
 The K-row translation confirms that prerequisites and application fit the existing
@@ -622,7 +630,9 @@ Handoff: the S row returns to acquisition, using the same five-vowel pattern to 
 1. Resolved: the initial pass contains every kana exactly once with five prompts in each
    direction; only a missed item-direction pair is requeued.
 2. It is not preceded by generated due review or recovery based on learner records.
-3. Attempts do not update persistent item-capability review records.
+3. Resolved: consolidation attempts now update persistent review records. The station
+   introduces nothing new; it backfills a missing record only so evidence can be stored,
+   which never resets a schedule the learner already earned.
 4. Resolved: checkpoint coverage now supports the completion claim that both rows were
    recalled together in this session.
 5. The existing `Step` union and station configuration can express the shorter sequence,
@@ -714,6 +724,35 @@ than when the character table has merely been covered.
 The opening station combines the whole course's brief three-script orientation with
 the Hiragana province orientation: what the scripts are and why learning begins with
 hiragana. Deeper script history belongs in the following book stop.
+
+### Approved rule 11: in province 1, words connect kana rather than being learned
+
+A word in the hiragana province exists to join characters the learner already has. It
+proves the kana are becoming usable and gives a station a real payoff. It is not
+vocabulary the learner is expected to retain.
+
+The rule for authoring one:
+
+- Every kana in the word must already be introduced. A word may not carry an untaught
+  character, because then it is no longer a decoding task.
+- The word creates no review target and never returns through spaced repetition.
+- Its meaning is revealed after the learner has decoded it, and is never tested.
+- No station may claim the learner knows a word. `Today you read your first Japanese
+  word` is honest; `you know えき` is not.
+
+Roughly one word per acquisition station is enough. The readable set grows quickly:
+after the S row `さかな`, after the T row `あした`, and so on.
+
+This rule exists because the risk is drift. By station 10 the learner has decoded
+several words, and it starts to feel as though they hold them. Nothing has scheduled a
+single one, so a later station that says "words you know" would be making a false
+claim.
+
+Vocabulary as tracked knowledge begins in the `First words & grammar` track, stations
+14 onward. That needs word items with their own ids, capabilities beyond the current
+`sound-to-symbol` and `symbol-to-sound`, and a decision about how a bounded review
+budget is split between kana and words. None of it is required for province 1, and it
+should not be built until that track is designed.
 
 ### Approved province 2: Katakana in use
 
@@ -858,15 +897,20 @@ opening answers supply that evidence. It also cannot move unrelated overdue mate
 into a station just because it exists. Focused tests cover relevance, future schedules,
 long-gap overflow, priority, deduplication, and bounded recovery.
 
-The K-row station now consumes this plan. Its authored review steps act only as insertion
-points: when no prerequisite target is due, both are removed; otherwise they render the
-selected exact item-capability prompts. Each initial answer updates its spaced schedule.
-Actual misses receive one recovery pass, whose answers are recorded without advancing the
-SRS clock, and then the station continues even if recovery was unsuccessful.
+Any station consumes this plan. Its authored review steps act only as insertion points:
+when no prerequisite target is due, both are removed; otherwise they render the selected
+exact item-capability prompts. Each initial answer updates its spaced schedule. Actual
+misses receive one recovery pass, whose answers are recorded without advancing the SRS
+clock, and then the station continues even if recovery was unsuccessful.
 
-For compatibility, a learner who reached the K row before review-state existed has the
-declared vowel prerequisites seeded as due rather than silently skipping review. This is
-a course-order migration bridge, not evidence that those targets were remembered.
+This is driven by the station's declared prerequisites, read through
+`prerequisitesFor(stationId)`, rather than by naming a station in the page component. A
+station with no declared prerequisites opens the curriculum and shows no review. A new
+station therefore gets opening review by declaring prerequisites, with no code change.
+
+For compatibility, a learner who reached a station before review-state existed has its
+declared prerequisites seeded as due rather than silently skipping review. This is a
+course-order migration bridge, not evidence that those targets were remembered.
 
 Phase 3 is complete for the first end-to-end proof: vowel checkpoint evidence now returns
 as bounded, need-based review in the K-row station. Later acquisition stations can reuse
@@ -990,15 +1034,165 @@ as a learning opportunity; correctness is not falsely claimed.
 
 ## Phase 6: prove the blueprint before expanding
 
-Goal: show that adding content is mostly authoring rather than rebuilding the app.
+Goal: adding a station should be authoring content, not changing code. The first three
+stations exist to establish that shape; the remaining hiragana stations should then be
+mostly content.
 
-- [ ] Prove one new acquisition station.
+- [x] Prove one new acquisition station.
 - [x] Prove one consolidation station.
 - [ ] Prove one vocabulary or grammar application station.
 - [ ] Observe a real learner using the sequence.
 - [ ] Revise the blueprint based on confusion, fatigue, recall, and pacing.
 
 Only after this phase should we scale into more tracks and provinces.
+
+### Result: the S row was authored as content
+
+Measured on 3 August 2026, after the S row shipped. The two row builders collapsed into
+one `buildRowStation({ row, review, word, trace })`, and station 5 was then added without
+a new step kind, a new component, or a branch in the page. What it took:
+
+1. `S_ROW` in `src/content/hiragana.ts` (five kana, three hints each).
+2. One `buildTrack4` call.
+3. A `StationDefinition` in `station-spec.ts`.
+4. A `StationConfig` of copy in `track1-page.tsx`.
+5. A four-line route, and an `href` on the worldmap entry that already existed.
+
+Items 1 and 4 are authoring. Items 2, 3 and 5 are boilerplate that could be derived from
+a single row descriptor later; that is worth doing once the T and N rows have shown it
+repeat twice more, not before. `track1.test.ts` now asserts the S row's step shape equals
+the K row's minus the word, so a future row that needs code will fail loudly.
+
+Two things the proof surfaced:
+
+- **The S row ships without a word.** さかな is readable now, but no recording exists for
+  it, and word audio is the binding constraint on every later row. The word is a payoff,
+  not completion evidence, so a station may ship without one. Sourcing word audio is now
+  the top content blocker, ahead of the remaining kana.
+- **Opening review is the most recent row, not everything taught.** The S row reviews the
+  K row only. Reviewing every earlier row would blow rule 10's five-prompt budget by the
+  T row; older material returns through the scheduled queue instead.
+
+### What a new station cost before that proof
+
+No application logic branches on a station id: prerequisites, opening review, and
+book-stop mentions all derive from declared data.
+
+Ready and reusable:
+
+- The station contract and its validator, with three worked proofs.
+- Persistent learner state, the SRS engine, and the bounded session planner.
+- Every teaching component (`teach`, `reveal`, `match`, `drill`, `grid`, `done`), each
+  taking a kana pool rather than a named row.
+- `prerequisitesFor(stationId)` and `hasBookStopAfter(stationId)`, both derived.
+- All eleven gojūon rows in `src/content/gojuon.ts`.
+- Human audio for all 46 kana in `public/audio/hiragana/`.
+
+Still required:
+
+1. **Kana content for the remaining 31.** `src/content/hiragana.ts` defines 15. Each kana
+   needs a glyph, reading, `say`, and three pronunciation hints. The hints are the real
+   authoring work; everything else is mechanical.
+2. Resolved: `buildRowStation` replaced the duplicated builders, and the S row proved it.
+3. **A word per acquisition station**, under rule 11: it may only join kana the learner
+   already has. `さかな` after the S row, `あした` after the T row, and so on. Only seven
+   word recordings exist, all spent on stations 1 to 3, so **every later word is blocked
+   on audio**. The kana recordings came from a specific personal grant (see
+   `public/audio/hiragana/ATTRIBUTION.md`); word audio needs its own source, and asking
+   the same speaker is the obvious first move.
+
+### The least proven part: reinforcement stations
+
+The "glue" stations that consolidate earlier rows have exactly one example,
+`look-back-1`, and it operates on a hardcoded `FIRST_TEN`. A generic consolidation
+station needs to know everything taught so far, and nothing derives that today.
+
+Two decisions are open and should be made before the second consolidation station is
+authored, not after:
+
+- Where does "everything taught up to station N" come from? The station specs already
+  declare `introducedCapabilities`, so the course order can probably supply it, but no
+  code reads it that way yet.
+- How often should a reinforcement station appear, and does it mix the whole known set or
+  a bounded selection? Rule 10 caps generated review; an authored consolidation station is
+  a separate budget and currently has no stated limit.
+
+### Approved rule 12: connected reading is its own station type, and is never graded
+
+Resolved 3 August 2026 and implemented as station 8, `reading-on`.
+
+A narrative station has one job: the learner reads several lines of real Japanese and
+takes the meaning of the whole. It is a separate station type rather than a phase inside
+an acquisition station because its job is understanding, not establishing a review
+target, and rule 7 already places real use outside graded evidence.
+
+The rules for authoring one:
+
+- Every character in every line must already be introduced. Rule 11's constraint applies
+  to lines exactly as it does to words.
+- The station introduces no review target, and nothing in it can be answered wrongly.
+- Meanings are revealed by the learner, never tested.
+- No station may claim the learner has learned vocabulary or grammar from it. `Today you
+  read Japanese a line at a time` is honest; `you know の` is not.
+
+Three guardrails make this structural rather than a convention to remember:
+
+1. `ReadableLine` has no `answer` or `options` field, so a line cannot be turned into a
+   checkpoint prompt. There is nowhere to put the right answer.
+2. `validateStationCourse` rejects a narrative station that introduces review targets or
+   carries a graded completion contract.
+3. `passageItemIds` derives the required items from the passage's own text, so a line
+   containing an untaught character fails the course validation. This already caught one:
+   the natural sentence for the first passage used は, which the H row does not introduce
+   until station 9.
+
+That last point set the honest ceiling for the first passage. With 25 kana and no は,
+a grammatical sentence is not yet possible, so the passage builds to a noun phrase
+(`そとのちいさいねこ`) rather than inventing ungrammatical Japanese to hit a target.
+Sentences arrive once the H row does.
+
+### Superseded: the open question this replaced
+
+The original outline for Michi put comprehensible input (reading and hearing simple,
+slightly-too-hard material and understanding it from context) at the centre. Nothing in
+the current system does that. Every station is item-and-checkpoint shaped, and the one
+reading moment, えき, is a single decoded word.
+
+This is a real gap rather than a missing feature, because the two disagree structurally.
+An item has a review target and a schedule. A story does not: its value is the
+understanding it builds, and grading a learner on a story turns it back into a test.
+
+Two defensible answers, and the choice should be made before the second consolidation
+station is authored:
+
+1. **A `narrative` station type.** Short authored passages using only introduced kana,
+   read and heard, understood from context, never graded. It becomes a fourth station
+   type alongside orientation, acquisition, and consolidation, and rule 11 already
+   supplies its constraint: it may not contain an untaught character.
+2. **Province 1 stays item-shaped.** Connected reading begins in province 4, where the
+   vocabulary to build a passage from actually exists.
+
+The case for (1) is that reading arrives while the learner still finds it hard, which is
+when it does the most work, and that a hiragana-only passage is possible from the T row
+onward. The case for (2) is that a passage built from 20 kana and no vocabulary is
+contrived, and contrived reading teaches decoding rather than comprehension.
+
+Resolved in favour of (1). See approved rule 12 above.
+
+### Suggested order for the next session
+
+1. **Replace the た and て recordings.** Both carry the trimmed-onset defect documented in
+   `public/audio/hiragana/ATTRIBUTION.md`, so they play as あ and え. They were tolerable
+   while the T row was unbuilt; now that it has shipped as station 6, they teach the wrong
+   sound to a learner. `src/content/kana-audio.test.ts` lists them.
+2. **Source word audio.** It blocks two things: the reading payoff at the end of each
+   acquisition station, and spoken lines in narrative stations (`ReadableLine.audioSrc` is
+   defined but unset everywhere, so the first passage is currently read but not heard).
+   Connected reading without hearing it is half the exercise.
+3. Author the H and M rows as content. Once は exists, the second narrative station can
+   use real sentences rather than noun phrases.
+4. Then resolve the two reinforcement-station questions above and author the second
+   consolidation station.
 
 ## Phase 1 result
 

@@ -52,6 +52,24 @@ Voiced span was compared before and after for every file; none lost speech. The
 largest duration drop is ろ (1.52 s → 0.83 s), which was 0.57 s of leading and 0.16 s
 of trailing silence — its 0.79 s of voice is intact.
 
+### Correction: the trim removed stop-consonant onsets
+
+The claim above is wrong for stop consonants. A k or t is produced by closing the vocal
+tract and releasing it, so the recording legitimately begins with a near-silent closure
+before the burst. The −50 dBFS threshold in step 1 sat above that closure, so the trim
+cut into the consonant itself and the 15 ms pad in step 4 did not restore it. The result
+was files that begin partway into the vowel.
+
+Found by ear on the K-row station: き く け こ played as い う え お. か survived because
+its burst is loud enough that more of the onset stayed above the threshold.
+
+- **Repaired (1 August 2026):** か き く け こ, from newly supplied recordings. Trimmed
+  with a −38 dBFS threshold and 40 ms of pre-roll so the closure and burst are kept,
+  then peak-normalized to −3 dBFS to sit with the rest of the set.
+- **Still affected:** た and て, which belong to the not-yet-built T row. They need the
+  same replacement. `src/content/kana-audio.test.ts` lists them explicitly and checks
+  every other stop-consonant clip, so this defect cannot return unnoticed.
+
 The processed clips are committed here, but the downloaded untrimmed source files are
 not kept in the repository. The following command records the processing recipe; it
 requires separately restoring those source files into `../5-vowels/` and `../rows/`:

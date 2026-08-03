@@ -13,6 +13,7 @@ import {
   stationRangeOfProvince,
   trackHue,
   TRACK_HUES,
+  hasBookStopAfter,
 } from "./worldmap";
 
 describe("worldmap structure", () => {
@@ -119,5 +120,23 @@ describe("track hues", () => {
       expect(n).toBeGreaterThanOrEqual(1);
       expect(n).toBeLessThanOrEqual(TRACK_HUES);
     });
+  });
+});
+
+// A completion slide tells the learner whether a book stop is coming, so this lookup has
+// to agree with the map. Promising one that is not there sends them hunting for nothing.
+describe("book stops on the way out of a station", () => {
+  it("reports the stops the map actually places", () => {
+    expect(hasBookStopAfter("vowels")).toBe(true);
+    expect(hasBookStopAfter("k-row")).toBe(true);
+  });
+
+  it("reports none where the map places none", () => {
+    // The next stop after this one unlocks at station 8, not 4.
+    expect(hasBookStopAfter("look-back-1")).toBe(false);
+  });
+
+  it("is false for an unknown station rather than throwing", () => {
+    expect(hasBookStopAfter("not-a-station")).toBe(false);
   });
 });

@@ -181,4 +181,37 @@ describe("one-target learner-state lifecycle", () => {
     expect(saved?.attemptCount).toBe(1);
     expect(loadLearnerState(storage).reviewRecords["hira_a:sound-to-symbol"]).toEqual(saved);
   });
+
+  // A consolidation station records evidence against targets earlier stations introduced,
+  // so it calls the introduce boundary to backfill any missing record. That backfill must
+  // never reset a schedule the learner has already earned.
+  it("keeps an earned schedule when a consolidation station reintroduces its pool", () => {
+    const storage = new MemoryStorage();
+    persistIntroducedReviewTarget(A_SOUND_TO_SYMBOL, NOW, storage);
+    const earned = persistReviewAttempt(
+      A_SOUND_TO_SYMBOL,
+      { correct: true, source: "checkpoint" },
+      NOW,
+      storage,
+    );
+
+    const later = new Date("2026-08-02T10:00:00Z");
+    persistIntroducedReviewTarget(A_SOUND_TO_SYMBOL, later, storage);
+    const afterBackfill = loadLearnerState(storage).reviewRecords["hira_a:sound-to-symbol"];
+
+    expect(afterBackfill).toEqual(earned);
+    expect(afterBackfill?.attemptCount).toBe(1);
+
+    // The consolidation answer itself is honest evidence and still moves the schedule.
+    const consolidated = persistReviewAttempt(
+      A_SOUND_TO_SYMBOL,
+      { correct: true, source: "review" },
+      later,
+      storage,
+    );
+    expect(consolidated?.attemptCount).toBe(2);
+    expect(consolidated?.schedule.dueDate.getTime()).toBeGreaterThan(
+      earned!.schedule.dueDate.getTime(),
+    );
+  });
 });

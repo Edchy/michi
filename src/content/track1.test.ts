@@ -1,6 +1,15 @@
 import { describe, it, expect } from "vitest";
-import { buildTrack1, buildTrack2, buildTrack3, EKI, FIRST_TEN } from "./track1";
-import { K_ROW, VOWELS } from "./hiragana";
+import {
+  buildTrack1,
+  buildTrack2,
+  buildTrack3,
+  buildTrack4,
+  buildTrack7,
+  EKI,
+  FIRST_PASSAGE,
+  FIRST_TEN,
+} from "./track1";
+import { K_ROW, N_ROW, S_ROW, T_ROW, VOWELS } from "./hiragana";
 
 describe("buildTrack1", () => {
   const steps = buildTrack1();
@@ -16,16 +25,24 @@ describe("buildTrack1", () => {
     }
   });
 
-  it("reveals the family, adds context, then assesses before speaking rehearsal", () => {
+  it("reveals the family, then assesses before speaking rehearsal", () => {
     expect(steps[6]!.kind).toBe("reveal");
     expect(steps[7]!.kind).toBe("match");
-    expect(steps[8]!.kind).toBe("context");
-    expect(steps.at(-3)!.kind).toBe("rehearse");
     const drills = steps.filter((s) => s.kind === "drill");
     expect(drills).toHaveLength(3); // 2 single-type blocks + 1 mixed capstone
     // The station closes on the gojūon table: the vowel row landing in the whole set.
     expect(steps.at(-2)!.kind).toBe("grid");
     expect(steps.at(-1)!.kind).toBe("done");
+  });
+
+  // The context slide states the running total and what it unlocks, so it has to land
+  // after the set has been used, not straight after teaching. Asserted as an ordering
+  // rather than an index so the rule survives steps being added around it.
+  it("states the running total only after the drills have used the set", () => {
+    const context = steps.findIndex((step) => step.kind === "context");
+    const lastDrill = steps.reduce((last, step, i) => (step.kind === "drill" ? i : last), -1);
+    expect(context).toBeGreaterThan(lastDrill);
+    expect(context).toBeLessThan(steps.findIndex((step) => step.kind === "grid"));
   });
 
   it("offers one ungraded guided trace only after the final checkpoint", () => {
@@ -133,6 +150,82 @@ describe("buildTrack2 — the k-row station", () => {
     const known = new Set([...VOWELS, ...K_ROW].map((k) => k.id));
     for (const k of EKI.kana) expect(known).toContain(k.id);
     expect(EKI.kana.map((k) => k.glyph).join("")).toBe("えき");
+  });
+});
+
+/**
+ * The claim Phase 6 exists to test: an x-row station is content, not code.
+ *
+ * If adding a row ever needs a new step kind or a branch in the page, these fail, and
+ * that failure is the signal the shared shape is wrong.
+ */
+describe("buildTrack4 — the S row, authored as content only", () => {
+  const steps = buildTrack4();
+
+  it("has the same step shape as the k-row station, minus the word", () => {
+    const kRow = buildTrack2().map((step) => step.kind);
+    expect(steps.map((step) => step.kind)).toEqual(kRow.filter((kind) => kind !== "read"));
+  });
+
+  it("teaches the five s-row kana and reviews the k-row before them", () => {
+    const review = steps.find((step) => step.kind === "review");
+    if (review?.kind === "review") expect(review.pool).toEqual(K_ROW);
+    const taught = steps.flatMap((step) => (step.kind === "teach" ? [step.kana] : []));
+    expect(taught).toEqual(S_ROW);
+    const done = steps.at(-1)!;
+    if (done.kind === "done") expect(done.learned).toEqual(S_ROW);
+  });
+
+  it("drills the s-row alone, so earlier rows come back through scheduled review", () => {
+    for (const step of steps) {
+      if (step.kind === "drill") expect(step.pool).toEqual(S_ROW);
+    }
+  });
+});
+
+/**
+ * The narrative station: connected reading, ungraded by construction.
+ *
+ * The constraint that matters is rule 11's, applied to lines instead of words. A single
+ * untaught character turns reading for meaning back into guessing, and it is easy to
+ * introduce one by writing natural Japanese without checking. This test is the reason
+ * that cannot ship.
+ */
+describe("buildTrack7 — the first connected reading", () => {
+  const steps = buildTrack7();
+  // Every kana introduced by the end of station 7, which is what this station may use.
+  const taught = new Set(
+    [...VOWELS, ...K_ROW, ...S_ROW, ...T_ROW, ...N_ROW].map((kana) => kana.glyph),
+  );
+
+  it("uses only kana taught by the preceding stations", () => {
+    for (const line of FIRST_PASSAGE.lines) {
+      const untaught = [...line.glyphs].filter((glyph) => !taught.has(glyph));
+      expect(untaught, `${line.glyphs} contains untaught ${untaught.join("")}`).toEqual([]);
+    }
+  });
+
+  it("introduces no review target and cannot be failed", () => {
+    // No drill of any role, so nothing can write evidence or a schedule.
+    expect(steps.some((step) => step.kind === "drill")).toBe(false);
+    const done = steps.at(-1)!;
+    if (done.kind === "done") expect(done.learned).toEqual([]);
+  });
+
+  it("presents every line in order, each carrying its own meaning", () => {
+    const lines = steps.flatMap((step) => (step.kind === "readLine" ? [step] : []));
+    expect(lines).toHaveLength(FIRST_PASSAGE.lines.length);
+    lines.forEach((step, i) => {
+      expect(step.index).toBe(i);
+      expect(step.total).toBe(FIRST_PASSAGE.lines.length);
+      expect(step.line.meaning.trim().length).toBeGreaterThan(0);
+    });
+  });
+
+  // The lines get longer, because the point is reading more than one word at a time.
+  it("builds from short to longer", () => {
+    const lengths = FIRST_PASSAGE.lines.map((line) => line.glyphs.length);
+    expect(lengths.at(-1)!).toBeGreaterThan(lengths[0]!);
   });
 });
 

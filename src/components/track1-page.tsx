@@ -5,7 +5,12 @@ import {
   buildTrack1,
   buildTrack2,
   buildTrack3,
+  buildTrack4,
+  buildTrack5,
+  buildTrack6,
+  buildTrack7,
   FIRST_TEN,
+  type ReadableLine,
   type ReadableWord,
   type Step,
 } from "@/content/track1";
@@ -17,20 +22,22 @@ import {
 } from "@/content/drill";
 import { makeQuestion, pickType, type Question, type QuestionType } from "@/content/question";
 import { ShuffleBag } from "@/content/bag";
-import { play, playRecording, primeAudio } from "@/lib/audio";
-import { K_ROW, VOWELS, type Kana } from "@/content/hiragana";
+import { play, playOnStepAppear, playRecording, primeAudio } from "@/lib/audio";
+import { K_ROW, N_ROW, S_ROW, T_ROW, VOWELS, type Kana } from "@/content/hiragana";
 import { GojuonGrid } from "@/components/gojuon-grid";
 import { Button } from "@/components/button";
 import { StationNav } from "@/components/station-nav";
 import { WritingSurface } from "@/components/writing-surface";
 import { SignTitle } from "@/components/sign-title";
+import { SPACE_KEY_CLASS } from "@/components/keyboard-key";
+import { hasBookStopAfter } from "@/app/worldmap";
 import {
   loadLearnerState,
   persistIntroducedReviewTarget,
   persistReviewAttempt,
 } from "@/lib/learner-state";
 import {
-  FIRST_STATIONS,
+  prerequisitesFor,
   reviewTargetKey,
   type ReviewTarget,
 } from "@/content/station-spec";
@@ -57,10 +64,42 @@ type StationConfig = {
   kana: Kana[];
   /** The intro slide's framing sentence. */
   introCopy: React.ReactNode;
-  /** The context slide: the one idea to land after the learner has used the set. */
+  /**
+   * The context slide: what the learner can now do with the set they just drilled.
+   *
+   * It runs after the drills, so it must not introduce or count anything. By this point
+   * the learner has met these five, matched them, and been tested on them three times;
+   * "Another five" reads as five more still to come, and any count contradicts the five
+   * glyphs on screen ("Ten sounds" over かきくけこ). The gojūon grid two slides later owns
+   * the running total, with every earlier row filled in and the count beneath it.
+   *
+   * The one new thing here is the capability, so state that and let the next slide prove
+   * it: in an acquisition station the application step follows immediately. Avoid
+   * structural promises ("which is where this station ends"), since the sequence can
+   * change, and leave background about the writing system to a book stop.
+   *
+   * The vowels are the exception with no word to unlock yet, so their payoff is
+   * structural: they are the base every later row is built on.
+   */
   context: { headline: string; body: React.ReactNode };
-  /** The done slide: what they can now do, and what comes next. */
-  done: { capability: string; next: string; completedId: string };
+  /**
+   * The done slide: the one claim this station earned, and the way onward.
+   *
+   * `capability` names what changed for the learner. Not a list of what they just did:
+   * "you read かきくけこ, and read えき" is a receipt for the two previous slides. It may
+   * only claim what the station verified, so speaking and writing, being rehearsed but
+   * ungraded, never appear here.
+   *
+   * There is deliberately no running count. The gojūon grid one slide earlier shows the
+   * same total with the whole table behind it, so repeating "10 of 46" here is a weaker
+   * second telling of something the learner has just seen.
+   */
+  done: {
+    /** Sentence parts. A plain string is prose; `{ kana }` is set in Klee One and, being
+     *  one inline-block, can never be broken apart across a line. */
+    capability: Array<string | { kana: string }>;
+    completedId: string;
+  };
   /** The closing gojūon slide: which rows are already filled, and which one lands now. */
   grid: { headline: string; body: React.ReactNode; known: string[]; arriving?: string };
 };
@@ -76,29 +115,21 @@ const VOWEL_STATION: StationConfig = {
     </>
   ),
   context: {
-    headline: "This order stays the same.",
-    body: (
-      <>
-        Japanese lists these sounds as あ い う え お, much like A-B-C in English. Every
-        new row follows this same vowel order.
-      </>
-    ),
+    headline: "The base of every row.",
+    body: <>Each row still to come is these five vowels with a consonant in front.</>,
   },
   grid: {
-    headline: "Here is where those five sit.",
-    body: (
-      <>
-        All of hiragana, laid out the way Japanese lays it out: rows of five, each row a
-        consonant sound crossed with the vowels you just learned. You have the top row,
-        which is the one every other row is built on.
-      </>
-    ),
+    headline: "This is all of hiragana.",
+    body: <>Every row is built on the five vowels you just learned.</>,
     known: [],
     arriving: "vowels",
   },
   done: {
-    capability: "You can hear, say, and recognize all five Japanese vowel sounds. 5 of 46.",
-    next: "Next comes the K row: か き く け こ. Those same five vowels again, each with a k in front, and at the end of it you will read your first real Japanese word.",
+    // Two honesty constraints. Speaking was rehearsed here, never checked, so it is not
+    // claimed. And completion is initial recall, not mastery: the sign reports what the
+    // learner did in this session rather than certifying a permanent ability. Review
+    // decides what actually stuck, so "today" is doing real work in this sentence.
+    capability: ["Japanese has five vowel sounds, and today you read all five."],
     completedId: "vowels",
   },
 };
@@ -116,33 +147,17 @@ const K_ROW_STATION: StationConfig = {
     </>
   ),
   context: {
-    headline: "Ten sounds, and a word you can read.",
-    // One idea, and it must be one the intro did not already state. "Five vowels with a k
-    // in front" is the intro's line, so repeating it here wastes the slide. The new fact
-    // is the capability: ten kana is enough for real words, which sets up the えき beat.
-    // No forward references: the gojūon table and the other rows are the book stop's job.
-    body: (
-      <>
-        With the vowels, that is ten characters. Enough that some real Japanese words are
-        now fully within reach, which is where this station ends.
-      </>
-    ),
+    headline: "Enough to read with.",
+    body: <>These five and the vowels cover a real Japanese word.</>,
   },
   grid: {
-    headline: "Two rows down.",
-    body: (
-      <>
-        The k row drops in under the vowels. Every row below works the same way: one
-        consonant sound crossed with あ い う え お, in that order, every time. Two rows
-        are yours, and the rest are the same shape.
-      </>
-    ),
+    headline: "Two rows of hiragana down.",
+    body: <>Every row works this way: one consonant, then あ い う え お.</>,
     known: ["vowels"],
     arriving: "k-row",
   },
   done: {
-    capability: "You can read the K row, and you read your first Japanese word. 10 of 46.",
-    next: "Next is a look back: no new characters, just time with the ten you have, until they come without effort.",
+    capability: ["Today you read your first Japanese word."],
     completedId: "k-row",
   },
 };
@@ -153,8 +168,8 @@ const FIRST_LOOK_BACK_STATION: StationConfig = {
   kana: FIRST_TEN,
   introCopy: (
     <>
-      No new characters here. Tap through the ten you know, then see which ones come
-      back without help. A pause is useful information, not a failure.
+      No new characters here, just the ten you know. A pause is useful information, not a
+      failure.
     </>
   ),
   context: {
@@ -165,43 +180,156 @@ const FIRST_LOOK_BACK_STATION: StationConfig = {
   },
   grid: {
     headline: "Ten characters, held together.",
-    body: (
-      <>
-        Nothing new was added at this stop. The vowels and k row are still the same ten
-        you arrived with, only easier to call back. That is what a look back is for.
-      </>
-    ),
+    body: <>Nothing new here. The same ten, easier to call back.</>,
     known: ["vowels", "k-row"],
   },
   done: {
-    capability: "You can recall the vowels and K row together, and read えき again. 10 of 46.",
-    next: "Next comes the S row: さ し す せ そ. Five new characters, built on the vowels you already know.",
+    capability: ["Today all ten came back, mixed and out of order."],
     completedId: "look-back-1",
   },
 };
 
+const S_ROW_STATION: StationConfig = {
+  title: "The S row.",
+  build: buildTrack4,
+  kana: S_ROW,
+  introCopy: (
+    <>
+      The same five vowels with an s in front. Four follow the pattern exactly, and one
+      does not.
+    </>
+  ),
+  context: {
+    headline: "Fifteen characters in.",
+    body: <>Three rows down. Every row still to come works the same way.</>,
+  },
+  grid: {
+    headline: "Three rows of hiragana down.",
+    body: <>Each row is one consonant across あ い う え お.</>,
+    known: ["vowels", "k-row"],
+    arriving: "s-row",
+  },
+  done: {
+    // し is the one thing this station teaches that the pattern does not give away, so it
+    // is the honest claim. No word was read here, so none is mentioned.
+    capability: ["Today you read さしすせそ, including し, the one that breaks the pattern."],
+    completedId: "s-row",
+  },
+};
+
+const T_ROW_STATION: StationConfig = {
+  title: "The T row.",
+  build: buildTrack5,
+  kana: T_ROW,
+  introCopy: (
+    <>
+      The same five vowels with a t in front. Two of these five break the pattern, not
+      just one.
+    </>
+  ),
+  context: {
+    headline: "Twenty characters in.",
+    body: <>Four rows down. You are most of the way through the first half.</>,
+  },
+  grid: {
+    headline: "Four rows of hiragana down.",
+    body: <>Each row is one consonant across あ い う え お.</>,
+    known: ["vowels", "k-row", "s-row"],
+    arriving: "t-row",
+  },
+  done: {
+    capability: ["Today you read たちつてと, including ち and つ, the two that shift."],
+    completedId: "t-row",
+  },
+};
+
+const N_ROW_STATION: StationConfig = {
+  title: "The N row.",
+  build: buildTrack6,
+  kana: N_ROW,
+  introCopy: (
+    <>
+      Five regular sounds, with no surprises. One of them, の, does a job you will see in
+      every sentence.
+    </>
+  ),
+  context: {
+    headline: "Enough to read a phrase.",
+    body: <>These twenty five characters are enough for real Japanese, not just words.</>,
+  },
+  grid: {
+    headline: "Five rows of hiragana down.",
+    body: <>More than half the basic set is behind you.</>,
+    known: ["vowels", "k-row", "s-row", "t-row"],
+    arriving: "n-row",
+  },
+  done: {
+    capability: ["Today you read なにぬねの."],
+    completedId: "n-row",
+  },
+};
+
+/**
+ * Station 8 — the first narrative station.
+ *
+ * Its config carries no `context` or `grid` copy because the station's step queue
+ * contains neither. The fields stay present because every station shares one serializable
+ * shape, the same way the consolidation station leaves `context` empty.
+ */
+const READING_ON_STATION: StationConfig = {
+  title: "Reading on.",
+  build: buildTrack7,
+  kana: [...T_ROW, ...N_ROW],
+  introCopy: (
+    <>
+      No new characters here. Four lines of real Japanese, and you already know every
+      character in them.
+    </>
+  ),
+  context: { headline: "", body: null },
+  grid: {
+    headline: "",
+    body: null,
+    known: ["vowels", "k-row", "s-row", "t-row", "n-row"],
+  },
+  done: {
+    // The honest claim. It says what the learner did, not that they have learned
+    // vocabulary or grammar: nothing here was scheduled, and nothing was tested.
+    capability: ["Today you read Japanese a line at a time, not a character at a time."],
+    completedId: "reading-on",
+  },
+};
+
 /** The stations this page can render, by id. Routes pass the id, never the config. */
-const STATIONS: Record<"vowels" | "k-row" | "look-back-1", StationConfig> = {
+const STATIONS: Record<
+  "vowels" | "k-row" | "look-back-1" | "s-row" | "t-row" | "n-row" | "reading-on",
+  StationConfig
+> = {
   vowels: VOWEL_STATION,
   "k-row": K_ROW_STATION,
   "look-back-1": FIRST_LOOK_BACK_STATION,
+  "s-row": S_ROW_STATION,
+  "t-row": T_ROW_STATION,
+  "n-row": N_ROW_STATION,
+  "reading-on": READING_ON_STATION,
 };
 
 export type StationId = keyof typeof STATIONS;
 
-const K_ROW_PREREQUISITES =
-  FIRST_STATIONS.find((station) => station.identity.id === "k-row")?.prerequisites ?? [];
-
 export default function Track1Page({ station: id = "vowels" }: { station?: StationId }) {
   const station = STATIONS[id];
+  const prerequisites = useMemo(() => prerequisitesFor(id), [id]);
   const [openingReview, setOpeningReview] = useState<OpeningReviewPlan | null>(null);
   const steps = useMemo(() => {
     const authored = station.build();
-    if (id === "k-row" && openingReview?.kind === "none") {
+    // Authored review steps are insertion points, not a promise that review happens: with
+    // nothing due, they are removed. Driven by the plan rather than by station id, so a
+    // new station gets the same behaviour without touching this component.
+    if (openingReview?.kind === "none") {
       return authored.filter((step) => step.kind !== "reviewIntro" && step.kind !== "review");
     }
     return authored;
-  }, [id, openingReview, station]);
+  }, [openingReview, station]);
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1); // 1 forward, -1 back
   const [drillBack, setDrillBack] = useState<(() => void) | null>(null);
@@ -211,25 +339,25 @@ export default function Track1Page({ station: id = "vowels" }: { station?: Stati
   const rowSoundIndex = useRef(0);
 
   useEffect(() => {
-    if (id !== "k-row") {
+    // A station that declares no prerequisites opens the curriculum and has nothing to
+    // review. Everything below keys off the declaration, never off a station id.
+    if (prerequisites.length === 0) {
       setOpeningReview(null);
       return;
     }
 
-    // Compatibility bridge: learners who completed vowels before review-state existed
+    // Compatibility bridge: learners who reached a station before review-state existed
     // have no records yet. Course order tells us the targets were introduced, so seed
     // them due-now rather than silently skipping prerequisite review.
     let state = loadLearnerState();
-    for (const target of K_ROW_PREREQUISITES) {
+    for (const target of prerequisites) {
       if (!state.reviewRecords[reviewTargetKey(target)]) {
         persistIntroducedReviewTarget(target, new Date());
         state = loadLearnerState();
       }
     }
-    setOpeningReview(
-      planOpeningReview({ state, prerequisites: K_ROW_PREREQUISITES, now: new Date() }),
-    );
-  }, [id]);
+    setOpeningReview(planOpeningReview({ state, prerequisites, now: new Date() }));
+  }, [prerequisites]);
 
   const step = steps[index]!;
   const atStart = index === 0;
@@ -437,6 +565,8 @@ function devStepLabel(step: Step, index: number): string {
       return "Speaking rehearsal";
     case "read":
       return `Read ${step.word.kana.map((kana) => kana.glyph).join("")}`;
+    case "readLine":
+      return `Read ${step.line.glyphs}`;
     case "grid":
       return "Gojūon grid";
     case "done":
@@ -521,6 +651,14 @@ function FloatingNav({
 }) {
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-10 flex justify-center pb-6">
+      {/* A scrim so tall content fades out under the nav instead of running into the
+          buttons. Transparent at the top and solid page colour by the bottom, sized to
+          clear the tallest nav (speaker + progress + Path). Behind its own siblings and
+          click-through, so it never covers a control or eats a tap. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-28 bg-gradient-to-t from-bg via-bg/85 to-transparent"
+      />
       <div data-floating-nav className="pointer-events-auto flex flex-col items-center gap-2">
         <StationNav
           onBack={onBack}
@@ -605,6 +743,8 @@ function StepView({
   const plannedReviewKana = VOWELS.filter((kana) => plannedReviewIds.has(kana.id));
 
   return (
+    // The writing surface keeps its tighter padding so the canvas stays reachable; the
+    // grid takes the normal rhythm and is allowed to run past the fold on a short window.
     <div className={step.kind === "guidedTrace" || step.kind === "blankRecall" ? "py-3" : "py-10"}>
       {step.kind === "intro" ? (
         <IntroStep station={station} />
@@ -616,6 +756,13 @@ function StepView({
         <HiraganaContextStep kana={step.kana} context={station.context} />
       ) : step.kind === "read" ? (
         <ReadWordStep word={step.word} onSoundChange={onDrillSoundChange} />
+      ) : step.kind === "readLine" ? (
+        <ReadLineStep
+          line={step.line}
+          index={step.index}
+          total={step.total}
+          onSoundChange={onDrillSoundChange}
+        />
       ) : step.kind === "grid" ? (
         <GridStep grid={station.grid} />
       ) : step.kind === "match" ? (
@@ -633,10 +780,7 @@ function StepView({
           onNavNextChange={onDrillNextChange}
         />
       ) : step.kind === "reviewIntro" ? (
-        <ReviewIntroStep
-          kana={plannedReviewKana.length > 0 ? plannedReviewKana : step.pool}
-          targetCount={openingReview?.targets.length ?? step.pool.length}
-        />
+        <ReviewIntroStep kana={plannedReviewKana.length > 0 ? plannedReviewKana : step.pool} />
       ) : step.kind === "review" ? (
         <DrillBlock
           pool={step.pool}
@@ -671,7 +815,7 @@ function StepView({
           onMeterChange={onDrillMeterChange}
           role={step.role}
           persistCheckpointEvidence={
-            station.done.completedId === "vowels" && step.role === "checkpoint"
+            step.role === "checkpoint" || step.role === "consolidation"
           }
         />
       ) : (
@@ -724,14 +868,23 @@ function KanaInText({ text }: { text: string }) {
     <>
       {parts.map((part, i) =>
         i % 2 === 1 ? (
+          // Centred, not baseline-aligned. Klee One and the UI sans sit on different
+          // intrinsic baselines, so pairing them with `items-baseline` and no line-height
+          // dropped the romaji below the glyph. The chip itself uses `align-middle` because
+          // an inline-flex box offers its last line box to the text baseline, which ignores
+          // the border and padding and left the whole pill riding low in the sentence.
           <span
             key={i}
-            className="mx-px inline-flex items-baseline gap-1 rounded-[var(--radius-btn)] border-2 border-ink bg-accent px-1.5 py-0.5 align-baseline text-ink"
+            className="mx-0.5 inline-flex items-center gap-1 rounded-[var(--radius-btn)] border-2 border-ink bg-accent px-1.5 py-0.5 align-middle text-ink"
           >
             <span className="font-kana text-base leading-none">{part}</span>
             {SAY_BY_GLYPH.get(part) && (
+              // Parenthesised because this chip sits inside a sentence: the brackets mark
+              // the romaji as a gloss on the glyph rather than as another word in the line.
+              // The stacked glyph/romaji pairs elsewhere need no brackets, as their layout
+              // already separates the two.
               <span className="text-xs leading-none text-ink-muted">
-                {SAY_BY_GLYPH.get(part)}
+                ({SAY_BY_GLYPH.get(part)})
               </span>
             )}
           </span>
@@ -744,14 +897,9 @@ function KanaInText({ text }: { text: string }) {
 }
 
 function TeachStep({ kana }: { kana: Kana }) {
-  // auto-play the sound when the step first appears. Just enough delay to let the
-  // slide paint first, so the glyph is on screen when its sound arrives. The old
-  // 250 ms was tuned when playback itself was slow; now that it is ~1 ms, that
-  // padding is pure lag.
-  useEffect(() => {
-    const t = setTimeout(() => play(kana), 60);
-    return () => clearTimeout(t);
-  }, [kana]);
+  // Auto-play when the step first appears, after the shared delay that lets the slide
+  // paint so the glyph is on screen before its sound arrives.
+  useEffect(() => playOnStepAppear(kana), [kana]);
 
   return (
     <div className="mx-auto flex max-w-md flex-col items-center gap-7 text-center">
@@ -849,8 +997,7 @@ function MatchStep({
   // Play the current target when it changes, so the learner always has a sound to hunt.
   useEffect(() => {
     if (!target) return;
-    const t = setTimeout(() => play(target), 60);
-    return () => clearTimeout(t);
+    return playOnStepAppear(target);
   }, [target]);
 
   useEffect(() => {
@@ -924,7 +1071,7 @@ function MatchStep({
  * Frames the refresher that follows. Without this, a station billed as the k row opens
  * by drilling あいうえお with no explanation, which reads as a mistake.
  */
-function ReviewIntroStep({ kana, targetCount }: { kana: Kana[]; targetCount: number }) {
+function ReviewIntroStep({ kana }: { kana: Kana[] }) {
   return (
     <div className="mx-auto flex max-w-md flex-col items-center gap-7 text-center">
       <SignTitle title="A quick look back." />
@@ -933,9 +1080,12 @@ function ReviewIntroStep({ kana, targetCount }: { kana: Kana[]; targetCount: num
           <span key={k.id}>{k.glyph}</span>
         ))}
       </p>
+      {/* Say what happens next, not why the scheduler chose it. "Due", "review target" and
+          "connection" are all words for machinery the learner cannot see. No count either:
+          the glyphs are on screen, and one target is a kana plus a direction, so any tally
+          would disagree with what is rendered. */}
       <p className="text-sm leading-relaxed text-ink-muted text-pretty">
-        {targetCount} earlier {targetCount === 1 ? "connection is" : "connections are"}
-        {" "}ready for another pass. A pause is useful information, not a failure.
+        You met these a while back. A quick check, then we carry on.
       </p>
     </div>
   );
@@ -943,21 +1093,23 @@ function ReviewIntroStep({ kana, targetCount }: { kana: Kana[]; targetCount: num
 
 function ReviewTransition({
   kind,
-  recoveryCount,
   recoveryHadMiss,
 }: {
   kind: "recovery" | "complete";
-  recoveryCount: number;
   recoveryHadMiss: boolean;
 }) {
   if (kind === "recovery") {
     return (
       <div className="mx-auto flex max-w-sm flex-col items-center gap-6 text-center">
-        <SignTitle
-          title={`Let’s see ${recoveryCount === 1 ? "that one" : `${recoveryCount} of those`} once more.`}
-        />
+        {/* No count in the sign: it counted review targets, not kana, so it disagreed with
+            what the learner had just seen, and it pushed the headline onto three lines
+            where the marker underlines only the last one. */}
+        <SignTitle title="Once more." />
+        {/* Plain about what is happening: the learner knows they missed one, so naming it
+            is calmer than hedging around it. "Connections" was the internal word for an
+            item plus a direction, which describes nothing the learner can see. */}
         <p className="leading-relaxed text-ink-muted text-pretty">
-          No need to restart. Only the connections that paused are coming back.
+          Nothing restarts. Only the ones you missed come back.
         </p>
       </div>
     );
@@ -965,13 +1117,13 @@ function ReviewTransition({
 
   return (
     <div className="mx-auto flex max-w-sm flex-col items-center gap-6 text-center">
-      <SignTitle
-        title={recoveryHadMiss ? "That’s enough for today." : "Good. Let’s continue."}
-      />
+      {/* Not "that's enough for today": this slide sits between the opening review and the
+          station's new material, so the learner is carrying on, not stopping. */}
+      <SignTitle title={recoveryHadMiss ? "Leave those for now." : "Good. Let’s continue."} />
       <p className="leading-relaxed text-ink-muted text-pretty">
         {recoveryHadMiss
-          ? "We’ll bring those connections back again later. Your place on the path has not changed."
-          : "The earlier sounds are ready for what comes next."}
+          ? "They will come round again later. Your place on the path has not changed."
+          : "Those sounds are still there. On we go."}
       </p>
     </div>
   );
@@ -1020,8 +1172,84 @@ function ReadWordStep({
         <p className="text-sm leading-relaxed text-ink-muted text-pretty">{word.note}</p>
       </div>
 
-      {!revealed && (
-        <p className="text-sm text-ink-muted">Say it out loud, then use the speaker below to check.</p>
+      {!revealed && <CheckYourselfHint lead="Say it out loud" />}
+    </div>
+  );
+}
+
+/**
+ * One line of connected Japanese.
+ *
+ * The learner reads first and reveals second, so the understanding is theirs. There is no
+ * right answer to submit and no way to be wrong: Continue is always available, and
+ * revealing the meaning is a choice rather than a verdict.
+ *
+ * Deliberately different from `ReadWordStep`: the glyphs stay on screen after the reveal,
+ * beside the meaning, because the thing being learned is the connection between the whole
+ * line and what it says, not a single character's identity.
+ */
+function ReadLineStep({
+  line,
+  index,
+  total,
+  onSoundChange,
+}: {
+  line: ReadableLine;
+  index: number;
+  total: number;
+  onSoundChange: (handler: (() => void) | null, kind: "button" | "glyph" | null) => void;
+}) {
+  const [revealed, setRevealed] = useState(false);
+
+  // Each line is its own step, so the reveal must reset or line 2 opens already answered.
+  useEffect(() => {
+    setRevealed(false);
+  }, [line.glyphs]);
+
+  useEffect(() => {
+    // Audio is optional and currently unset for every line (word recordings are the
+    // project's open content blocker), so the speaker only appears once a line has one.
+    if (!line.audioSrc) {
+      onSoundChange(null, null);
+      return;
+    }
+    const src = line.audioSrc;
+    const play = () => playRecording(src);
+    onSoundChange(play, "button");
+    return () => onSoundChange(null, null);
+  }, [line.audioSrc, onSoundChange]);
+
+  return (
+    <div className="mx-auto flex max-w-lg flex-col items-center gap-6 text-center">
+      <p className="text-sm font-medium text-ink-muted">
+        Line {index + 1} of {total}
+      </p>
+
+      <div className="flex w-full flex-wrap items-center justify-center gap-x-1 rounded-[var(--radius-lg)] border-2 border-ink bg-accent px-6 py-8">
+        {/* One run of text, not separated characters. Spacing the kana apart would turn
+            the line back into a row of glyphs to decode one at a time, which is the
+            habit this station exists to break.
+
+            `text-balance` keeps a wrapped line from leaving one stray character on the
+            second row, which reads as a broken word. Japanese has no spaces, so the
+            browser may break anywhere; balancing is the difference between a line that
+            looks like text and one that looks like it came apart. */}
+        <span className="font-kana text-[clamp(2.5rem,9vw,4.5rem)] leading-tight text-ink text-balance">
+          {line.glyphs}
+        </span>
+      </div>
+
+      {revealed ? (
+        <div className="flex flex-col gap-2">
+          <p className="text-2xl font-medium text-ink">{line.meaning}</p>
+          {line.note && (
+            <p className="text-sm leading-relaxed text-ink-muted text-pretty">{line.note}</p>
+          )}
+        </div>
+      ) : (
+        <Button variant="secondary" onClick={() => setRevealed(true)}>
+          Show what it means
+        </Button>
       )}
     </div>
   );
@@ -1151,6 +1379,11 @@ function DrillBlock({
         ? speakTarget
         : progress.current.totalCount;
 
+  // Acquisition checkpoints introduce their new targets here. A consolidation block
+  // introduces nothing new, but its pool was introduced by earlier stations: this call
+  // is idempotent, so it only backfills a record that is missing (a learner who reached
+  // this station before review-state existed) rather than resetting a mature schedule.
+  // Without it, recording evidence against a missing record would throw mid-drill.
   useEffect(() => {
     if (!persistCheckpointEvidence) return;
     const now = new Date();
@@ -1174,7 +1407,11 @@ function DrillBlock({
   }, [qNum]);
 
   function advance(correct: boolean) {
-    const activeCheckpointTarget = isCoverageCheckpoint ? checkpoint.current.current : null;
+    const activeCheckpointTarget = isCoverageCheckpoint
+      ? checkpoint.current.current
+      : isConsolidation
+        ? consolidation.current.current
+        : null;
     const activeReviewTarget = isBoundedReview ? boundedReview.current.current : null;
     const capability =
       q.type === "hearPickChar"
@@ -1337,7 +1574,6 @@ function DrillBlock({
       {reviewInterstitial ? (
         <ReviewTransition
           kind={reviewInterstitial}
-          recoveryCount={boundedReview.current.recoveryCount}
           recoveryHadMiss={boundedReview.current.recoveryHadMiss}
         />
       ) : q.type === "sayAloud" ? (
@@ -1382,7 +1618,7 @@ function PickQuestion({
   // is the prompt, so no auto audio (that'd give the answer away).
   useEffect(() => {
     if (q.type !== "hearPickChar") return;
-    play(q.answer);
+    return playOnStepAppear(q.answer);
   }, [q]);
 
   function choose(k: Kana) {
@@ -1477,8 +1713,28 @@ function SayAloudQuestion({ q }: { q: Question }) {
       <div className="flex flex-col items-center px-8 py-2">
         <span className={`${DRILL_GLYPH} text-ink`}>{q.answer.glyph}</span>
       </div>
-      <p className="text-sm text-ink-muted">Try it, then use the speaker below to check.</p>
+      <CheckYourselfHint lead="Try it" />
     </div>
+  );
+}
+
+/**
+ * "Check yourself against the recording" told two ways: keyboard devices get the
+ * shortcut, touch devices get the on-screen speaker. Only one is ever visible, so the
+ * hint never names a key the learner does not have. Station 1 sets this precedent by
+ * teaching the shortcuts and adding that the controls below always work too.
+ */
+function CheckYourselfHint({ lead }: { lead: string }) {
+  return (
+    <p className="text-sm text-ink-muted text-pretty">
+      <span className="hidden keyboard:inline">
+        {lead}, then press <kbd className={SPACE_KEY_CLASS}>Space</kbd> to see if you were
+        right.
+      </span>
+      <span className="keyboard:hidden">
+        {lead}, then use the speaker below to see if you were right.
+      </span>
+    </p>
   );
 }
 
@@ -1523,32 +1779,70 @@ function BlankRecallStep({
   );
 }
 
+/**
+ * One centered column: headline, one short line, then the table with its count. Same
+ * vertical rhythm as every other teaching slide (sign, caption, subject), so the grid
+ * stops reading as a different kind of screen. The earlier two-column split left the
+ * table and the copy optically unaligned across a dead gutter, and it was the only slide
+ * in the station anchored left.
+ *
+ * The sentence sits above the table so the slide reads top to bottom: what changed, then
+ * the table, then the count. The table is sized to be read rather than to fit above the
+ * fold, so on a short window the page scrolls and the nav's scrim shows there is more.
+ */
 function GridStep({ grid }: { grid: StationConfig["grid"] }) {
   return (
-    // Two columns: the table on the left, the copy centered against it on the right.
-    // Stacked on narrow screens, where the grid sits above the text.
-    // Anchored left rather than centered as a pair: on a wide screen a centered
-    // grid+text unit floats as an island with no edge to line up against.
-    <div className="flex flex-col items-center gap-8 text-center sm:flex-row sm:items-center sm:justify-start sm:gap-12 sm:text-left">
-      <div className="sm:shrink-0">
-        <GojuonGrid known={grid.known} arriving={grid.arriving} />
-      </div>
-      <div className="flex max-w-sm flex-col items-center gap-5 sm:items-start">
-        <SignTitle title={grid.headline} />
-        <p className="text-sm leading-relaxed text-ink-muted text-pretty">{grid.body}</p>
-      </div>
+    <div className="mx-auto flex max-w-xl flex-col items-center gap-5 text-center">
+      <SignTitle title={grid.headline} />
+      <p className="max-w-sm text-sm leading-relaxed text-ink-muted text-balance">
+        {grid.body}
+      </p>
+      <GojuonGrid known={grid.known} arriving={grid.arriving} />
     </div>
   );
 }
 
+/**
+ * Every station ends the same way, so the shape is fixed here rather than authored: the
+ * sign states what the learner can now do, the count below it is the permanent travel
+ * measure, and one short line names where the path goes next.
+ *
+ * The forward action on this slide is Path, so the learner is already leaving. A full
+ * preview of the next station is wasted here: they meet it on the map moments later. It
+ * gets one clause, not the slide's largest block of text.
+ */
 function DoneStep({ done }: { done: StationConfig["done"] }) {
   return (
-    <div className="mx-auto flex max-w-md flex-col items-center gap-7 text-center">
+    <div className="mx-auto flex max-w-md flex-col items-center gap-6 text-center">
       <SignTitle title="Station complete." />
-      <p className="w-full rounded-[var(--radius-lg)] border-2 border-ink bg-accent px-6 py-5 font-medium leading-relaxed text-ink text-pretty">
-        {done.capability}
+      <p className="w-full rounded-[var(--radius-lg)] border-2 border-ink bg-accent px-6 py-5 font-medium leading-relaxed text-ink text-balance">
+          {done.capability.map((part, i) => {
+            if (typeof part === "string") {
+              // Punctuation directly after a kana run was already emitted with it.
+              const previous = done.capability[i - 1];
+              return typeof previous === "object" ? part.replace(/^[,.]/, "") : part;
+            }
+            // The kana run and any punctuation that follows it travel together. The run is
+            // inline-block so the balancer cannot break between individual kana, and the
+            // trailing punctuation is pulled inside the same nowrap span so it cannot be
+            // stranded at the start of the next line either.
+            const following = done.capability[i + 1];
+            const tail =
+              typeof following === "string" ? (following.match(/^[,.]/)?.[0] ?? "") : "";
+            return (
+              <span key={i} className="whitespace-nowrap">
+                {" "}
+                <span className="inline-block font-kana tracking-[0.08em]">{part.kana}</span>
+                {tail}
+              </span>
+            );
+          })}
       </p>
-      <p className="max-w-sm text-sm text-ink-muted text-balance">{done.next}</p>
+      <p className="max-w-sm text-sm text-ink-muted text-balance">
+        {hasBookStopAfter(done.completedId)
+          ? "Return to the path. There is a book stop on the way to the next station."
+          : "Return to the path to continue to the next station."}
+      </p>
     </div>
   );
 }

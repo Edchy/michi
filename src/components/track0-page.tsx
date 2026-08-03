@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { buildTrack0, type ScriptStep } from "@/content/track0";
-import { MICHI, type Script, type Word } from "@/content/scripts";
+import { MICHI, ROMAJI_WORDS, type Script, type Word } from "@/content/scripts";
 import { VOWELS } from "@/content/hiragana";
 import { playRecording } from "@/lib/audio";
 import { ARROW_KEY_CLASS, SPACE_KEY_CLASS } from "@/components/keyboard-key";
@@ -23,7 +23,10 @@ export default function Track0Page() {
       ? () => playRecording(step.script.words[0]!.audioSrc)
       : step.kind === "michi" || step.kind === "welcome"
         ? () => playRecording(MICHI.audioSrc)
-        : undefined;
+        : // The even beat is the whole claim of this slide, so it has to be heard.
+          step.kind === "beats"
+          ? () => playRecording(ROMAJI_WORDS[0]!.audioSrc)
+          : undefined;
 
   function go(delta: number) {
     setDirection(delta);
@@ -129,6 +132,7 @@ function StepView({ step }: { step: ScriptStep }) {
   if (step.kind === "script") return <ScriptStepView script={step.script} />;
   if (step.kind === "romaji") return <RomajiStep />;
   if (step.kind === "michi") return <MichiStep />;
+  if (step.kind === "beats") return <BeatsStep />;
   return <HandoffStep />;
 }
 
@@ -337,6 +341,45 @@ function MichiStep() {
             <span className="font-kana text-5xl leading-none">{form}</span>
           </span>
         ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * How Japanese sound works, before any character is taught.
+ *
+ * The three pieces are shown as equal-width boxes because that IS the point: each takes
+ * the same length of time. English spelling has nothing this regular, so the boxes carry
+ * the idea faster than a sentence about mora timing would, and the word "mora" is not
+ * needed to understand it.
+ */
+function BeatsStep() {
+  const [word] = ROMAJI_WORDS;
+  return (
+    <div className="mx-auto flex w-full max-w-md flex-col items-center gap-7 text-center">
+      <SignTitle title="Every sound is one beat." />
+
+      <div className="flex w-full items-stretch justify-center gap-2">
+        {word!.syllables.map((s, i) => (
+          <span
+            key={i}
+            className="flex flex-1 flex-col items-center gap-1 rounded-[var(--radius-lg)] border-2 border-ink bg-accent px-2 py-4"
+          >
+            <span className="font-kana text-5xl leading-none text-ink">{s.glyph}</span>
+            <span className="text-xs font-medium tracking-wide text-ink-muted">{s.say}</span>
+          </span>
+        ))}
+      </div>
+
+      <div className="flex max-w-sm flex-col gap-2 text-pretty">
+        <p className="text-base font-semibold leading-relaxed text-ink">
+          Three pieces, three equal beats.
+        </p>
+        <p className="text-sm leading-relaxed text-ink-muted">
+          Japanese has no silent letters and no spelling surprises. Learn a character and
+          you can say it anywhere it appears.
+        </p>
       </div>
     </div>
   );

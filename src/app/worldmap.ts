@@ -78,10 +78,12 @@ export const PROVINCES: Province[] = [
         id: "reading-on", n: 2, title: "Reading on",
         line: "Marunouchi", lineKanji: "丸ノ内線", code: "M",
         stations: [
-          { id: "s-row",        n: 5, title: "The S row",        place: "しんじゅく", placeRomaji: "Shinjuku", x: 1520, y: 400 },
-          { id: "t-row",        n: 6, title: "The T row",        place: "おおてまち", placeRomaji: "Ōtemachi", x: 1840, y: 560 },
-          { id: "n-row",        n: 7, title: "The N row",        place: "いけぶくろ", placeRomaji: "Ikebukuro", x: 2160, y: 440 },
-          { id: "snapshot-1",   n: 8, title: "Halfway snapshot",  place: "ぎんざ",    placeRomaji: "Ginza",    x: 2480, y: 580 },
+          { id: "s-row",        n: 5, title: "The S row",        place: "しんじゅく", placeRomaji: "Shinjuku", href: "/tracks/s-row", x: 1520, y: 400 },
+          { id: "t-row",        n: 6, title: "The T row",        place: "おおてまち", placeRomaji: "Ōtemachi", href: "/tracks/t-row", x: 1840, y: 560 },
+          { id: "n-row",        n: 7, title: "The N row",        place: "いけぶくろ", placeRomaji: "Ikebukuro", href: "/tracks/n-row", x: 2160, y: 440 },
+          // The first connected reading, and the reason the N row comes just before it:
+          // の is what lets a line join two words instead of listing them.
+          { id: "reading-on",   n: 8, title: "Reading on",       place: "ぎんざ",    placeRomaji: "Ginza",    href: "/tracks/reading-on", x: 2480, y: 580 },
         ],
       },
       // Chiyoda 千代田線
@@ -165,6 +167,19 @@ export const BOOK_STOPS: BookStop[] = [
     y: 507,
   },
 ];
+
+/**
+ * Whether a book stop sits between this station and the next one.
+ *
+ * Derived from the map rather than restated in station content, so a completion slide can
+ * mention the stop without an author remembering to keep the two in sync. Book stops
+ * unlock *after* a station number, which is the same thing as sitting on the path out of
+ * it.
+ */
+export function hasBookStopAfter(stationId: string): boolean {
+  const station = STATIONS.find((s) => s.id === stationId);
+  return station ? BOOK_STOPS.some((stop) => stop.unlockAfterStation === station.n) : false;
+}
 
 // done / current / locked — used for both tracks and provinces
 export type ProgressState = "done" | "current" | "locked";

@@ -29,7 +29,9 @@ export function GojuonGrid({
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <div className="max-w-full overflow-x-auto">
+      {/* px-14 reserves room for the hung row labels so they are never clipped, while the
+          table itself stays the centred element. */}
+      <div className="max-w-full overflow-x-auto px-14">
         <table className="mx-auto border-collapse">
           <tbody>
             {GOJUON.map((row) => {
@@ -40,11 +42,19 @@ export function GojuonGrid({
                 <tr key={row.id}>
                   <th
                     scope="row"
-                    className={`border-0 pr-2.5 text-right text-xs font-medium ${
-                      isKnown || isArriving || isNext ? "text-ink" : "text-ink-muted"
-                    }`}
+                    // Zero-width and hung to the left: labels vary from "vowels" to "k", so
+                    // a real column both ragged-edges the rows and shifts the table off
+                    // centre against the headline. Taking them out of the table's width
+                    // lets the cells define it, so the glyphs centre where the eye expects.
+                    className="relative w-0 border-0 p-0"
                   >
-                    {row.label}
+                    <span
+                      className={`absolute right-3 top-1/2 -translate-y-1/2 whitespace-nowrap text-sm font-medium ${
+                        isKnown || isArriving || isNext ? "text-ink" : "text-ink-muted"
+                      }`}
+                    >
+                      {row.label}
+                    </span>
                   </th>
                   {row.cells.map((cell, i) => (
                     <td
@@ -52,7 +62,7 @@ export function GojuonGrid({
                       // A real ruled table: every occupied cell is boxed, so the rows and
                       // vowel columns read as a grid rather than as floating glyphs. Empty
                       // cells (the y/w gaps) keep the border, showing the gap is real.
-                      className={`border border-line p-0 ${
+                      className={`border-2 border-line p-0 ${
                         // An upcoming row gets a tinted, ink-bordered cell: clearly
                         // singled out, but plainly not filled in like a learned row.
                         isNext ? "border-ink/50 bg-ink/[0.07]" : ""
@@ -79,18 +89,25 @@ export function GojuonGrid({
         </table>
       </div>
       {caption && (
-        <p className="text-sm text-ink-muted text-balance">
-          {knownCount} of {GOJUON_COUNT} hiragana.
+        // The count is the slide's actual claim, so it reads as a fact in ink rather than
+        // as a muted footnote. Centered on the whole grid block, label column included,
+        // so it sits under the table's visual mass instead of drifting left.
+        <p className="text-sm text-ink-muted">
+          <span className="font-semibold text-ink tabular-nums">{knownCount}</span> of{" "}
+          {GOJUON_COUNT} hiragana.
         </p>
       )}
     </div>
   );
 }
 
-// Eleven rows have to fit a laptop viewport without scrolling, which caps the height.
-// The grid gets its own column on these slides, so the glyph can stay comfortably big.
+// The whole table is the subject of its slide, so the cell is sized to be read, not to
+// squeeze eleven rows above the fold. The station page is `min-h-screen`, so a short
+// window scrolls; the nav's gradient scrim shows there is more below. Cells are wider
+// than tall because the glyphs are, and that proportion reads as a table rather than a
+// column of squares.
 const CELL_BASE =
-  "flex h-9 w-9 items-center justify-center font-kana text-lg leading-none sm:h-10 sm:w-10 sm:text-xl";
+  "flex h-11 w-12 items-center justify-center font-kana text-2xl leading-none [@media(min-height:820px)]:h-12 [@media(min-height:820px)]:w-14 [@media(min-height:820px)]:text-3xl";
 
 function cellClass(cell: string | null, isKnown: boolean, isArriving: boolean) {
   if (!cell) return CELL_BASE;

@@ -106,6 +106,36 @@ export function play(kana: Playable): void {
   void load(kana.id).then((b) => b && start(ac, b));
 }
 
+/**
+ * How long a sound waits when it plays because a step appeared, rather than because the
+ * learner asked for it.
+ *
+ * A tap should sound instantly: the finger is the cue, and any delay reads as lag. A slide
+ * arriving is different. The sound is the prompt, so it must not reach the ear before the
+ * thing it belongs to is on screen. Firing inside the same frame as the render means the
+ * audio starts while the browser is still painting and the learner hears the question
+ * before they can see it.
+ *
+ * 120 ms clears a paint and the step transition without feeling like a pause.
+ */
+export const STEP_AUDIO_DELAY_MS = 120;
+
+/**
+ * Play a kana's recording once the step it belongs to has had a moment to appear.
+ * Returns a cleanup function, so a learner who moves on quickly does not hear the sound
+ * of a step they already left.
+ */
+export function playOnStepAppear(kana: Playable): () => void {
+  const timer = setTimeout(() => play(kana), STEP_AUDIO_DELAY_MS);
+  return () => clearTimeout(timer);
+}
+
+/** The same appearance delay for a full word or sentence recording. */
+export function playRecordingOnStepAppear(source: string): () => void {
+  const timer = setTimeout(() => playRecording(source), STEP_AUDIO_DELAY_MS);
+  return () => clearTimeout(timer);
+}
+
 /** Play a complete word or sentence recording shipped with the app. */
 export function playRecording(source: string): void {
   const ac = context();

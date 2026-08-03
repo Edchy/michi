@@ -12,8 +12,9 @@ the plans had become larger and less coherent than the product itself.
 The working application currently includes:
 
 - A map organized into provinces, tracks, and stations.
-- Four playable stations: an introduction to Japanese scripts, the five hiragana
-  vowels, the K row, and a first consolidation station.
+- Eight playable stations: an introduction to Japanese scripts, the vowels, the K row, a
+  first consolidation station, the S, T and N rows, and a first connected-reading station.
+- Twenty five of the 46 basic hiragana taught, with human audio for all of them.
 - Audio-led kana teaching using licensed human recordings, with complete AI-generated
   recordings for words.
 - Guided sound-and-symbol pairing followed by recognition drills.

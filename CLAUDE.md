@@ -34,6 +34,12 @@ plainly. Do not silently choose the archived version.
 - Keep feedback calm and make mistakes useful.
 - Do not use unexplained jargon or unexplained Japanese.
 - Do not use em dashes in learner-facing copy.
+- Keep station copy short: at most 30 words and 2 sentences per slide. Stepping through a
+  station should feel like moving, not reading. Longer explanation, history, and optional
+  depth belong in book stops, not on the path. `src/content/station-copy.test.ts` enforces
+  this.
+- A completion claim may only state what the station actually verified. Speaking and
+  writing are rehearsed but ungraded, so they never appear in a capability sentence.
 - Preserve accessible focus, keyboard behavior, reduced motion, and adequate touch
   targets.
 
