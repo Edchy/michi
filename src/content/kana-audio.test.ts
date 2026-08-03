@@ -211,6 +211,32 @@ describe.skipIf(!hasFfmpeg())("kana recordings contain their consonant", () => {
     },
   );
 
+  /**
+   * An affricate has to ARRIVE, not fade in.
+   *
+   * The last defect in this sequence: ち and つ held their friction and their spectrum,
+   * but it ramped up gradually with no sharp edge, so the ear heard no stop at all and
+   * read them as "gee" and "tu". Every other check here passed them.
+   *
+   * A released consonant rises steeply out of its closure. た, a plain stop, manages
+   * ~55 dB over 15 ms. Requiring 40 dB keeps a clear margin below that while failing the
+   * ~20 dB creep the originals had.
+   */
+  it.each(allIds().filter((id) => AFFRICATE.test(id.replace(/^hira_/, ""))))(
+    "%s attacks sharply out of its closure",
+    (id) => {
+      const frames = envelope(join(AUDIO_DIR, `${id}.webm`));
+      let steepest = -99;
+      for (let i = 0; i + 2 < Math.min(frames.length, 40); i += 1) {
+        steepest = Math.max(steepest, frames[i + 2]! - frames[i]!);
+      }
+      expect(
+        steepest,
+        `${id} rises only ${steepest.toFixed(0)} dB at its steepest, so it fades in rather than arriving: no audible stop`,
+      ).toBeGreaterThanOrEqual(40);
+    },
+  );
+
   it.each(allIds())("%s starts promptly, with no dead air in front", (id) => {
     const frames = envelope(join(AUDIO_DIR, `${id}.webm`));
     const peak = Math.max(...frames);

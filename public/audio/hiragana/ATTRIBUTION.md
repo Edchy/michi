@@ -129,6 +129,33 @@ energy above 3 kHz exceeds energy below 1 kHz. Verified by re-encoding at 48 kbp
 fails it. Every check in that file was confirmed against a defective file rather than
 assumed to work.
 
+### The real defect in ち and つ: no attack, and it is in the source
+
+The trims and encodes above were all downstream of the actual problem. Comparing the
+shipped つ against the untouched source gave a correlation of 0.9986 and identical energy
+in every band: the processing was faithful, and the source recording is what sounds wrong.
+
+Both clips have their friction. つ carries 105 ms of it, peaking 22 dB above the vowel
+band. What they lack is an **attack**. The friction fades in gradually rather than being
+released, so no stop is audible, and the ear hears つ as "tu" and ち as "gee". Measured as
+the steepest rise over 15 ms: た, a plain stop, reaches ~55 dB. ち and つ managed 17 and 18.
+
+New recordings were not available, so both were reshaped from their own material:
+
+1. Cut to the measured friction onset, discarding the gradual fade-in (つ 40 ms, ち 20 ms).
+2. Prepend 60 ms of true silence, supplying the stop closure.
+3. Apply an 8 ms square-root attack ramp so the friction arrives rather than creeps.
+
+No audio was borrowed or synthesised; た has no isolable burst to graft, and none was used.
+The result rises 62 dB (つ) and 63 dB (ち), above た's 55 dB, with friction unchanged at
+105 ms and 85 ms. Confirmed by ear before shipping.
+
+`kana-audio.test.ts` checks this too, requiring a 40 dB rise for affricates. Verified
+against the fade-in versions, which fail at 17 and 18 dB.
+
+**These two clips are reshaped, not original.** If replacement recordings ever become
+available, prefer them: the closure here is silence rather than a real one.
+
 ### Measured state of the full set, 3 August 2026
 
 All 46 clips were decoded and their onset, peak and rise measured. Summarised so a future
