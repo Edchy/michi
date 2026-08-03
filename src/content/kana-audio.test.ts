@@ -29,16 +29,15 @@ const STOP_ONSET = /^(k|g|t|d|p|b)/;
 const AFFRICATE = /^(chi|tsu)/;
 
 /**
- * Known-bad clips in the shipped set, carrying the same trimmed-onset defect that made
- * き/く/け/こ play as bare vowels. Replace the files and delete the entry. Listed
- * explicitly so a NEW regression still fails the suite.
+ * Escape hatch for clips carrying the trimmed-onset defect that made き/く/け/こ play as
+ * bare vowels. Empty, and should stay that way: た and て were the last two, replaced on
+ * 3 August 2026 from fresh recordings using the same repair as the K row.
  *
- * These are now REACHABLE BY LEARNERS: the T row shipped as station 6, so た plays as あ
- * and て plays as え during its teaching and drill steps. That makes replacing these two
- * recordings the highest-priority audio work, ahead of the word audio the later stations
- * want, because this one actively teaches the wrong sound.
+ * If a future clip lands broken and cannot be replaced immediately, add its id here so
+ * the defect is recorded rather than silently tolerated, and so a NEW regression still
+ * fails the suite. The check below then fails once it is fixed, forcing the entry out.
  */
-const KNOWN_TRIMMED_ONSET = new Set(["hira_ta", "hira_te"]);
+const KNOWN_TRIMMED_ONSET = new Set<string>();
 
 function hasFfmpeg(): boolean {
   try {
@@ -75,6 +74,14 @@ function envelope(file: string): number[] {
  * whole 46 ship today while only the taught rows exist as `Kana`, and a recording is
  * wrong the moment it lands, not when a station finally uses it.
  */
+/** Every shipped clip id, for checks that apply regardless of the sound being taught. */
+function allIds(): string[] {
+  return readdirSync(AUDIO_DIR)
+    .filter((name) => name.endsWith(".webm"))
+    .map((name) => name.replace(/\.webm$/, ""))
+    .sort();
+}
+
 function stopConsonantIds(): string[] {
   return readdirSync(AUDIO_DIR)
     .filter((name) => name.endsWith(".webm"))
@@ -106,6 +113,29 @@ describe.skipIf(!hasFfmpeg())("kana recordings contain their consonant", () => {
         `${id} now starts quietly, so it is fixed: remove it from KNOWN_TRIMMED_ONSET`,
       ).toBeGreaterThan(-25);
     }
+  });
+
+  /**
+   * The opposite defect from a trimmed onset: dead air before the speech.
+   *
+   * ち and つ shipped with ~410 ms of room tone at −35 to −55 dBFS in front of the voice.
+   * The set's own trim used a −38 dBFS threshold, and that noise sat right at it, so the
+   * trim never fired. Nothing sounded wrong in isolation; it read as the app being slow
+   * to respond to a tap, which is why measuring the whole set caught it and listening to
+   * one clip did not.
+   *
+   * Measured across every clip rather than by sound type, because this is about the file,
+   * not the phoneme: a vowel with 400 ms of hiss in front is just as late as an affricate
+   * with the same. The rest of the set lands at or under 110 ms.
+   */
+  it.each(allIds())("%s starts promptly, with no dead air in front", (id) => {
+    const frames = envelope(join(AUDIO_DIR, `${id}.webm`));
+    const peak = Math.max(...frames);
+    const loudAt = frames.findIndex((value) => value > peak - 20);
+    expect(
+      loudAt * FRAME_SECONDS * 1000,
+      `${id} waits ${(loudAt * FRAME_SECONDS * 1000).toFixed(0)} ms before its sound`,
+    ).toBeLessThanOrEqual(200);
   });
 
   it.each(stops.filter((id) => !KNOWN_TRIMMED_ONSET.has(id)))(

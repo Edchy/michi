@@ -66,9 +66,46 @@ its burst is loud enough that more of the onset stayed above the threshold.
 - **Repaired (1 August 2026):** か き く け こ, from newly supplied recordings. Trimmed
   with a −38 dBFS threshold and 40 ms of pre-roll so the closure and burst are kept,
   then peak-normalized to −3 dBFS to sit with the rest of the set.
-- **Still affected:** た and て, which belong to the not-yet-built T row. They need the
-  same replacement. `src/content/kana-audio.test.ts` lists them explicitly and checks
-  every other stop-consonant clip, so this defect cannot return unnoticed.
+- **Repaired (3 August 2026):** た and て, the last two affected clips, from fresh
+  recordings using the same recipe. Both now open on three frames of true silence before
+  the burst, matching the K row's profile, and `KNOWN_TRIMMED_ONSET` in
+  `src/content/kana-audio.test.ts` is empty as a result.
+
+No clip in the set now carries the defect. `src/content/kana-audio.test.ts` checks every
+stop-consonant recording, so it cannot return unnoticed.
+
+### Correction: ち and つ carried the opposite defect
+
+Found by ear on 3 August 2026: both felt slow to respond when tapped. They were not
+trimmed too tightly but not trimmed at all, carrying ~410 ms of room tone at −35 to
+−55 dBFS in front of the voice. The −38 dBFS threshold in step 1 sat inside that noise
+band, so the trim never fired on them.
+
+The rest of the set reaches its sound within 110 ms. These two took 410 ms, which reads
+as the app being slow rather than as a bad recording, and that is why listening to a
+single clip never caught it.
+
+- **Repaired (3 August 2026):** trimmed with a −30 dBFS head threshold, above the room
+  tone but below the affricate friction, keeping 40 ms of pre-roll and a −55 dBFS tail
+  threshold so the natural decay survives. Voiced span is unchanged (ち 310→290 ms,
+  つ 330→290 ms; the difference is decay below the measurement floor, not speech).
+
+`src/content/kana-audio.test.ts` now measures time-to-sound on all 46 clips and fails
+above 200 ms, so dead air cannot ship again. That check is per file rather than per sound
+type: a vowel with 400 ms of hiss in front is just as late as an affricate with the same.
+
+### Measured state of the full set, 3 August 2026
+
+All 46 clips were decoded and their onset, peak and rise measured. Summarised so a future
+reader does not have to redo it:
+
+| Group | Onset | Reading |
+|---|---|---|
+| か き く け こ, た て | −99 dBFS | Repaired. True closure silence, then a burst. |
+| と | −51 dBFS | Original, and correct: quiet then rising. |
+| さ し す せ そ, ち, つ | −29 to −43 dBFS | Fricatives and affricates. Correct for their type. |
+| な行, ま行, ら行, わ, ん | −17 to −26 dBFS | Nasals and liquids. They have no closure burst to lose. |
+| あいうえお, は行, や ゆ よ, を | −5 to −19 dBFS | Legitimately start loud. Nothing to trim off. |
 
 The processed clips are committed here, but the downloaded untrimmed source files are
 not kept in the repository. The following command records the processing recipe; it

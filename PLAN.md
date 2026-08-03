@@ -24,8 +24,8 @@ For every phase:
   stations. The S row proved a new acquisition station is content, not code, and the T
   and N rows confirmed it twice more.
 - Approved rule 12 added connected reading as its own ungraded station type (station 8).
-- Current focus: audio. た and て carry a known onset defect and now teach the wrong sound
-  in station 6; word audio blocks the reading payoff and spoken narrative lines.
+- Current focus: word audio. It blocks the reading payoff at the end of each acquisition
+  station and spoken lines in narrative stations. All 46 kana recordings are now correct.
 - Not in scope yet: katakana, kanji, tracked vocabulary, or any province beyond the first.
 
 ## Shared terminology
@@ -1181,17 +1181,13 @@ Resolved in favour of (1). See approved rule 12 above.
 
 ### Suggested order for the next session
 
-1. **Replace the た and て recordings.** Both carry the trimmed-onset defect documented in
-   `public/audio/hiragana/ATTRIBUTION.md`, so they play as あ and え. They were tolerable
-   while the T row was unbuilt; now that it has shipped as station 6, they teach the wrong
-   sound to a learner. `src/content/kana-audio.test.ts` lists them.
-2. **Source word audio.** It blocks two things: the reading payoff at the end of each
+1. **Source word audio.** It blocks two things: the reading payoff at the end of each
    acquisition station, and spoken lines in narrative stations (`ReadableLine.audioSrc` is
    defined but unset everywhere, so the first passage is currently read but not heard).
    Connected reading without hearing it is half the exercise.
-3. Author the H and M rows as content. Once は exists, the second narrative station can
+2. Author the H and M rows as content. Once は exists, the second narrative station can
    use real sentences rather than noun phrases.
-4. Then resolve the two reinforcement-station questions above and author the second
+3. Then resolve the two reinforcement-station questions above and author the second
    consolidation station.
 
 ## Phase 1 result
