@@ -18,7 +18,7 @@
     "postcss": "^8.5.20",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.5.0",
-    "vitest": "^2.0.0"
+    "vitest": "^4.1.10"
   },
   "dependencies": {
     "@fontsource/klee-one": "^5.3.0",
